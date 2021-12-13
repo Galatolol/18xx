@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   viewBox="-16 -16 32 32"
+   height="32"
+   width="32"
+   version="1.1"
+   id="svg36"
+   sodipodi:docname="port_token2.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata42">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs40" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1019"
+     id="namedview38"
+     showgrid="false"
+     inkscape:zoom="7.375"
+     inkscape:cx="-27.318778"
+     inkscape:cy="4.771746"
+     inkscape:window-x="1920"
+     inkscape:window-y="35"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg36" />
+  <style
+     id="style2"><![CDATA[.B{stroke-linejoin:round}.C{stroke-linecap:round}]]></style>
+  <circle
+     r="15"
+     stroke="#000"
+     fill="#0efffd"
+     opacity=".99"
+     id="circle4" />
+  <g
+     stroke="#000"
+     transform="matrix(.65216 0 0 .65216 .004 5.979)"
+     class="B"
+     id="g16">
+    <g
+       stroke-width="4"
+       class="C"
+       id="g12">
+      <path
+         d="M0-6V8"
+         fill="#67a7c4"
+         id="path6" />
+      <path
+         fill="#67a7c47"
+         d="M-5-3H5"
+         id="path8" />
+      <path
+         d="M-9 5c2 6 16 6 18 0C7 9-7 9-9 5"
+         id="path10" />
+    </g>
+    <circle
+       cy="-8"
+       r="2"
+       stroke-width="4"
+       id="circle14" />
+  </g>
+  <g
+     class="B"
+     id="g30"
+     stroke="#67a7c4">
+    <g
+       class="C"
+       id="g22"
+       stroke-width="1.304">
+      <path
+         d="M.004 2.066v9.13"
+         id="path18"
+         fill="#67a7c4" />
+      <path
+         fill="#67a7c47"
+         d="M-3.256 4.022h6.521"
+         id="path20" />
+    </g>
+    <g
+       transform="matrix(.65216 0 0 .65216 .004 5.979)"
+       id="g28"
+       stroke-width="2"
+       fill="none">
+      <path
+         d="M-9 5c2 6 16 6 18 0C7 9-7 9-9 5"
+         class="C"
+         id="path24" />
+      <circle
+         cy="-8"
+         r="2"
+         id="circle26" />
+    </g>
+  </g>
+  <text
+     y="-0.881661"
+     x="-9.1179686"
+     font-weight="700"
+     font-size="12"
+     letter-spacing="0"
+     word-spacing="0"
+     id="text34"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:libre;-inkscape-font-specification:'libre, ';letter-spacing:0;word-spacing:0">
+    <tspan
+       y="-0.881661"
+       x="-9.1179686"
+       id="tspan32"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.66666698px;font-family:'Libre Baskerville';-inkscape-font-specification:'Libre Baskerville'">50</tspan>
+  </text>
+</svg>

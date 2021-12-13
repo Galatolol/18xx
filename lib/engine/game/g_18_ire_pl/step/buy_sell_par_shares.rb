@@ -8,8 +8,7 @@ module Engine
       module Step
         class BuySellParShares < Engine::Step::BuySellParSharesViaBid
           MIN_BID = 100
-          MAX_MINOR_PAR = 135
-          MAJOR_PHASE = 6
+          MAX_MINOR_PAR = 148
 
           def win_bid(winner, _company)
             entity = winner.entity
@@ -48,25 +47,21 @@ module Engine
             end
           end
 
-          def can_ipo_any?(entity)
-            phase_allows_ipo? && !bought? && !sold? &&
-            @game.corporations.any? do |c|
-              @game.can_par?(c, entity) && c.type == :major && can_buy?(entity, c.shares.first&.to_bundle)
-            end
-          end
+          # def can_ipo_any?(entity)
+          #   phase_allows_ipo? && !bought? && !sold? &&
+          #   @game.corporations.any? do |c|
+          #     @game.can_par?(c, entity) && c.type == :major && can_buy?(entity, c.shares.first&.to_bundle)
+          #   end
+          # end
 
-          def phase_allows_ipo?
-            @game.phase.name == 'D' || @game.phase.name.to_i >= MAJOR_PHASE
-          end
+          # def phase_allows_ipo?
+          #   @game.phase.name == 'D' || @game.phase.name.to_i >= MAJOR_PHASE
+          # end
 
           def ipo_type(entity)
             # Major's are par, minors are bid
             if entity.type == :major
-              if phase_allows_ipo?
-                :par
-              else
-                "Cannot start till phase #{MAJOR_PHASE}"
-              end
+              "Cannot start directly"
             elsif entity == @game.corporations.find { |c| c.ipoed == false }
               # First un-ipoed corporation
               :bid
@@ -77,6 +72,10 @@ module Engine
 
           def round_state
             super.merge(minor_started: false)
+          end
+
+          def get_par_prices(entity, _corp)
+            @game.par_prices.select { |p| p.price * 2 <= entity.cash }
           end
         end
       end

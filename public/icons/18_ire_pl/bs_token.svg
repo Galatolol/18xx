@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" version="1.1" viewBox="-16 -16 32 32" xmlns="http://www.w3.org/2000/svg">
+ <style><![CDATA[.B{stroke-linejoin:round}.C{stroke-linecap:round}]]></style>
+ <circle r="15" fill="#fff" opacity=".99" stroke="#000"/>
+ <text x="-9.9468746" y="6.1680002" font-family="libre" font-size="16px" letter-spacing="0" word-spacing="0">
+  <tspan x="-9.9468746" y="6.1680002" font-family="'Libre Baskerville'" font-size="16px">50</tspan>
+ </text>
+</svg>

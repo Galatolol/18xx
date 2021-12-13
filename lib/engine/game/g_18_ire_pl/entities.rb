@@ -6,20 +6,35 @@ module Engine
       module Entities
         COMPANIES = [
           {
-            name: 'Dalkey Atmospheric Railway',
+            name: 'Industrialisation of Łódź',
             value: 20,
             revenue: 5,
-            desc: 'No company can build in the Wicklow hex until this company is either bought by'\
-                  ' any company or closed.',
-            sym: 'DAR',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['J14'] }],
+            desc: 'Owning corporation may place a +20 marker in Łódź (F12). For all corporations the value of the city is increased by 20.'\
+                  ' If the marker still isn\'t placed when at the start of brown phase, it is placed immediately.'\
+                  ' The marker isn\'t removed when Industrialisation of Łódź closes or when the hex is upgraded.',
+            sym: 'IOL',
+            abilities: [
+              {
+                type: 'assign_hexes',
+                when: 'tile_lay',
+                hexes: ['F12'],
+                count: 1,
+                owner_type: 'corporation',
+              },
+              {
+                type: 'assign_corporation',
+                when: 'any',
+                count: 1,
+                owner_type: 'corporation',
+              },
+            ],
           },
           {
             name: 'Wrocław-Oława Railway',
             value: 40,
             revenue: 10,
             desc: 'Once per game, in any moment of the laying or upgrading track step of its operating round,'\
-                  ' owning company may lay an extra yellow track in either Zielona Góra (B10), Wałbrzych (B12),'\
+                  ' owning corporation may lay an extra yellow track in either Zielona Góra (B10), Wałbrzych (B12),'\
                   ' Bielsko-Biała (F18) or Zakopane (G19), following normal track laying rules.',
             sym: 'WOR',
             abilities: [
@@ -35,129 +50,48 @@ module Engine
             ],
           },
           {
-            name: 'Donegal Railway',
-            value: 30,
-            revenue: 7,
-            desc: 'The owning Corporation can place two connected narrow gauge yellow tiles in the Donegal'\
-                  ' hex and one adjacent hex. This action closes the company.',
-            sym: 'DR',
-            abilities: [
-              {
-                type: 'tile_lay',
-                hexes: %w[F4 F2 E3 E5 G3 G5],
-                tiles: %w[IR5 77 78 79],
-                when: 'track',
-                owner_type: 'corporation',
-                count: 2,
-                must_lay_together: true,
-                must_lay_all: true,
-                closed_when_used_up: true,
-              },
-            ],
-          },
-          {
-            name: 'Board of Works',
-            value: 40,
-            revenue: 9,
-            desc: 'The owning Corporation can place a yellow tile without payment of terrain costs.'\
-                  ' The company closes once this ability has been used twice.',
-            sym: 'BoW',
-            abilities: [
-              {
-                type: 'tile_lay',
-                hexes: [],
-                tiles: [],
-                when: 'track',
-                owner_type: 'corporation',
-                consume_tile_lay: true,
-                free: true,
-                count: 2,
-                closed_when_used_up: true,
-              },
-            ],
-          },
-          {
-            name: 'City of Dublin Steam Packet Company',
-            value: 45,
+            name: 'Bridge Company',
+            value: 55,
             revenue: 10,
-            desc: 'The owning Corporation can place the +£10 token on any port (Belfast, Londonderry or Rosslare).'\
-                  ' This action closes the company, but the Corporation adds £10 to the' \
-                  " port's revenue until the end of the game.",
-            sym: 'CDSPC',
+            desc: 'Owning corporation ignores river costs until the end of the game.',
+            sym: 'BC',
             abilities: [
               {
-                type: 'assign_hexes',
-                when: 'owning_corp_or_turn',
-                hexes: %w[J4 G1 I19],
-                count: 1,
+                type: 'tile_discount',
                 owner_type: 'corporation',
-              },
-              {
-                type: 'assign_corporation',
-                when: 'any',
-                count: 1,
-                owner_type: 'corporation',
+                discount: 30,
+                terrain: 'water',
               },
             ],
           },
           {
-            name: 'Tralee & Dingle Railway',
-            value: 50,
+            name: 'Wilhelmsbahn',
+            value: 70,
             revenue: 10,
-            desc: 'The owning Corporation can place two connected narrow gauge yellow tiles in the'\
-                  ' Tralee and Dingle hexes. This action closes the company.',
-            sym: 'TDR',
-            abilities: [
-              {
-                type: 'tile_lay',
-                hexes: %w[A19 B18],
-                tiles: ['IR5'],
-                when: 'track',
-                owner_type: 'corporation',
-                count: 2,
-                must_lay_together: true,
-                must_lay_all: true,
-                closed_when_used_up: true,
-              },
-            ],
+            desc: 'When thisis purchased by a corporation, that corporation may immediately lay a yellow track, following normal track laying rules.'\
+                  ' Once per game, in any moment of the laying or upgrading track step of its operating round, owning corporation may pay 20zł to lay'\
+                  ' an extra yellow track, following normal track laying rules.'\
+                  ' It is possible to lay those two additional yellow tracks in one round. It is possible to upgrade a track laid by this power in the '\
+                  ' same round (using normal laying or upgrading track action).',
+            sym: 'WB',
+            abilities: [],
           },
           {
-            name: 'Drumglass Colliery Railway',
-            value: 60,
-            revenue: 12,
-            desc: 'No Corporation can build in the DCR hex (H4) until this company is bought by any Corporation'\
-                  ' or closed. The owning Corporation may place a yellow tile, subject to normal track laying rules,'\
-                  ' on that hex (H4) without using a tile action or paying terrain costs.',
-            sym: 'DCR',
-            abilities: [
-              {
-                type: 'blocks_hexes',
-                owner_type: 'player',
-                hexes: ['H4'],
-              },
-              {
-                type: 'tile_lay',
-                hexes: ['H4'],
-                tiles: [],
-                when: 'owning_corp_or_turn',
-                owner_type: 'corporation',
-                free: true,
-                count: 1,
-              },
-            ],
-          },
-          {
-            name: 'Trans-Atlantic Steam Packet Station',
-            value: 75,
+            name: 'Baltic Shipping',
+            value: 100,
             revenue: 15,
-            desc: 'The owning Corporation can place the +£20 token on Galway. This action closes the company,'\
-                  " but the Corporation adds £20 to the city's revenue until the end of the game.",
-            sym: 'TASPS',
+            desc: 'During the aying or upgrading track step of its operating round, in addition to the normal track lay or upgrade, owning crporation'\
+                  ' may place a 50 marker near one of the ports (A3, C1, F2). The corporation is not required to be connected to the port. This forms an exclusive'\
+                  ' revenue center worth 50 that is accessible for that corporation only. The corporation may no longer access the regular port worth 10 in the same'\
+                  ' hex.'\
+                  ' The corporation may access the port with only one train per operating round, even if there are two different connections leading to the port.'\
+                  ' Other corprorations may still access the regular port with two trains.',
+            sym: 'BS',
             abilities: [
               {
                 type: 'assign_hexes',
-                when: 'owning_corp_or_turn',
-                hexes: %w[C13],
+                when: 'tile_lay',
+                hexes: %w[A3 C1 F2],
                 count: 1,
                 owner_type: 'corporation',
               },
@@ -170,53 +104,17 @@ module Engine
             ],
           },
           {
-            name: 'River Shannon Shipping Co',
-            value: 80,
-            revenue: 10,
-            desc: 'The owning Corporation controls a river link between Dromod and Limerick and adds the value of the'\
-                  ' other city to one train ending at either Dromod or Limerick.',
-            sym: 'RSSC',
-          },
-          {
-            name: 'William Dargan Esq.',
-            value: 90,
-            revenue: 10,
-            desc: 'The owning Corporation can upgrade a second track tile during each'\
-                  " OR at a cost of £30 from the Corporation's Treasury.",
-            sym: 'WDE',
-          },
-          {
-            name: 'The Irish Mail',
-            value: 110,
-            revenue: 20,
-            desc: 'The owning Corporation can place an off-board location tile adjacent'\
-                  ' to one of: Londonderry, Kingstown, or Waterford. This action closes the company,'\
-                  ' but any Corporation may run to the tile for the rest of the game.',
-            sym: 'TIM',
-            abilities: [
-              {
-                type: 'tile_lay',
-                hexes: %w[F0 H0 G-1 J12 G21 H20],
-                tiles: ['IM'],
-                when: 'track',
-                owner_type: 'corporation',
-                count: 1,
-                closed_when_used_up: true,
-              },
-            ],
-          },
-          {
-            name: 'Dublin & Kingstown Railway',
+            name: 'Warszawa-Radom Railway',
             value: 120,
             revenue: 0,
-            desc: 'The owner of this company: Takes the DKR directorship; sets the share'\
-                  ' price at half bid; places a 2H-Train on the charter; places the winning bid'\
-                  ' in the DKR treasury less the cost of the train and discards this card.',
-            sym: 'DK',
+            desc: 'The owner of this company takes the M8 directorship. The winning bid is put into the M8 treasury. M8 share price is the highest'\
+                  ' yellow par value that is not more than half the bid.'\
+                  ' This private company closes immediately.',
+            sym: 'WRR',
             abilities: [
-            { type: 'close', when: 'bought_train', corporation: 'DKR' },
-            { type: 'no_buy' },
-            { type: 'shares', shares: 'DKR_0' },
+              { type: 'close', when: 'par', 'corporation': 'M8' },
+              { type: 'no_buy' },
+              { type: 'shares', shares: 'M8_0' },
             ],
           },
       ].freeze
@@ -309,7 +207,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'D2',
@@ -322,10 +220,22 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'E3',
+            abilities: [
+              {
+                type: 'tile_lay',
+                discount: 30,
+                description: 'Ignores river cost in the home hex.',
+                desc_detail: 'Ignores river cost in E3.',
+                passive: true,
+                when: 'track',
+                hexes: ['E3'],
+                tiles: ['5', '6', '57'],
+              },
+            ],
           },
           {
             float_percent: 40,
@@ -335,7 +245,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'A5',
@@ -348,7 +258,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'G5',
@@ -361,7 +271,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'D6',
@@ -374,7 +284,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'K7',
@@ -387,7 +297,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'C9',
@@ -400,7 +310,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'H10',
@@ -413,7 +323,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'F12',
@@ -426,7 +336,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'C13',
@@ -439,7 +349,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'J14',
@@ -452,7 +362,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'F16',
@@ -465,10 +375,22 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'G17',
+            abilities: [
+              {
+                type: 'tile_lay',
+                discount: 30,
+                description: 'Ignores river cost in the home hex.',
+                desc_detail: 'Ignores river cost in G17.',
+                passive: true,
+                when: 'track',
+                hexes: ['G17'],
+                tiles: ['5', '6', '57'],
+              },
+            ],
           },
           {
             float_percent: 40,
@@ -478,7 +400,7 @@ module Engine
             tokens: [0],
             shares: [40, 20, 20, 20],
             always_market_price: true,
-            color: 'white',
+            color: 'black',
             reservation_color: nil,
             type: 'minor',
             coordinates: 'I17',

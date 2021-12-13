@@ -8,7 +8,7 @@ module Engine
     module G18Ireland
       module Step
         class SpecialTrack < Engine::Step::SpecialTrack
-          include NarrowTrack
+          # include NarrowTrack
           def potential_tiles(entity, _hex)
             return super unless entity.id == 'TIM'
             return [] unless (tile_ability = abilities(entity))
