@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="13.991mm" height="7.62mm" version="1.1" viewBox="0 0 13.991 7.62" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-48.54 -15.075)">
+  <flowRoot transform="scale(.26458)" fill="#000000" font-family="'Bebas Neue'" font-size="40px" letter-spacing="0px" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><flowRegion font-family="'Bebas Neue'"><rect x="74.286" y="48.234" width="242.86" height="108.57"/></flowRegion><flowPara/></flowRoot>
+  <text x="48.380955" y="22.589287" fill="#000000" font-family="'Bebas Neue'" font-size="10.583px" letter-spacing="0px" stroke-width=".26458" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="48.380955" y="22.589287" font-family="'Bebas Neue'" stroke-width=".26458">WOR</tspan></text>
+  <g fill="#ffd5d5" fill-opacity=".56522">
+   <rect x="61.894" y="12.006" width=".37798" height=".37798"/>
+   <rect x="33.451" y="34.59" width=".37798" height=".85045"/>
+   <rect x="-11.906" y="52.827" width=".18899" height=".47247"/>
+  </g>
+ </g>
+</svg>

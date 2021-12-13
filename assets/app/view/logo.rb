@@ -31,16 +31,17 @@ module View
           height: '3rem',
           width: '2.5rem',
           lineHeight: '3rem',
-          background: "url(/images/logo_polygon_#{logo_color}.svg) left/2.5rem no-repeat",
-          color: logo_color == 'red' ? '#ffffff' : '#000000',
+          # background: "url(/images/logo_polygon_#{logo_color}.svg) left/2.5rem no-repeat",
+          background: "url(/images/logo.png) left/2.5rem no-repeat",
+          # color: logo_color == 'red' ? '#ffffff' : '#000000',
           textAlign: 'center',
         },
       }
 
       h('h1#logo', h1_props, [
         h(:a, a_props, [
-          h(:span, logo_props, '18xx'),
-          h(:span, ' . Games'),
+          h(:span, logo_props, '.'),
+          h(:span, '18xx . Games'),
         ]),
       ])
     end
