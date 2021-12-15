@@ -46,15 +46,10 @@ module Engine
         }.freeze
 
         CURRENCY_FORMAT_STR = '%dzł'
-
         BANK_CASH = 4000
-
         CERT_LIMIT = { 3 => 16, 4 => 12, 5 => 10, 6 => 8 }.freeze
-
         STARTING_CASH = { 3 => 400, 4 => 300, 5 => 240, 6 => 210 }.freeze
-
         LIMIT_TOKENS_AFTER_MERGER = 4
-
         GAME_END_CHECK = { bankrupt: :full_or, stock_market: :full_or, bank: :full_or }.freeze
 
         MARKET = [
@@ -176,8 +171,9 @@ module Engine
                                               ['Train trade in allowed',
                                                'Trains can be traded in for face value for more powerful trains'],)
         # Companies guaranteed to be in the game
-        # PROTECTED_COMPANIES = %w[DAR DK].freeze
         PROTECTED_CORPORATION = 'M8'
+        MINOR_A_ID = 'MA'
+        MINOR_B_ID = 'MB'
         # SHANNON_COMPANY = 'RSSC'
         # SHANNON_HEXES = %w[F10 D16].freeze
         # KEEP_COMPANIES = 5
@@ -266,6 +262,10 @@ module Engine
           # shannon_revenue = shannon_revenue(route.routes)
 
           # revenue += shannon_revenue[:revenue] if shannon_revenue && shannon_revenue[:route] == route
+
+          #+10 bonus
+          revenue += 10 if (stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates})
+          puts stops.map(&:hex)
 
           # Bonus for assignments
           iol = iol_company&.id
@@ -430,15 +430,89 @@ module Engine
           corporations.delete(removed_corporation)
         end
 
-        def setup
-          # @narrow_connected_hexes = {}
-          # @narrow_connected_paths = {}
+        SOUTHERN_OFFBOARDS = %w[A13 C17 I19 K17]
+        NORTHERN_OFFBOARDS = %w[G3 I3 K5]
+        POTENTIAL_PLUS_TEN_HEXES = %w[C9 C13 E3 F16 G17]
 
+        def optional_hexes
+          southern_offboards_randomized = SOUTHERN_OFFBOARDS.sort_by { rand }
+          @minor_A_starting_location = southern_offboards_randomized.shift
+
+          northern_offboards_randomized = NORTHERN_OFFBOARDS.sort_by { rand }
+          @minor_B_starting_location = northern_offboards_randomized.shift
+
+          @map_hexes ||= {
+            white: {
+              %w[A9 A11 B4 B8 B12 C3 C7 C11 C15 D4 D8 D12 D16 E9 E11 E13 E15 E17 F4 F6 F14 G13 H8 H14 I5 I7 I9
+                J6 J10 J12 J16 K11 K13] => '',
+              %w[E5 F8 G9 H4 H6 H16 I11 I13 I15] => 'upgrade=cost:30,terrain:water',
+              %w[A5 C9 C13 D2 D6 F12 F16 J14] => 'city=revenue:0;',
+              %w[E3 G5 G17 I17 K7] => 'city=revenue:0;upgrade=cost:30,terrain:water',
+              %w[D10 D14 F10 G7 G11 G15 H18 J4 K9 K15] => 'town=revenue:0;',
+              %w[E7] => 'town=revenue:0;upgrade=cost:30,terrain:water',
+              %w[B10 B14] => 'town=revenue:0;icon=image:18_ire_pl/wor,sticky:1',
+              %w[F18 G19] => 'town=revenue:0;icon=image:18_ire_pl/wor,sticky:1;upgrade=cost:30,terrain:mountain',
+            },
+            yellow: {
+              ['H10'] => 'city=revenue:20;path=a:0,b:_0;label=W',
+              ['H12'] => 'town=revenue:10;path=a:3,b:_0;path=a:0,b:_0;label=R',
+            },
+            blue: { 
+              %w[A3 C1] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:5,b:_0',
+              ['F2'] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:1,b:_0',
+            },
+            red: {
+              ['A13'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+              ['C17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1",
+              ['G3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+              ['I3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+              ['I19'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
+              ['K5'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:2,b:_0,terminal:1",
+              ['K17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
+            },
+            gray: {
+              southern_offboards_randomized => '',
+              northern_offboards_randomized => '',
+              ['E1'] => 'town=revenue:10;path=a:1,b:_0;path=a:0,b:_0',
+              ['E19'] => 'town=revenue:10;path=a:3,b:_0;path=a:4,b:_0',
+              ['J18'] => 'town=revenue:10;path=a:2,b:_0;path=a:3,b:_0',
+              ['A7'] => 'town=revenue:10;path=a:3,b:_0;path=a:0,b:_0;path=a:0,b:4',
+              ['B6'] => 'path=a:0,b:1;path=a:0,b:5;path=a:1,b:5;path=a:2,b:3;path=a:2,b:4;path=a:3,b:4',
+              ['C5'] => 'path=a:0,b:3;path=a:0,b:4;path=a:3,b:4;path=a:1,b:2;path=a:1,b:5;path=a:2,b:5',
+              ['J8'] => 'path=a:1,b:3;path=a:1,b:5;path=a:3,b:5;path=a:2,b:4;path=a:2,b:0;path=a:0,b:4',
+            },
+          }
+        end
+
+        def setup
           @available_par_groups = %i[par]
 
           corporations, @future_corporations = @corporations.partition do |corporation|
             corporation.type == :minor
           end
+
+          minor_A = corporations.find { |c| c.id == MINOR_A_ID }
+          minor_A.coordinates = @minor_A_starting_location
+          minor_B = corporations.find { |c| c.id == MINOR_B_ID }
+          minor_B.coordinates = @minor_B_starting_location
+
+          potential_plus_ten_hexes_randomized = POTENTIAL_PLUS_TEN_HEXES.sort_by { rand }
+          @plus_ten_hex_coordinates = potential_plus_ten_hexes_randomized.shift
+          plus_ten_hex = hex_by_id(@plus_ten_hex_coordinates)
+          plus_ten_hex.tile.icons << Part::Icon.new('/18_ire_pl/plus_ten_token')
+          @log << "+10 marker placed in #{@plus_ten_hex_coordinates}"
+
+          # @plus_ten = Corporation.new(
+          #   sym: '+10',
+          #   name: '+10',
+          #   logo: '/icons/18_ire_pl/plus_ten_token.svg',
+          #   tokens: [0],
+          # )
+          # @plus_ten.owner = @bank
+          # place_free_token(@plus_ten, 'C14', 1)
+          # place_free_token(@k, 'D15', 0)
+          # extra_coal_mine = hex_by_id(variable_coal_mine)
+          # extra_coal_mine.tile.icons << Part::Icon.new('../logos/18_rhl/K')
 
           # @reserved_trains = depot.upcoming.select(&:reserved)
           # @all_reserved_trains = @reserved_trains.dup

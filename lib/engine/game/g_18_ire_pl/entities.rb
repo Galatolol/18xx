@@ -405,6 +405,30 @@ module Engine
             type: 'minor',
             coordinates: 'I17',
           },
+          {
+            float_percent: 40,
+            sym: 'MA',
+            name: 'Minor A',
+            logo: '18_ire_pl/MA',
+            tokens: [0],
+            shares: [40, 20, 20, 20],
+            always_market_price: true,
+            color: 'black',
+            reservation_color: nil,
+            type: 'minor',
+          },
+          {
+            float_percent: 40,
+            sym: 'MB',
+            name: 'Minor B',
+            logo: '18_ire_pl/MB',
+            tokens: [0],
+            shares: [40, 20, 20, 20],
+            always_market_price: true,
+            color: 'black',
+            reservation_color: nil,
+            type: 'minor',
+          },
         ].freeze
       end
     end
