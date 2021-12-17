@@ -104,8 +104,8 @@ module Engine
           'K9' => 'Biała Podlaska',
           'K15' => 'Zamość',
           'K17' => 'Ukraine',
-        }.freeze
-
+        }.freeze        
+        
         HEXES = {
           white: {
             %w[A9 A11 B4 B8 B12 C3 C7 C11 C15 D4 D8 D12 D16 E9 E11 E13 E15 E17 F4 F6 F14 G13 H8 H14 I5 I7 I9
@@ -126,8 +126,16 @@ module Engine
             %w[A3 C1] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:5,b:_0',
             ['F2'] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:1,b:_0',
           },
+          red: {
+            ['A13'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+            ['C17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1",
+            ['G3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+            ['I3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
+            ['I19'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
+            ['K5'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:2,b:_0,terminal:1",
+            ['K17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
+          },
           gray: {
-            %w[A13 C17 G3 I3 I19 K5 K17] => '',
             ['E1'] => 'town=revenue:10;path=a:1,b:_0;path=a:0,b:_0',
             ['E19'] => 'town=revenue:10;path=a:3,b:_0;path=a:4,b:_0',
             ['J18'] => 'town=revenue:10;path=a:2,b:_0;path=a:3,b:_0',
@@ -135,8 +143,8 @@ module Engine
             ['B6'] => 'path=a:0,b:1;path=a:0,b:5;path=a:1,b:5;path=a:2,b:3;path=a:2,b:4;path=a:3,b:4',
             ['C5'] => 'path=a:0,b:3;path=a:0,b:4;path=a:3,b:4;path=a:1,b:2;path=a:1,b:5;path=a:2,b:5',
             ['J8'] => 'path=a:1,b:3;path=a:1,b:5;path=a:3,b:5;path=a:2,b:4;path=a:2,b:0;path=a:0,b:4',
-          }
-        }.freeze
+          },
+        }
 
         LAYOUT = :flat
 

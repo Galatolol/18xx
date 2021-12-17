@@ -33,13 +33,6 @@ module Engine
                                                             par_3: :brown,
                                                             endgame: :red)
 
-        EVENTS_TEXT = Base::EVENTS_TEXT.merge(
-          'green_par' => ['Green phase pars',
-                          '122zł par price is now available'],
-          'brown_par' => ['Brown phase pars',
-                          '148zł par price is now available']
-        ).freeze
-
         ASSIGNMENT_TOKENS = {
           'IOL' => '/icons/18_ire_pl/iol_token.svg',
           'BS' => '/icons/18_ire_pl/bs_token.svg',
@@ -109,8 +102,6 @@ module Engine
           },
         ].freeze
 
-        # The ' trains are the opposite sides of the physical cards which
-        # get added into the bankpool when their equivilent rusts
         TRAINS = [
           {
             name: '2',
@@ -167,16 +158,17 @@ module Engine
 
         EVENTS_TEXT = Base::EVENTS_TEXT.merge('corporations_can_merge' => ['Corporations can merge',
                                                                            'Players can vote to merge corporations'],
-                                              'train_trade_allowed' =>
-                                              ['Train trade in allowed',
-                                               'Trains can be traded in for face value for more powerful trains'],)
+                                              'green_par' => ['Green phase pars',
+                                                              '122zł par price is now available'],
+                                              'brown_par' => ['Brown phase pars',
+                                                              '148zł par price is now available'],
+                                              'train_trade_allowed' => ['Train trade in allowed',
+                                                                        'Trains can be traded in for face value for more powerful trains'],).freeze
+
         # Companies guaranteed to be in the game
         PROTECTED_CORPORATION = 'M8'
         MINOR_A_ID = 'MA'
         MINOR_B_ID = 'MB'
-        # SHANNON_COMPANY = 'RSSC'
-        # SHANNON_HEXES = %w[F10 D16].freeze
-        # KEEP_COMPANIES = 5
 
         # used for laying tokens, running routes, mergers
         # def init_graph
@@ -265,7 +257,6 @@ module Engine
 
           #+10 bonus
           revenue += 10 if (stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates})
-          puts stops.map(&:hex)
 
           # Bonus for assignments
           iol = iol_company&.id
@@ -292,62 +283,6 @@ module Engine
         #   #           ' Dromod or Limerick to the other city for one train.'
         #   # end
         #   # help
-        # end
-
-        # def revenue_str(route)
-        #   str = super
-
-        #   ng_revenue = narrow_gauge_revenue(route, route.stops)
-        #   str += " (Narrow: #{format_currency(ng_revenue)})" if ng_revenue.positive?
-
-        #   shannon_revenue = shannon_revenue(route.routes)
-        #   if shannon_revenue && shannon_revenue[:route] == route
-        #     str += " (#{self.class::SHANNON_COMPANY}:#{format_currency(shannon_revenue[:revenue])})"
-        #   end
-
-        #   str
-        # end
-
-        # def narrow_connected_hexes(corporation)
-        #   compute_narrow(corporation) unless @narrow_connected_hexes[corporation]
-        #   @narrow_connected_hexes[corporation]
-        # end
-
-        # def narrow_connected_paths(corporation)
-        #   compute_narrow(corporation) unless @narrow_connected_paths[corporation]
-        #   @narrow_connected_paths[corporation]
-        # end
-
-        # def compute_narrow(entity)
-        #   # Narrow gauge network is a separate network that is not blocked by tokens
-        #   hexes = Hash.new { |h, k| h[k] = {} }
-        #   paths = {}
-
-        #   @graph.connected_nodes(entity).keys.each do |node|
-        #     node.walk(skip_track: :broad, tile_type: self.class::TILE_TYPE) do |path, _, _|
-        #       next if paths[path]
-
-        #       paths[path] = true
-
-        #       hex = path.hex
-
-        #       path.exits.each do |edge|
-        #         hexes[hex][edge] = true
-        #         hexes[hex.neighbors[edge]][hex.invert(edge)] = true
-        #       end
-        #     end
-        #   end
-
-        #   hexes.default = nil
-        #   hexes.transform_values!(&:keys)
-
-        #   @narrow_connected_hexes[entity] = hexes
-        #   @narrow_connected_paths[entity] = paths
-        # end
-
-        # def clear_narrow_graph
-        #   @narrow_connected_hexes.clear
-        #   @narrow_connected_paths.clear
         # end
 
         # def upgrade_cost(old_tile, hex, entity, spender)
@@ -435,53 +370,28 @@ module Engine
         POTENTIAL_PLUS_TEN_HEXES = %w[C9 C13 E3 F16 G17]
 
         def optional_hexes
+          hexes = G18IrePL::Map::HEXES
+
           southern_offboards_randomized = SOUTHERN_OFFBOARDS.sort_by { rand }
           @minor_A_starting_location = southern_offboards_randomized.shift
 
           northern_offboards_randomized = NORTHERN_OFFBOARDS.sort_by { rand }
           @minor_B_starting_location = northern_offboards_randomized.shift
 
-          @map_hexes ||= {
-            white: {
-              %w[A9 A11 B4 B8 B12 C3 C7 C11 C15 D4 D8 D12 D16 E9 E11 E13 E15 E17 F4 F6 F14 G13 H8 H14 I5 I7 I9
-                J6 J10 J12 J16 K11 K13] => '',
-              %w[E5 F8 G9 H4 H6 H16 I11 I13 I15] => 'upgrade=cost:30,terrain:water',
-              %w[A5 C9 C13 D2 D6 F12 F16 J14] => 'city=revenue:0;',
-              %w[E3 G5 G17 I17 K7] => 'city=revenue:0;upgrade=cost:30,terrain:water',
-              %w[D10 D14 F10 G7 G11 G15 H18 J4 K9 K15] => 'town=revenue:0;',
-              %w[E7] => 'town=revenue:0;upgrade=cost:30,terrain:water',
-              %w[B10 B14] => 'town=revenue:0;icon=image:18_ire_pl/wor,sticky:1',
-              %w[F18 G19] => 'town=revenue:0;icon=image:18_ire_pl/wor,sticky:1;upgrade=cost:30,terrain:mountain',
-            },
-            yellow: {
-              ['H10'] => 'city=revenue:20;path=a:0,b:_0;label=W',
-              ['H12'] => 'town=revenue:10;path=a:3,b:_0;path=a:0,b:_0;label=R',
-            },
-            blue: { 
-              %w[A3 C1] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:5,b:_0',
-              ['F2'] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:1,b:_0',
-            },
-            red: {
-              ['A13'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-              ['C17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1",
-              ['G3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-              ['I3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-              ['I19'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
-              ['K5'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:2,b:_0,terminal:1",
-              ['K17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
-            },
-            gray: {
-              southern_offboards_randomized => '',
-              northern_offboards_randomized => '',
-              ['E1'] => 'town=revenue:10;path=a:1,b:_0;path=a:0,b:_0',
-              ['E19'] => 'town=revenue:10;path=a:3,b:_0;path=a:4,b:_0',
-              ['J18'] => 'town=revenue:10;path=a:2,b:_0;path=a:3,b:_0',
-              ['A7'] => 'town=revenue:10;path=a:3,b:_0;path=a:0,b:_0;path=a:0,b:4',
-              ['B6'] => 'path=a:0,b:1;path=a:0,b:5;path=a:1,b:5;path=a:2,b:3;path=a:2,b:4;path=a:3,b:4',
-              ['C5'] => 'path=a:0,b:3;path=a:0,b:4;path=a:3,b:4;path=a:1,b:2;path=a:1,b:5;path=a:2,b:5',
-              ['J8'] => 'path=a:1,b:3;path=a:1,b:5;path=a:3,b:5;path=a:2,b:4;path=a:2,b:0;path=a:0,b:4',
-            },
-          }
+          empty_gray_hexes = southern_offboards_randomized + northern_offboards_randomized
+
+          new_hexes = {}
+          HEXES.keys.each do |color|
+            new_map = self.class::HEXES[color].transform_keys do |coords|
+              coords - empty_gray_hexes
+            end
+            empty_gray_hexes_dict = empty_gray_hexes.to_h { |h| [[h], ''] }
+            empty_gray_hexes_dict.each { |coords, tile_str| new_map[coords] = tile_str } if color == :gray
+
+            new_hexes[color] = new_map
+          end
+
+          new_hexes
         end
 
         def setup
@@ -689,10 +599,10 @@ module Engine
             G18Ireland::Step::SpecialTrack,
             Engine::Step::BuyCompany,
             G18Ireland::Step::IssueShares,
-            G18Ireland::Step::Track,
-            Engine::Step::Token,
+            Engine::Step::Track,
+            G18IrePL::Step::Token,
             Engine::Step::Route,
-            G18Ireland::Step::Dividend,
+            G18IrePL::Step::Dividend,
             Engine::Step::DiscardTrain,
             G18Ireland::Step::BuyTrain,
             [Engine::Step::BuyCompany, { blocks: true }],
