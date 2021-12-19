@@ -62,6 +62,17 @@ module Engine
                 discount: 30,
                 terrain: 'water',
               },
+              {
+                type: 'close',
+                on_phase: 'never',
+                owner_type: 'corporation',
+              },
+              {
+                type: 'revenue_change',
+                revenue: 0,
+                on_phase: 'Brown',
+                owner_type: 'corporation',
+              },
             ],
           },
           {
