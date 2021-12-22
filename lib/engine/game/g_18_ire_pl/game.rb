@@ -11,6 +11,7 @@ module Engine
         include_meta(G18IrePL::Meta)
         include G18IrePL::Entities
         include G18IrePL::Map
+        include CitiesPlusTownsRouteDistanceStr
 
         CAPITALIZATION = :incremental
         HOME_TOKEN_TIMING = :par
@@ -37,6 +38,8 @@ module Engine
           'IOL' => '/icons/18_ire_pl/iol_token.svg',
           'BS' => '/icons/18_ire_pl/bs_token.svg',
         }.freeze
+
+        IOL_HEX_COORDINATES = 'F12'
 
         CURRENCY_FORMAT_STR = '%dzł'
         BANK_CASH = 4000
@@ -132,7 +135,8 @@ module Engine
             num: 1,
             distance: 4,
             price: 36,
-            events: [{ 'type' => 'close_companies' },
+            events: [{ 'type' => 'iol_must_be_assigned' },
+                     { 'type' => 'close_companies' },
                      { 'type' => 'brown_par' }],
           },
           {
@@ -165,45 +169,10 @@ module Engine
                                               'train_trade_allowed' => ['Train trade in allowed',
                                                                         'Trains can be traded in for face value for more powerful trains'],).freeze
 
-        # Companies guaranteed to be in the game
-        PROTECTED_CORPORATION = 'M8'
         MINOR_A_ID = 'MA'
         MINOR_B_ID = 'MB'
-
-        # used for laying tokens, running routes, mergers
-        # def init_graph
-        #   Graph.new(self, skip_track: :narrow)
-        # end
-
-        # def skip_route_track_type
-        #   :narrow
-        # end
-
-        # def tile_lays(entity)
-        #   return super if !entity.corporation? || entity.companies.none? { |c| c.id == 'WDE' }
-
-        #   DARGAN_TILE_LAYS
-        # end
-
-        # def hex_edge_cost(conn)
-        #   conn[:paths].each_cons(2).sum do |a, b|
-        #     a.hex == b.hex ? 0 : 1
-        #   end
-        # end
-
-        # def route_distance(route)
-        #   route.chains.sum { |conn| hex_edge_cost(conn) }
-        # end
-
-        # def route_distance_str(route)
-        #   "#{route_distance(route)}H"
-        # end
-
-        # def check_distance(route, _visits)
-        #   limit = route.train.distance
-        #   distance = route_distance(route)
-        #   raise GameError, "#{distance} is too many hex edges for #{route.train.name} train" if distance > limit
-        # end
+        # Corporation guaranteed to be in the game
+        PROTECTED_CORPORATION = 'M8'
 
         def iol_company
           company_by_id('IOL')
@@ -213,83 +182,20 @@ module Engine
           company_by_id('BS')
         end
 
-        # def calculate_shannon_revenue(route, revenues)
-        #   shannon_hexes = self.class::SHANNON_HEXES.map { |hex| hex_by_id(hex) }
-        #   shannon_options = [0]
-        #   route.visited_stops.each do |stop|
-        #     next unless stop.city?
-
-        #     next unless shannon_hexes.include?(stop.hex)
-
-        #     other_hex = (shannon_hexes - [stop.hex]).first
-        #     # Avoid calculating this multiple times
-        #     unless revenues[other_hex]
-        #       # Tiles only ever contain one city
-        #       other_city = other_hex.tile.cities.first
-        #       revenue = other_city.route_revenue(route.phase, route.train)
-        #       revenue += narrow_gauge_revenue(route, [other_city])
-        #       revenues[other_hex] = revenue
-        #     end
-        #     shannon_options << revenues[other_hex]
-        #   end
-        #   { route: route, revenue: shannon_options.max }
-        # end
-
-        # def shannon_revenue(routes)
-        #   entity = routes.first.train.owner
-        #   return nil unless entity.companies.any? { |c| c.id == self.class::SHANNON_COMPANY }
-
-        #   revenues = {}
-
-        #   destination_bonus = routes.map { |r| calculate_shannon_revenue(r, revenues) }.compact
-        #   destination_bonus.sort_by { |v| v[:revenue] }.reverse&.first
-        # end
-
         def revenue_for(route, stops)
           revenue = super
-          # Bonus for connected narrow gauges directly connected
-          # via narrow gauge without being connected to broad gauge.
-          # revenue += narrow_gauge_revenue(route, stops)
-
-          # shannon_revenue = shannon_revenue(route.routes)
-
-          # revenue += shannon_revenue[:revenue] if shannon_revenue && shannon_revenue[:route] == route
 
           #+10 bonus
-          revenue += 10 if (stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates})
+          revenue += 10 if (stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates })
 
           # Bonus for assignments
           iol = iol_company&.id
-          revenue += 20 if route.corporation.assigned?(iol) && (stops.map(&:hex).find { |hex| hex.assigned?(iol) })
+          revenue += 20 if (stops.map(&:hex).find { |hex| hex.assigned?(iol) })
           bs = bs_company&.id
           revenue += 40 if route.corporation.assigned?(bs) && (stops.map(&:hex).find { |hex| hex.assigned?(bs) })
 
           revenue
         end
-
-        # def train_help(_entity, runnable_trains, _routes)
-        #   return [] if runnable_trains.empty?
-
-        #   entity = runnable_trains.first.owner
-
-        #   # Shannon
-        #   # shannon = entity.companies.any? { |c| c.id == self.class::SHANNON_COMPANY }
-
-        #   # help = ['Trains only use broad gauge.'\
-        #   #         'Narrow gauge track is automatically added to connected revenue centers.']
-
-        #   # if shannon
-        #   #   help << "#{self.class::SHANNON_COMPANY} automatically adds the value (including Narrow Gauge) of"\
-        #   #           ' Dromod or Limerick to the other city for one train.'
-        #   # end
-        #   # help
-        # end
-
-        # def upgrade_cost(old_tile, hex, entity, spender)
-        #   return 0 if hex.tile.paths.all? { |path| path.track == :narrow }
-
-        #   super
-        # end
 
         def unstarted_corporation_summary
           unipoed = @corporations.reject(&:ipoed)
@@ -307,55 +213,7 @@ module Engine
         def sorted_corporations
           # Corporations sorted by some potential game rules
           ipoed, others = corporations.partition(&:ipoed)
-
-          # hide non-ipoed majors until phase 4
-          # others.reject! { |c| c.type == :major } unless @show_majors
           ipoed.sort + others
-        end
-
-        # def tile_uses_broad_rules?(old_tile, tile)
-        #   # Is this tile a 'broad' gauge lay or a 'narrow' gauge lay.
-        #   # Broad gauge lay is if any of the new exits broad gauge?
-        #   old_paths = old_tile.paths
-        #   new_tile_paths = tile.paths
-        #   new_tile_paths.all? { |path| path.track == :broad || old_paths.any? { |p| path <= p } }
-        # end
-
-        # def legal_tile_rotation?(entity, hex, tile)
-        #   # TIM, DR and TDR can lay irrespective of connectivity.
-        #   if !entity.company? || !%w[TIM DR TDR].include?(entity.id)
-        #     corp = entity.corporation
-        #     connection_directions = graph.connected_hexes(corp)[hex]
-        #     # Must be connected for the tile to be layable
-        #     return false unless connection_directions
-        #   end
-
-        #   # All tile exits must match neighboring tiles
-        #   tile.exits.each do |dir|
-        #     next unless (connecting_path = tile.paths.find { |p| p.exits.include?(dir) })
-        #     next unless (neighboring_tile = hex.neighbors[dir]&.tile)
-
-        #     neighboring_path = neighboring_tile.paths.find { |p| p.exits.include?(Engine::Hex.invert(dir)) }
-        #     return false if neighboring_path && !connecting_path.tracks_match?(neighboring_path)
-        #   end
-        #   true
-        # end
-
-        def setup_preround
-          # Only keep 3 private companies
-          # remove_companies = @companies.size - self.class::KEEP_COMPANIES
-
-          # companies = @companies.reject do |c|
-          #   self.class::PROTECTED_COMPANIES.include?(c.id)
-          # end
-
-          # removed_companies = companies.sort_by! { rand }.take(remove_companies)
-          # removed = removed_companies.map do |comp|
-          #   @companies.delete(comp)
-          #   comp.close!
-          #   comp.id
-          # end
-          # @log << "Removed #{removed.join(',')} companies"
         end
 
         def remove_corporation(corporations)
@@ -405,31 +263,13 @@ module Engine
           minor_A.coordinates = @minor_A_starting_location
           minor_B = corporations.find { |c| c.id == MINOR_B_ID }
           minor_B.coordinates = @minor_B_starting_location
+          @log << "Offboards in play: #{@minor_A_starting_location} and #{@minor_B_starting_location}"
 
           potential_plus_ten_hexes_randomized = POTENTIAL_PLUS_TEN_HEXES.sort_by { rand }
           @plus_ten_hex_coordinates = potential_plus_ten_hexes_randomized.shift
           plus_ten_hex = hex_by_id(@plus_ten_hex_coordinates)
           plus_ten_hex.tile.icons << Part::Icon.new('/18_ire_pl/plus_ten_token')
           @log << "+10 marker placed in #{@plus_ten_hex_coordinates}"
-
-          # @plus_ten = Corporation.new(
-          #   sym: '+10',
-          #   name: '+10',
-          #   logo: '/icons/18_ire_pl/plus_ten_token.svg',
-          #   tokens: [0],
-          # )
-          # @plus_ten.owner = @bank
-          # place_free_token(@plus_ten, 'C14', 1)
-          # place_free_token(@k, 'D15', 0)
-          # extra_coal_mine = hex_by_id(variable_coal_mine)
-          # extra_coal_mine.tile.icons << Part::Icon.new('../logos/18_rhl/K')
-
-          # @reserved_trains = depot.upcoming.select(&:reserved)
-          # @all_reserved_trains = @reserved_trains.dup
-          # @reserved_trains.each do |train|
-          #   train.reserved = false # don't hide in the UI
-          #   depot.remove_train(train)
-          # end
 
           protect = corporations.find { |c| c.id == PROTECTED_CORPORATION }
           corporations.delete(protect)
@@ -439,21 +279,7 @@ module Engine
           corporations.unshift(protect)
 
           @corporations = corporations
-          # @show_majors = false
         end
-
-        # def rust(train)
-        #   unless @all_reserved_trains.include?(train)
-        #     new_distance = train.distance / 2
-        #     new_train = @reserved_trains.find { |t| t.distance == new_distance }
-        #     new_train.reserved = false
-        #     @reserved_trains.delete(new_train)
-        #     @depot.reclaim_train(new_train)
-        #     @extra_trains << new_train.name
-        #   end
-
-        #   super
-        # end
 
         def close_corporation(corporation, quiet: false)
           # Share holders gain the final value of shares on corporations from bankrupt players
@@ -479,15 +305,6 @@ module Engine
           super
           corporation.close!
         end
-
-        # def rust_trains!(train, _entity)
-        #   @extra_trains = []
-        #   super
-        #   return if @extra_trains.empty?
-
-        #   @log << "-- Event: Rusted trains become #{@extra_trains.uniq.join(', ')},"\
-        #           ' and are available from the bank pool'
-        # end
 
         def get_par_prices(entity, _corp)
           @game
@@ -521,21 +338,6 @@ module Engine
           end
         end
 
-        # def close_dkr_if_unpurchased!
-        #   protect = corporations.find { |c| c.id == PROTECTED_CORPORATION }
-        #   return if protect&.owner&.player?
-
-        #   close_corporation(protect)
-        # end
-
-        def upgrades_to?(from, to, special = false, selected_company: nil)
-          # The Irish Mail
-          return true if special && from.color == :blue && to.color == :red
-
-          # Specials must observe existing rules otherwise
-          super(from, to, false, selected_company: selected_company)
-        end
-
         def home_token_locations(corporation)
           hexes.select do |hex|
             !hex.tile.exits.empty? && hex.tile.cities.any? { |city| city.tokenable?(corporation, free: true) }
@@ -563,12 +365,6 @@ module Engine
           bundles_for_corporation(@share_pool, entity).reject { |bundle| entity.cash < bundle.price }.take(1)
         end
 
-        # def new_auction_round
-        #   Engine::Round::Auction.new(self, [
-        #     G18Ireland::Step::WaterfallAuction,
-        #   ])
-        # end
-
         def par_prices
           @stock_market.share_prices_with_types(@available_par_groups)
         end
@@ -593,15 +389,15 @@ module Engine
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
             G18Ireland::Step::Bankrupt,
-            G18Ireland::Step::Assign,
             Engine::Step::Exchange,
+            G18IrePL::Step::SpecialTrack,
             Engine::Step::HomeToken,
-            G18Ireland::Step::SpecialTrack,
             Engine::Step::BuyCompany,
+            Engine::Step::Assign,
             G18Ireland::Step::IssueShares,
             Engine::Step::Track,
             G18IrePL::Step::Token,
-            Engine::Step::Route,
+            G18IrePL::Step::Route,
             G18IrePL::Step::Dividend,
             Engine::Step::DiscardTrain,
             G18Ireland::Step::BuyTrain,
@@ -637,7 +433,6 @@ module Engine
             when G18Ireland::Round::Merger
               new_or!
             when init_round.class
-              # close_dkr_if_unpurchased!
               reorder_players
               new_stock_round
             end
@@ -661,20 +456,14 @@ module Engine
           update_cache(:share_prices)
         end
 
-        # def event_minors_cannot_start!
-        #   @corporations, removed = @corporations.partition do |corporation|
-        #     corporation.owned_by_player? || corporation.type != :minor
-        #   end
-
-        #   removed.each { |c| close_corporation(c, quiet: true) }
-
-        #   @log << 'Minors can no longer be started' if removed.any?
-        # end
-
-        # def event_majors_can_ipo!
-        #   @log << 'Majors can now be started via IPO'
-        #   @show_majors = true
-        # end
+        def event_iol_must_be_assigned!
+          iol_hex = hexes.find { |hex| hex.coordinates == IOL_HEX_COORDINATES }
+          iol = iol_company&.id
+          unless iol_hex.assigned?(iol)
+            iol_hex.assign!(iol)
+            @log << "-- Event: +20 marker placed in #{IOL_HEX_COORDINATES} --"
+          end
+        end
 
         def event_train_trade_allowed!; end
       end

@@ -16,7 +16,7 @@ module Engine
             abilities: [
               {
                 type: 'assign_hexes',
-                when: 'tile_lay',
+                when: 'owning_corp_or_turn',
                 hexes: ['F12'],
                 count: 1,
                 owner_type: 'corporation',
@@ -40,11 +40,12 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                hexes: %w[B10 B12 F18 G19],
-                tiles: [],
+                hexes: %w[B10 B14 F18 G19],
+                tiles: %w[3 4 58],
                 when: 'track',
                 owner_type: 'corporation',
-                free: true,
+                free: false,
+                reachable: true,
                 count: 1,
               },
             ],
@@ -79,20 +80,40 @@ module Engine
             name: 'Wilhelmsbahn',
             value: 70,
             revenue: 10,
-            desc: 'When thisis purchased by a corporation, that corporation may immediately lay a yellow track, following normal track laying rules.'\
+            desc: 'When this is purchased by a corporation, that corporation may immediately lay a yellow track, following normal track laying rules.'\
                   ' Once per game, in any moment of the laying or upgrading track step of its operating round, owning corporation may pay 20zł to lay'\
                   ' an extra yellow track, following normal track laying rules.'\
                   ' It is possible to lay those two additional yellow tracks in one round. It is possible to upgrade a track laid by this power in the '\
                   ' same round (using normal laying or upgrading track action).',
             sym: 'WB',
-            abilities: [],
+            abilities: [
+              {
+                type: 'tile_lay',
+                owner_type: 'corporation',
+                when: 'sold',
+                reachable: 'true',
+                count: 1,
+                hexes: [],
+                tiles: %w[3 4 5 6 7 8 9 57 58],
+              },
+              {
+                type: 'tile_lay',
+                owner_type: 'corporation',
+                when: 'track',
+                cost: 20,
+                count: 1,
+                reachable: true,
+                special: false,
+                hexes: [],
+                tiles: %w[3 4 5 6 7 8 9 57 58],
+              },
+            ],
           },
           {
             name: 'Baltic Shipping',
             value: 100,
             revenue: 15,
-            desc: 'During the aying or upgrading track step of its operating round, in addition to the normal track lay or upgrade, owning crporation'\
-                  ' may place a 50 marker near one of the ports (A3, C1, F2). The corporation is not required to be connected to the port. This forms an exclusive'\
+            desc: 'Owning corporation may place a 50 marker in one of the ports (A3, C1, F2). The corporation is not required to be connected to the port. This forms an exclusive'\
                   ' revenue center worth 50 that is accessible for that corporation only. The corporation may no longer access the regular port worth 10 in the same'\
                   ' hex.'\
                   ' The corporation may access the port with only one train per operating round, even if there are two different connections leading to the port.'\
@@ -101,7 +122,7 @@ module Engine
             abilities: [
               {
                 type: 'assign_hexes',
-                when: 'tile_lay',
+                when: 'owning_corp_or_turn',
                 hexes: %w[A3 C1 F2],
                 count: 1,
                 owner_type: 'corporation',
@@ -110,6 +131,17 @@ module Engine
                 type: 'assign_corporation',
                 when: 'any',
                 count: 1,
+                owner_type: 'corporation',
+              },
+              {
+                type: 'close',
+                on_phase: 'never',
+                owner_type: 'corporation',
+              },
+              {
+                type: 'revenue_change',
+                revenue: 0,
+                on_phase: 'Brown',
                 owner_type: 'corporation',
               },
             ],
@@ -183,6 +215,7 @@ module Engine
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
             color: 'orange',
+            text_color: 'black',
             reservation_color: nil,
             type: 'major',
             max_ownership_percent: 60,
