@@ -4,7 +4,7 @@ require_relative '../../../step/buy_sell_par_shares_via_bid'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Step
         class BuySellParShares < Engine::Step::BuySellParSharesViaBid
           MIN_BID = 100

@@ -4,7 +4,7 @@ require_relative '../../../step/buy_train'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Step
         class BuyTrain < Engine::Step::BuyTrain
           def setup
@@ -18,7 +18,7 @@ module Engine
           end
 
           def discountable_trains_allowed?(_entity)
-            !@exchanged && %w[D 10].include?(@game.phase.name)
+            !@exchanged && %w[Red Gray].include?(@game.phase.name)
           end
 
           def can_ebuy_sell_shares?(entity)

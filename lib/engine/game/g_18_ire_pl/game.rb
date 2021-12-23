@@ -41,7 +41,7 @@ module Engine
 
         IOL_HEX_COORDINATES = 'F12'
 
-        CURRENCY_FORMAT_STR = '%dzł'
+        CURRENCY_FORMAT_STR = '%d zł'
         BANK_CASH = 4000
         CERT_LIMIT = { 3 => 16, 4 => 12, 5 => 10, 6 => 8 }.freeze
         STARTING_CASH = { 3 => 400, 4 => 300, 5 => 240, 6 => 210 }.freeze
@@ -108,54 +108,54 @@ module Engine
         TRAINS = [
           {
             name: '2',
-            num: 1,
+            num: 6,
             distance: 2,
-            price: 8,
+            price: 80,
             rusts_on: '3+',
           },
           {
             name: '3',
-            num: 1,
+            num: 5,
             distance: 3,
-            price: 18,
+            price: 180,
             rusts_on: '4+',
             events: [{ 'type' => 'corporations_can_merge' },
                      { 'type' => 'green_par' }],
           },
           {
             name: '3+',
-            num: 1,
+            num: 4,
             distance: [{ 'nodes' => %w[city offboard], 'pay' => 3, 'visit' => 3 },
                        { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
-            price: 28,
+            price: 280,
             rusts_on: '4D',
           },
           {
             name: '4',
-            num: 1,
+            num: 3,
             distance: 4,
-            price: 36,
+            price: 360,
             events: [{ 'type' => 'iol_must_be_assigned' },
                      { 'type' => 'close_companies' },
                      { 'type' => 'brown_par' }],
           },
           {
             name: '4+',
-            num: 1,
+            num: 2,
             distance: [{ 'nodes' => %w[city offboard], 'pay' => 4, 'visit' => 4 },
                        { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
-            price: 48,
+            price: 480,
           },
           {
             name: '4D',
             num: 20,
             distance: [{ 'nodes' => %w[city offboard town], 'pay' => 4, 'visit' => 4, 'multiplier' => 2 }],
-            price: 72,
+            price: 720,
             events: [{ 'type' => 'train_trade_allowed' }],
             discount: {
-              "3+" => 44,
-              '4' => 36,
-              '4+' => 24,
+              "3+" => 440,
+              '4' => 360,
+              '4+' => 240,
             },
           },
         ].freeze
@@ -193,6 +193,18 @@ module Engine
           revenue += 20 if (stops.map(&:hex).find { |hex| hex.assigned?(iol) })
           bs = bs_company&.id
           revenue += 40 if route.corporation.assigned?(bs) && (stops.map(&:hex).find { |hex| hex.assigned?(bs) })
+
+          if route.train.owner.companies.include?(company_by_id('BS'))
+            bs_hex_visits_count = 0
+            route.routes.each do |route|
+              route.visited_stops.each do |stop|
+                if stop.hex.assigned?(bs)
+                  bs_hex_visits_count += 1
+                  raise GameError, "#{route.train.owner.name} can't run to #{stop.hex.coordinates} more than once" if bs_hex_visits_count > 1
+                end
+              end
+            end
+          end
 
           revenue
         end
@@ -261,8 +273,10 @@ module Engine
 
           minor_A = corporations.find { |c| c.id == MINOR_A_ID }
           minor_A.coordinates = @minor_A_starting_location
+          hex_by_id(minor_A.coordinates).tile.add_reservation!(minor_A, 0)
           minor_B = corporations.find { |c| c.id == MINOR_B_ID }
           minor_B.coordinates = @minor_B_starting_location
+          hex_by_id(minor_B.coordinates).tile.add_reservation!(minor_B, 0)
           @log << "Offboards in play: #{@minor_A_starting_location} and #{@minor_B_starting_location}"
 
           potential_plus_ten_hexes_randomized = POTENTIAL_PLUS_TEN_HEXES.sort_by { rand }
@@ -370,37 +384,37 @@ module Engine
         end
 
         def stock_round
-          G18Ireland::Round::Stock.new(self, [
+          G18IrePL::Round::Stock.new(self, [
             Engine::Step::DiscardTrain,
             Engine::Step::Exchange,
             Engine::Step::HomeToken,
-            G18Ireland::Step::BuySellParShares,
+            G18IrePL::Step::BuySellParShares,
           ])
         end
 
         def merger_round
-          G18Ireland::Round::Merger.new(self, [
+          G18IrePL::Round::Merger.new(self, [
             Engine::Step::DiscardTrain,
-            G18Ireland::Step::MergerVote,
-            G18Ireland::Step::Merge,
+            G18IrePL::Step::MergerVote,
+            G18IrePL::Step::Merge,
           ], round_num: @round.round_num)
         end
 
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
-            G18Ireland::Step::Bankrupt,
+            G18IrePL::Step::Bankrupt,
             Engine::Step::Exchange,
             G18IrePL::Step::SpecialTrack,
             Engine::Step::HomeToken,
             Engine::Step::BuyCompany,
             Engine::Step::Assign,
-            G18Ireland::Step::IssueShares,
+            G18IrePL::Step::IssueShares,
             Engine::Step::Track,
             G18IrePL::Step::Token,
-            G18IrePL::Step::Route,
+            Engine::Step::Route,
             G18IrePL::Step::Dividend,
             Engine::Step::DiscardTrain,
-            G18Ireland::Step::BuyTrain,
+            G18IrePL::Step::BuyTrain,
             [Engine::Step::BuyCompany, { blocks: true }],
           ], round_num: round_num)
         end
@@ -430,7 +444,7 @@ module Engine
                 @log << "-- #{round_description('Merger', @round.round_num)} --"
                 merger_round
               end
-            when G18Ireland::Round::Merger
+            when G18IrePL::Round::Merger
               new_or!
             when init_round.class
               reorder_players

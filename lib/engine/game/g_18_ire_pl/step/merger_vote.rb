@@ -5,7 +5,7 @@ require_relative 'merger_common'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Step
         class MergerVote < Engine::Step::Base
           include MergerCommon

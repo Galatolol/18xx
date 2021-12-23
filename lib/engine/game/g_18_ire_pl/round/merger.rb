@@ -4,7 +4,7 @@ require_relative '../../../round/merger'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Round
         class Merger < Engine::Round::Merger
           def self.round_name

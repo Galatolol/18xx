@@ -4,7 +4,7 @@ require_relative '../../../step/base'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Step
         module MergerCommon
           def vote_summary

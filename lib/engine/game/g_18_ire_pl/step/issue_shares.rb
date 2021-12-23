@@ -4,7 +4,7 @@ require_relative '../../../step/issue_shares'
 
 module Engine
   module Game
-    module G18Ireland
+    module G18IrePL
       module Step
         class IssueShares < Engine::Step::IssueShares
           def process_sell_shares(action)
