@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../g_1822/game'
+require_relative '../../part/upgrade'
 require_relative 'meta'
 require_relative 'map'
 
@@ -46,8 +47,6 @@ module Engine
              500 550 600e],
         ].freeze
 
-        BIDDING_BOX_START_MINOR = nil
-
         PRIVATE_TRAINS = %w[P1 P2 P3 P4 P5 P6].freeze
         PRIVATE_CLOSE_AFTER_PASS = %w[P9].freeze
         PRIVATE_MAIL_CONTRACTS = %w[P14 P15].freeze
@@ -70,12 +69,21 @@ module Engine
           'P13' => { acquire: %i[major minor], phase: 1 },
           'P14' => { acquire: %i[major], phase: 3 },
           'P15' => { acquire: %i[major], phase: 3 },
-          'P16' => { acquire: %i[major minor], phase: 1 },
+          'P16' => { acquire: %i[major], phase: 2 },
           'P17' => { acquire: %i[major minor], phase: 2 },
           'P18' => { acquire: %i[major], phase: 3 },
         }.freeze
 
-        BIDDING_BOX_START_PRIVATE = 'P16'
+        def port_company?(entity)
+          entity.id == 'P17' || entity.id == 'P18'
+        end
+
+        def cube_company?(entity)
+          entity.id == 'P10' || entity.id == 'P11'
+        end
+
+        BIDDING_BOX_START_PRIVATE = 'P1'
+        BIDDING_BOX_START_MINOR = nil
 
         TRAINS = [
           {
@@ -506,6 +514,7 @@ module Engine
           on_acquired_train(company, entity) if self.class::PRIVATE_TRAINS.include?(company.id)
           adjust_p7_revenue(company) if company.id == 'P7'
           company.revenue = -10 if company.id == 'P16'
+          company.revenue = 0 if cube_company?(company)
         end
 
         def reorder_players(_order = nil)
@@ -553,10 +562,6 @@ module Engine
           super
         end
 
-        def port_company?(entity)
-          entity.id == 'P17' || entity.id == 'P18'
-        end
-
         def payout_companies
           super
           # Check on stock drop private
@@ -586,18 +591,43 @@ module Engine
           ''
         end
 
+        def terrain?(tile, terrain)
+          tile.parts.each do |part|
+            return true if part.is_a?(Engine::Part::Upgrade) && (part.terrains[0] == terrain)
+          end
+          false
+        end
+
         def max_builder_cubes(tile)
           max = 0
-          tile.parts.each do |part|
-            max += 2 if part.terrains[0] == 'mountain'
-            max += 1 if part.terrains[0] == 'hill'
-            max += 1 if part.terrains[0] == 'river'
-          end
+          max += 2 if terrain?(tile, 'mountain')
+          max += 1 if terrain?(tile, 'hill')
+          max += 1 if terrain?(tile, 'river')
           max
         end
 
         def current_builder_cubes(tile)
           tile.icons.count { |i| i.name.start_with?('block') }
+        end
+
+        def can_hold_builder_cubes?(tile)
+          current_builder_cubes(tile) < max_builder_cubes(tile)
+        end
+
+        # Assume the company optimizes cost reduction from cubes
+        def upgrade_cost(tile, hex, entity, spender)
+          cost = super
+          num_cubes = current_builder_cubes(tile)
+          if num_cubes >= 2 && terrain?(tile, 'mountain')
+            num_cubes -= 2
+            cost -= 80
+          end
+          if num_cubes >= 1 && terrain?(tile, 'hill')
+            num_cubes -= 1
+            cost -= 40
+          end
+          cost -= 20 if num_cubes >= 1 && terrain?(tile, 'river')
+          cost
         end
       end
     end
