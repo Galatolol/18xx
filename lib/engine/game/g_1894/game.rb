@@ -2,126 +2,52 @@
 
 require_relative 'meta'
 require_relative '../base'
+require_relative 'stock_market'
+require_relative 'map'
+require_relative 'system'
+require_relative 'shell'
+require_relative '../cities_plus_towns_route_distance_str'
 
 module Engine
   module Game
     module G1894
       class Game < Game::Base
         include_meta(G1894::Meta)
+        include G1894::Map
+        include CitiesPlusTownsRouteDistanceStr
 
-        register_colors(green: '#237333',
-                        gray: '#9a9a9d',
-                        red: '#d81e3e',
-                        blue: '#0189d1',
-                        yellow: '#FFF500',
-                        brown: '#7b352a')
+        register_colors(hanBlue: '#446CCF',
+                        steelBlue: '#4682B4',
+                        brick: '#9C661F',
+                        powderBlue: '#B0E0E6',
+                        khaki: '#F0E68C',
+                        darkGoldenrod: '#B8860B',
+                        yellowGreen: '#9ACD32',
+                        gray70: '#B3B3B3',
+                        khakiDark: '#BDB76B',
+                        thistle: '#D8BFD8',
+                        lightCoral: '#F08080',
+                        tan: '#D2B48C',
+                        gray50: '#7F7F7F',
+                        cinnabarGreen: '#61B329',
+                        tomato: '#FF6347',
+                        plum: '#DDA0DD',
+                        lightGoldenrod: '#EEDD82')
 
-        AXES = { x: :number, y: :letter }.freeze
+        CURRENCY_FORMAT_STR = '$%d'
 
-        CURRENCY_FORMAT_STR = 'F%d'
+        BANK_CASH = 99_999
 
-        BANK_CASH = 8000
+        CERT_LIMIT = { 3 => 99, 4 => 99, 5 => 99 }.freeze
 
-        CERT_LIMIT = { 3 => 20, 4 => 15 }.freeze
-
-        STARTING_CASH = { 3 => 624, 4 => 525 }.freeze
+        STARTING_CASH = { 3 => 800, 4 => 700, 5 => 620 }.freeze
 
         CAPITALIZATION = :full
 
         MUST_SELL_IN_BLOCKS = false
 
-        TILES = {
-          '1' => 1,
-          '2' => 1,
-          '7' => 4,
-          '8' => 13,
-          '9' => 13,
-          '14' => 4,
-          '15' => 4,
-          '16' => 1,
-          '17' => 1,
-          '18' => 1,
-          '19' => 1,
-          '20' => 1,
-          '23' => 3,
-          '24' => 3,
-          '25' => 2,
-          '26' => 2,
-          '27' => 2,
-          '28' => 1,
-          '29' => 1,
-          '30' => 1,
-          '31' => 1,
-          '39' => 1,
-          '40' => 1,
-          '41' => 2,
-          '42' => 2,
-          '43' => 2,
-          '44' => 1,
-          '45' => 2,
-          '46' => 2,
-          '47' => 1,
-          '55' => 1,
-          '56' => 1,
-          '57' => 4,
-          '69' => 1,
-          '70' => 1,
-          '619' => 4,
-          'R1' =>
-          {
-            'count' => 1,
-            'color' => 'green',
-            'code' =>
-            'city=revenue:60;city=revenue:60;path=a:0,b:_0;path=a:_0,b:1;path=a:2,b:_1;path=a:_1,b:3;label=R',
-          },
-          'R2' =>
-          {
-            'count' => 1,
-            'color' => 'brown',
-            'code' =>
-            'city=revenue:70,slots:2;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0;label=R',
-          },
-        }.freeze
-
-        LOCATION_NAMES = {
-          'I1' => 'Western Canada (HB +100)',
-          'B2' => 'Northern Alberta (HB +100)',
-          'L2' => 'Lethbridge',
-          'C3' => 'Lloydminster',
-          'G3' => 'Kindersley',
-          'K3' => 'Medicine Hat',
-          'M3' => 'Elkwater',
-          'D4' => 'Maidstone',
-          'F4' => 'Wilkie',
-          'E5' => 'North Battleford & Battleford',
-          'I5' => 'Swift Current',
-          'D6' => 'Spiritwood',
-          'N6' => 'Shaunavon',
-          'G7' => 'Saskatoon',
-          'D8' => 'Prince Albert',
-          'F8' => 'Rosthern & Melfort',
-          'J8' => 'Moose Jaw',
-          'L8' => 'Assiniboia',
-          'C9' => 'Candle Lake',
-          'G9' => 'Humboldt',
-          'K9' => 'Rouleau & Mossbank',
-          'J10' => "Pile o' Bones & Lumsden",
-          'A11' => 'Sandy Bay',
-          'C11' => 'Flin Flon',
-          'G11' => 'Wadena',
-          'I11' => "Melville & Fort Qu'Appelle",
-          'M11' => 'Wayburn & Estevan',
-          'O11' => 'USA',
-          'B12' => 'Hudson Bay',
-          'J12' => 'Moosomin',
-          'L12' => 'Carlyle',
-          'N12' => 'Oxbow',
-          'I13' => 'Eastern Canada',
-          'K13' => 'Virden',
-        }.freeze
-
         MARKET = [
-          %w[60y
+          %w[60
              67
              71
              76
@@ -135,13 +61,13 @@ module Engine
              180
              200
              225
-             250
-             275
-             300
+             255
+             285
              325
-             350],
-          %w[53y
-             60y
+             375
+             425],
+          %w[53o
+             60
              66
              70
              76
@@ -154,14 +80,14 @@ module Engine
              160
              180
              200
-             220
-             240
-             260
-             280
-             300],
-          %w[46y
-             55y
-             60y
+             225
+             250
+             275
+             300
+             330],
+          %w[46o
+             55o
+             60
              65
              70
              76
@@ -173,12 +99,12 @@ module Engine
              140
              155
              170
-             185
-             200],
+             190
+             210],
           %w[39o
-             48y
-             54y
-             60y
+             48o
+             54o
+             60
              66
              71
              76p
@@ -188,573 +114,753 @@ module Engine
              110
              120
              130],
-          %w[32o 41o 48y 55y 62 67 71p 76 82 90 100],
-          %w[25b 34o 42o 50y 58y 65 67p 71 75 80],
-          %w[18b 27b 36o 45o 54y 63 67 69 70],
-          %w[10b 20b 30b 40o 50y 60y 67 68],
-          ['', '10b', '20b', '30b', '40o', '50y', '60y'],
-          ['', '', '10b', '20b', '30b', '40o', '50y'],
-          ['', '', '', '10b', '20b', '30b', '40o'],
+          %w[32o 41o 48o 55o 62 67 71p 76 82 90 100],
+          %w[25o 34o 42o 50o 58o 65 67p 71 75 80],
+          %w[18o 27o 36o 45o 54o 63 67 69 70],
+          %w[10o 20o 30o 40o 50o 60 67 68],
+          ['', '10o', '20o', '30o', '40o', '50o', '60'],
+          ['', '', '10o', '20o', '30o', '40o', '50o'],
+          ['', '', '', '10o', '20o', '30o', '40o'],
         ].freeze
 
-        PHASES = [
-          {
-            name: 'Yellow',
-            train_limit: 4,
-            tiles: [:yellow],
-            operating_rounds: 1
-          },
-          {
-            name: 'Green',
-            on: '3',
-            train_limit: 4,
-            tiles: %i[yellow green],
-            operating_rounds: 2,
-            status: ['can_buy_companies'],
-          },
-          {
-            name: 'Blue',
-            on: '4',
-            train_limit: 3,
-            tiles: %i[yellow green],
-            operating_rounds: 2,
-            status: ['can_buy_companies'],
-          },
-          {
-            name: 'Brown',
-            on: '5',
-            train_limit: 3,
-            tiles: %i[yellow green brown],
-            operating_rounds: 3,
-            status: ['can_buy_companies'],
-          },
-          {
-            name: 'Red',
-            on: '6',
-            train_limit: 2,
-            tiles: %i[yellow green brown],
-            operating_rounds: 3,
-          },
-          {
-            name: 'Gray',
-            on: '7',
-            train_limit: 2,
-            tiles: %i[yellow green brown],
-            operating_rounds: 3,
-          },
-          {
-            name: 'Purple',
-            on: 'D',
-            train_limit: 2,
-            tiles: %i[yellow green brown],
-            operating_rounds: 3,
-          },
-        ].freeze
+        PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
+                  {
+                    name: 'Green',
+                    on: '3',
+                    train_limit: 4,
+                    tiles: %i[yellow green],
+                    operating_rounds: 2,
+                    status: ['can_buy_companies'],
+                  },
+                  {
+                    name: 'Blue',
+                    on: '5',
+                    train_limit: 4,
+                    tiles: %i[yellow green],
+                    operating_rounds: 2,
+                    status: ['can_buy_companies'],
+                  },
+                  {
+                    name: 'Brown',
+                    on: '3+D',
+                    train_limit: 3,
+                    tiles: %i[yellow green brown],
+                    operating_rounds: 3,
+                    status: ['can_buy_companies'],
+                  },
+                  {
+                    name: 'Red',
+                    on: '6',
+                    train_limit: 2,
+                    tiles: %i[yellow green brown],
+                    operating_rounds: 3,
+                  },
+                  {
+                    name: 'Gray',
+                    on: '8E',
+                    train_limit: 2,
+                    tiles: %i[yellow green brown],
+                    operating_rounds: 3,
+                  },
+                  {
+                    name: 'Purple',
+                    on: 'D',
+                    train_limit: 2,
+                    tiles: %i[yellow green brown],
+                    operating_rounds: 4,
+                  }].freeze
 
-        TRAINS = [
-          {
-            name: '2',
-            distance: 2,
-            price: 80,
-            rusts_on: '4',
-            num: 6
-          },
-          {
-            name: '3',
-            distance: 3,
-            price: 180,
-            rusts_on: '5',
-            num: 5
-          },
-          {
-            name: '4',
-            distance: 4,
-            price: 300,
-            rusts_on: '7',
-            num: 4
-          },
-          {
-            name: '5',
-            distance: 5,
-            price: 450,
-            num: 3
-          },
-          {
-            name: '6',
-            distance: 6,
-            price: 600,
-            rusts_on: 'D',
-            num: 3,
-            events: [{ 'type' => 'close_companies' }],
-          },
-          {
-            name: '7',
-            distance: 6,
-            price: 750,
-            num: 3
-          },
-          {
-            name: 'D',
-            distance: 999,
-            price: 900,
-            num: 20,
-            discount: { '5' => 675, '6' => 600, '7' => 525 },
-          }
-        ].freeze
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '5', num: 7 },
+                  {
+                    name: '3',
+                    distance: 3,
+                    price: 160,
+                    rusts_on: '6',
+                    num: 9,
+                    events: [{ 'type' => 'green_par' }],
+                  },
+                  {
+                    name: '5',
+                    distance: 5,
+                    price: 250,
+                    rusts_on: '8E',
+                    num: 4,
+                    events: [{ 'type' => 'blue_par' }],
+                  },
+                  {
+                    name: '3+D',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 3, 'visit' => 3, 'multiplier' => 2 },
+                               {
+                                 'nodes' => ['town'],
+                                 'pay' => 99,
+                                 'visit' => 99,
+                                 'multiplier' => 2,
+                               }],
+                    price: 350,
+                    rusts_on: 'D',
+                    num: 6,
+                    events: [{ 'type' => 'brown_par' }],
+                  },
+                  {
+                    name: '6',
+                    distance: 6,
+                    price: 650,
+                    num: 4,
+                    events: [{ 'type' => 'close_companies' }],
+                  },
+                  {
+                    name: '8E',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 8, 'visit' => 8 },
+                               { 'nodes' => ['town'], 'pay' => 0, 'visit' => 99 }],
+                    price: 800,
+                    num: 3,
+                  },
+                  {
+                    name: 'D',
+                    distance: 999,
+                    price: 900,
+                    num: 20,
+                    events: [{ 'type' => 'remove_corporations' }],
+                  }].freeze
 
         COMPANIES = [
           {
-            name: 'Hudson Bay',
+            name: 'Schuylkill Valley Navigation',
             value: 20,
             revenue: 5,
-            desc: 'Blocks hex C11 (Flin Flon) while owned by a player. Closes at the start of Phase 5.',
-            sym: 'HB',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['C11'] }],
+            desc: 'Blocks G19 while owned by a player.',
+            sym: 'SVN',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['B1'] }],
             color: nil,
           },
           {
-            name: 'Saskatchewan Central',
-            value: 50,
-            revenue: 10,
-            desc: "Blocks hex H4 while owned by a player. On the owner's turn during a stock round they may convert it"\
-                  " to a President's share of the SC by choosing its par price and using their \"buy action\" to purchase an"\
-                  ' additional share of the SC. This is the only way the SC can be started. Place the SC home token in any'\
-                  ' available non-reserved city slot or replace a neutral station. If the next available train is a 3, 4, 5'\
-                  ' or 6, add one train of that type to the Depot. Closes at the start of Phase 6.',
-            sym: 'SC',
-            abilities: [{ type: 'close', on_phase: '6' },
-                        { type: 'blocks_hexes', owner_type: 'player', hexes: ['H4'] },
-                        {
-                          type: 'exchange',
-                          corporations: ['SC'],
-                          owner_type: 'player',
-                          from: 'par',
-                        }],
-            color: nil,
-          },
-          {
-            name: 'North West Rebellion',
-            value: 80,
-            revenue: 15,
-            desc: 'The owning corporation may move a single station token located in a non-NWR hex to any open city in'\
-                  " an NWR hex. This action is free and may be performed at any time during the corporation's turn. An extra"\
-                  " tile lay or upgrade may be performed on the destination hex. If the corporation's home token is moved,"\
-                  ' replace it with a neutral station (its home token cannot be moved if a neutral station already exists in'\
-                  ' the corporation’s home hex). Closes at the start of Phase 5.',
-            sym: 'NWR',
-            abilities: [
-              {
-                type: 'token',
-                owner_type: 'corporation',
-                hexes: %w[C3 D4 D6 E5],
-                price: 0,
-                teleport_price: 0,
-                when: 'owning_corp_or_turn',
-                special_only: true,
-                count: 1,
-                from_owner: true,
-              },
-              {
-                type: 'tile_lay',
-                when: 'owning_corp_or_turn',
-                owner_type: 'corporation',
-                count: 1,
-                hexes: [],
-                tiles: [],
-              },
-            ],
+            name: 'Saint Clair Tunnel',
+            value: 20,
+            revenue: 5,
+            desc: 'Blocks Sarnia (D10) while owned by a player. When this company is sold to a corporation, ' \
+                  'revenue increases to $10.',
+            sym: 'StCT',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['B1'] },
+                        { type: 'revenue_change', revenue: 10, when: 'sold' }],
             color: nil,
           },
         ].freeze
 
         CORPORATIONS = [
           {
-            sym: 'CN',
-            name: 'Canadian National',
-            logo: '1882/CN',
-            simple_logo: '1882/CN.alt',
-            tokens: [],
-            color: :orange,
-            text_color: 'black',
-            reservation_color: nil,
-          },
-          {
-            sym: 'CNR',
-            name: 'Canadian Northern',
-            logo: '1882/CNR',
-            simple_logo: '1882/CNR.alt',
-            tokens: [0, 40, 100],
-            coordinates: 'D8',
-            color: '#237333',
-            reservation_color: nil,
-          },
-          {
-            sym: 'HBR',
-            name: 'Hudson Bay Railway',
-            logo: '1882/HBR',
-            simple_logo: '1882/HBR.alt',
-            tokens: [0, 40, 100],
-            coordinates: 'G11',
-            color: :gold,
-            text_color: 'black',
-            reservation_color: nil,
-          },
-          {
-            sym: 'CPR',
-            name: 'Canadian Pacific Railway',
-            logo: '1882/CPR',
-            simple_logo: '1882/CPR.alt',
-            tokens: [0, 40, 100, 100],
-            coordinates: 'I5',
-            color: '#d81e3e',
-            reservation_color: nil,
-          },
-          {
-            sym: 'GT',
-            name: 'Grand Trunk Pacific',
-            logo: '1882/GT',
-            simple_logo: '1882/GT.alt',
-            tokens: [0, 40, 100],
-            coordinates: 'L8',
-            color: :black,
-            reservation_color: nil,
-          },
-          {
-            sym: 'SC',
-            name: 'Saskatchewan Central Railroad',
-            logo: '1882/SC',
-            simple_logo: '1882/SC.alt',
-            tokens: [0],
-            color: '#0189d1',                    events: [{ 'type' => 'close_companies' }],
-            name: "Qu'Appelle, Long Lake Railroad Co.",
-            logo: '1882/QLL',
-            simple_logo: '1882/QLL.alt',
-            tokens: [0, 40],
-            coordinates: 'J10',
-            color: :purple,
+            sym: 'B&M',
+            name: 'Boston & Maine',
+            logo: '1828/BM',
+            simple_logo: '1828/BM.alt',
+            tokens: [0, 100, 100, 100],
+            coordinates: 'B3',
+            color: '#446CCF',
+            abilities: [
+            {
+              type: 'description',
+              description: 'Place a second yellow tile for $40',
+            },
+          ],
             reservation_color: nil,
           },
         ].freeze
 
-        HEXES = {
-          red: {
-            ['I1'] => 'offboard=revenue:yellow_40|brown_80;path=a:4,b:_0;path=a:5,b:_0',
-            ['B2'] =>
-                   'offboard=revenue:yellow_30|brown_60;border=edge:0,type:water,cost:40;path=a:0,b:_0;path=a:5,b:_0',
-            ['O11'] => 'offboard=revenue:yellow_30|brown_30;path=a:3,b:_0',
-            ['B12'] =>
-                   'offboard=revenue:yellow_40|brown_50;border=edge:0,type:water,cost:60;path=a:0,b:_0;path=a:1,b:_0',
-            ['I13'] => 'offboard=revenue:yellow_30|brown_40;path=a:1,b:_0;path=a:2,b:_0',
-          },
-          white: {
-            %w[F2 H2 K5 M5 L6 M7 M9 B10 L10 H12] => '',
-            ['K11'] => 'border=edge:3,type:water,cost:40',
-            ['J2'] => 'border=edge:4,type:water,cost:20',
-            ['L4'] => 'border=edge:2,type:water,cost:40',
-            ['B4'] => 'icon=image:1882/NWR,sticky:1',
-            %w[G3 L8 G11 J12] => 'city=revenue:0',
-            ['C3'] =>
-            'city=revenue:0;border=edge:1,type:water,cost:20;border=edge:0,type:water,cost:40;'\
-            'icon=image:1882/NWR,sticky:1',
-            ['K3'] =>
-            'city=revenue:0;border=edge:0,type:water,cost:20;border=edge:1,type:water,cost:40;'\
-            'border=edge:3,type:water,cost:40;border=edge:4,type:water,cost:40;'\
-            'border=edge:5,type:water,cost:40',
-            ['D4'] =>
-            'city=revenue:0;border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:40;'\
-            'border=edge:5,type:water,cost:20;icon=image:1882/NWR,sticky:1',
-            ['D6'] =>
-            'city=revenue:0;border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:40;'\
-            'icon=image:1882/NWR,sticky:1',
-            ['G7'] =>
-            'city=revenue:0;border=edge:3,type:water,cost:40;border=edge:5,type:water,cost:40',
-            ['J8'] => 'city=revenue:0;border=edge:2,type:water,cost:40',
-            ['G9'] =>
-            'city=revenue:0;border=edge:2,type:water,cost:20;border=edge:3,type:water,cost:40',
-            ['C11'] =>
-            'city=revenue:0;border=edge:0,type:water,cost:60;border=edge:5,type:water,cost:60',
-            ['I5'] =>
-            'city=revenue:0;border=edge:2,type:water,cost:20;border=edge:3,type:water,cost:40;'\
-            'border=edge:4,type:water,cost:40',
-            ['M3'] =>
-            'town=revenue:0;upgrade=cost:40,terrain:mountain;border=edge:3,type:water,cost:20',
-            ['D2'] => 'border=edge:3,type:water,cost:40;border=edge:4,type:water,cost:20',
-            ['F6'] =>
-            'border=edge:3,type:water,cost:40;border=edge:4,type:water,cost:20;icon=image:1882/NWR,sticky:1',
-            ['E3'] =>
-            'border=edge:3,type:water,cost:40;border=edge:4,type:water,cost:40;icon=image:1882/NWR,sticky:1',
-            ['J6'] => 'border=edge:3,type:water,cost:40;border=edge:4,type:water,cost:40',
-            ['I3'] =>
-            'border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:20;border=edge:5,type:water,cost:40',
-            ['E7'] =>
-            'border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:20;'\
-            'border=edge:5,type:water,cost:40;icon=image:1882/NWR,sticky:1',
-            %w[J4 H8] =>
-            'border=edge:1,type:water,cost:40;border=edge:2,type:water,cost:40;border=edge:3,type:water,cost:40',
-            ['C5'] => 'border=edge:0,type:water,cost:40;icon=image:1882/NWR,sticky:1',
-            ['G5'] => 'border=edge:0,type:water,cost:40',
-            ['H4'] => 'border=edge:0,type:water,cost:40;border=edge:5,type:water,cost:20',
-            ['H6'] => 'border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:40',
-            ['I7'] =>
-            'border=edge:0,type:water,cost:20;border=edge:1,type:water,cost:40;'\
-            'border=edge:4,type:water,cost:40;border=edge:5,type:water,cost:40',
-            ['K7'] => 'border=edge:3,type:water,cost:20',
-            ['E9'] =>
-            'border=edge:0,type:water,cost:40;border=edge:3,type:water,cost:20;'\
-            'border=edge:4,type:water,cost:40;border=edge:5,type:water,cost:40',
-            ['I9'] => 'border=edge:5,type:water,cost:60',
-            ['D10'] =>
-            'border=edge:0,type:water,cost:60;border=edge:1,type:water,cost:40;border=edge:5,type:water,cost:40',
-            %w[F10 E11] =>
-            'border=edge:2,type:water,cost:40;border=edge:3,type:water,cost:60',
-            ['H10'] => 'border=edge:0,type:water,cost:20',
-            ['D12'] =>
-            'border=edge:3,type:water,cost:60;border=edge:2,type:water,cost:60',
-            ['L12'] => 'town=revenue:0',
-            ['F4'] => 'town=revenue:0;border=edge:3,type:water,cost:40',
-            ['K9'] => 'town=revenue:0;town=revenue:0',
-            ['I11'] =>
-            'town=revenue:0;town=revenue:0;border=edge:0,type:water,cost:40;border=edge:1,type:water,cost:40',
-            ['F8'] =>
-            'town=revenue:0;town=revenue:0;border=edge:0,type:water,cost:40;'\
-            'border=edge:2,type:water,cost:40;border=edge:3,type:water,cost:40;'\
-            'border=edge:5,type:water,cost:20',
-          },
-          gray: {
-            ['L2'] =>
-                     'city=revenue:40;path=a:4,b:_0;path=a:_0,b:5;border=edge:4,type:water,cost:40',
-            ['N6'] => 'city=revenue:30;path=a:2,b:_0;path=a:_0,b:4',
-            ['C7'] => 'path=a:0,b:1;border=edge:5',
-            ['D8'] =>
-            'city=revenue:30;path=a:0,b:_0;path=a:1,b:_0;border=edge:0,type:water,cost:40;border=edge:2;border=edge:4',
-            ['N8'] => 'path=a:3,b:4',
-            ['C9'] =>
-            'town=revenue:10;path=a:0,b:_0;path=a:_0,b:4;border=edge:0,type:water,cost:20;border=edge:1',
-            ['N10'] => 'path=a:2,b:4',
-            ['A11'] => 'town=revenue:10;path=a:0,b:_0;path=a:_0,b:1',
-            ['N12'] => 'town=revenue:10;path=a:2,b:_0;path=a:_0,b:3',
-            ['K13'] => 'city=revenue:20;path=a:2,b:_0',
-          },
-          yellow: {
-            ['M11'] => 'city=revenue:0;city=revenue:0;label=OO',
-            ['E5'] =>
-            'city=revenue:0;city=revenue:0;label=OO;border=edge:2,type:water,cost:20;'\
-            'border=edge:3,type:water,cost:40;'\
-            'border=edge:4,type:water,cost:40;icon=image:1882/NWR,sticky:1',
-            ['J10'] =>
-            'city=revenue:40;city=revenue:40;path=a:1,b:_0;path=a:4,b:_1;label=R;'\
-            'border=edge:2,type:water,cost:60;border=edge:3,type:water,cost:20;'\
-            'border=edge:4,type:water,cost:40',
-            ['F12'] => 'path=a:1,b:3',
-          },
-          blue: {
-            ['B6'] =>
-                        'offboard=revenue:yellow_20|brown_30,visit_cost:0,route:optional;'\
-                        'path=a:0,b:_0;path=a:1,b:_0;icon=image:1882/fish',
-          },
-        }.freeze
+        # MINORS = [
+        #   {
+        #     sym: 'C&P',
+        #     name: 'Cobourg & Peterborough Railway',
+        #     logo: '1828/CP',
+        #     simple_logo: '1828/CP.alt',
+        #     tokens: [0],
+        #     coordinates: 'C15',
+        #     color: '#7F7F7F',
+        #   },
+        # ].freeze
 
-        LAYOUT = :flat
+        LAYOUT = :pointy
+
+        MULTIPLE_BUY_TYPES = %i[unlimited].freeze
 
         MUST_BID_INCREMENT_MULTIPLE = true
+        MIN_BID_INCREMENT = 5
+
+        HOME_TOKEN_TIMING = :operate
+
+        TILE_RESERVATION_BLOCKS_OTHERS = true
+
+        GAME_END_CHECK = {
+          bankrupt: :immediate,
+          stock_market: :current_round,
+          final_phase: :one_more_full_or_set,
+        }.freeze
+
         SELL_BUY_ORDER = :sell_buy_sell
+
+        NEXT_SR_PLAYER_ORDER = :first_to_pass
+
         TRACK_RESTRICTION = :permissive
+
         DISCARDED_TRAINS = :remove
+
+        MARKET_SHARE_LIMIT = 80 # percent
+
+        MARKET_TEXT = Base::MARKET_TEXT.merge(par: 'Par',
+                                              unlimited: 'Corporation shares can be held above 60% and ' \
+                                                         'President may buy two shares at a time and ' \
+                                                         'additional move up if sold out.')
+
+        STOCKMARKET_COLORS = Base::STOCKMARKET_COLORS.merge(par: :red,
+                                                            unlimited: :gray)
+
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
-          'nwr' => ['North West Rebellion',
-                    'Remove all yellow tiles from NWR-marked hexes. Station markers remain']
+          'green_par' => ['Green phase pars',
+                          '$86 and $94 par prices are now available'],
+          'blue_par' => ['Blue phase pars',
+                         '$105 par price is now available'],
+          'brown_par' => ['Brown phase pars',
+                          '$120 par price is now available'],
+          'remove_corporations' => ['Unparred corporations removed',
+                                    'All unparred corporations are removed at the beginning of next stock round.' \
+                                    ' Blocking tokens placed in home stations.']
         ).freeze
 
-        GAME_END_CHECK = { bankrupt: :immediate, stock_market: :current_round, bank: :full_or }.freeze
-        # Two lays or one upgrade, second tile costs 20
-        TILE_LAYS = [{ lay: true, upgrade: true }, { lay: :not_if_upgraded, upgrade: false, cost: 20 }].freeze
+        ENGLAND = 'A10'
+        ENGLAND_FERRY_SUPPLY = 'A8'
+        COAL_MARKER_ICON = 'coal'
+        COAL_MARKER_COST = 120
 
-        def stock_round
-          Round::Stock.new(self, [
-            Engine::Step::DiscardTrain,
-            G1882::Step::HomeToken,
-            G1882::Step::BuySellParShares,
+        def new_auction_round
+          Engine::Round::Auction.new(self, [
+            G1894::Step::CompanyPendingPar,
+            G1894::Step::WaterfallAuction,
           ])
         end
 
-        def new_auction_round
-          Round::Auction.new(self, [
-            Engine::Step::CompanyPendingPar,
-            G1882::Step::WaterfallAuction,
+        def stock_round
+          G1894::Round::Stock.new(self, [
+            G1894::Step::DiscardTrain,
+            G1894::Step::RemoveTokens,
+            # G1894::Step::Merger,
+            G1894::Step::Exchange,
+            G1894::Step::BuySellParShares,
           ])
         end
 
         def operating_round(round_num)
-          Round::Operating.new(self, [
+          Engine::Round::Operating.new(self, [
             Engine::Step::Bankrupt,
-            Engine::Step::BuyCompany,
+            G1894::Step::Exchange,
+            G1894::Step::DiscardTrain,
             Engine::Step::HomeToken,
-            G1882::Step::SpecialNWR,
-            G1882::Step::Track,
-            Engine::Step::Token,
-            Engine::Step::Route,
-            Engine::Step::Dividend,
-            Engine::Step::DiscardTrain,
-            Engine::Step::BuyTrain,
+            G1894::Step::BuyCompany,
+            G1894::Step::SpecialTrack,
+            G1894::Step::SpecialToken,
+            G1894::Step::SpecialBuy,
+            G1894::Step::Track,
+            G1894::Step::Token,
+            G1894::Step::Route,
+            G1894::Step::Dividend,
+            G1894::Step::SwapTrain,
+            G1894::Step::BuyTrain,
             [Engine::Step::BuyCompany, { blocks: true }],
           ], round_num: round_num)
         end
 
-        def home_token_locations(corporation)
-          raise NotImplementedError unless corporation.name == 'SC'
-
-          # SC, find all locations with neutral or no token
-          cn_corp = corporations.find { |x| x.name == 'CN' }
-          hexes = @hexes.dup
-          hexes.select do |hex|
-            hex.tile.cities.any? { |city| city.tokenable?(corporation, free: true) || city.tokened_by?(cn_corp) }
-          end
-        end
-
-        def add_extra_train_when_sc_pars(corporation)
-          first = depot.upcoming.first
-          train = @sc_reserve_trains.find { |t| t.name == first.name }
-          @sc_company = nil
-          return unless train
-
-          # Move events other than NWR rebellion earlier.
-          train.events, first.events = first.events.partition { |e| e['type'] != 'nwr' }
-
-          @log << "#{corporation.name} adds an extra #{train.name} train to the depot"
-          train.reserved = false
-          @depot.unshift_train(train)
-        end
-
-        def init_train_handler
-          depot = super
-
-          # Grab the reserve trains that SC can add
-          trains = %w[3 4 5 6]
-
-          @sc_reserve_trains = []
-          trains.each do |train_name|
-            train = depot.upcoming.reverse.find { |t| t.name == train_name }
-            @sc_reserve_trains << train
-            depot.remove_train(train)
-            train.reserved = true
-          end
-
-          # Due to SC adding an extra train this isn't quite a phase change, so the event needs to be tied to a train.
-          nwr_train = trains[rand % trains.size]
-          @log << "NWR Rebellion occurs on purchase of the first #{nwr_train} train"
-          train = depot.upcoming.find { |t| t.name == nwr_train }
-          train.events << { 'type' => 'nwr' }
-
-          depot
-        end
-
         def setup
-          cp = @companies.find { |company| company.name == 'Canadian Pacific' }
-          cp.add_ability(Ability::Close.new(
-            type: :close,
-            when: 'bought_train',
-            corporation: abilities(cp, :shares).shares.first.corporation.name,
-          ))
+          # setup_minors
+          setup_company_min_price
+
+          @available_par_groups = %i[par]
+
+          @log << "-- Setting game up for #{@players.size} players --"
+          remove_extra_private_companies
+          remove_extra_trains
+
+          @coal_marker_ability =
+            Engine::Ability::Description.new(type: 'description', description: 'Coal Marker')
+          block_va_coalfields
+
+          @blocking_corporation = Corporation.new(sym: 'B', name: 'Blocking', logo: '1828/blocking', tokens: [0])
         end
 
-        def init_company_abilities
-          @companies.each do |company|
-            next unless (ability = abilities(company, :exchange))
+        def init_stock_market
+          G1894::StockMarket.new(self.class::MARKET, [],
+                                 multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
+        end
 
-            next unless ability.from.include?(:par)
+        TILE_LAYS = [{ lay: true, upgrade: :not_if_upgraded, cannot_reuse_same_hex: true, cost: 0 }].freeze
+        EXTRA_TILE_LAY_CORPS = %w[B&M NYH].freeze
 
-            exchange_corporations(ability).first.par_via_exchange = company
-            @sc_company = company
+        def tile_lays(entity)
+          tile_lays = super
+          tile_lays += [{ lay: true, upgrade: :not_if_upgraded, cannot_reuse_same_hex: true }] if entity.system?
+          (entity.system? ? entity.corporations.map(&:name) : [entity.name]).each do |corp_name|
+            next unless EXTRA_TILE_LAY_CORPS.include?(corp_name)
+
+            tile_lays += [
+              {
+                lay: :not_if_upgraded,
+                upgrade: false,
+                cannot_reuse_same_hex: true,
+                cost: 40,
+              },
+            ]
           end
+
+          tile_lays
+        end
+
+        def can_hold_above_corp_limit?(_entity)
+          true
+        end
+
+        def show_game_cert_limit?
+          false
+        end
+
+        def init_round_finished
+          @players.rotate!(@round.entity_index)
+
+          @companies.each do |company|
+            next unless company.owner
+
+            abilities(company, :revenue_change, time: 'auction_end') do |ability|
+              company.revenue = ability.revenue
+            end
+          end
+        end
+
+        # def event_green_par!
+        #   @log << "-- Event: #{EVENTS_TEXT['green_par'][1]} --"
+        #   @available_par_groups << :par_1
+        #   update_cache(:share_prices)
+        # end
+
+        # def event_blue_par!
+        #   @log << "-- Event: #{EVENTS_TEXT['blue_par'][1]} --"
+        #   @available_par_groups << :par_2
+        #   update_cache(:share_prices)
+        # end
+
+        # def event_brown_par!
+        #   @log << "-- Event: #{EVENTS_TEXT['brown_par'][1]} --"
+        #   @available_par_groups << :par_3
+        #   update_cache(:share_prices)
+        # end
+
+        # def event_close_companies!
+        #   super
+
+        #   @minors.dup.each { |minor| remove_minor!(minor, block: true) }
+        # end
+
+        def event_remove_corporations!
+          @log << "-- Event: #{EVENTS_TEXT['remove_corporations'][1]}. --"
+          @log << 'Unparred corporations will be removed at the beginning of the next stock round'
+        end
+
+        def new_stock_round
+          new_sr = super
+          remove_unparred_corporations! if @phase.current[:name] == 'Purple'
+          new_sr
+        end
+
+        def remove_unparred_corporations!
+          @corporations.reject(&:ipoed).reject(&:closed?).each do |corporation|
+            place_home_blocking_token(corporation)
+            @log << "Removing #{corporation.name}"
+            @corporations.delete(corporation)
+          end
+        end
+
+        # def remove_minor!(minor, block: false)
+        #   minor.spend(minor.cash, @bank) if minor.cash.positive?
+        #   minor.tokens.each do |token|
+        #     city = token&.city
+        #     token.remove!
+        #     place_blocking_token(city.hex) if block && city
+        #   end
+        #   @graph.clear_graph_for(minor)
+        #   @minors.delete(minor)
+
+        #   @round.force_next_entity! if @round.current_entity == minor
+        # end
+
+        # def upgrades_to?(from, to, _special = false, selected_company: nil)
+        #   # Virginia tunnel can only be upgraded to #4 tile
+        #   return false if from.hex.id == VA_TUNNEL_HEX && to.name != '4'
+
+        #   super
+        # end
+
+        def par_prices
+          @stock_market.share_prices_with_types(@available_par_groups)
+        end
+
+        def merge_candidates(player, corporation)
+          return [] if corporation.system?
+
+          @corporations.select { |candidate| merge_candidate?(player, corporation, candidate) }
+        end
+
+        def merge_candidate?(player, corporation, candidate)
+          return false if candidate == corporation ||
+                          candidate.system? ||
+                          !candidate.ipoed ||
+                          (corporation.owner != player && candidate.owner != player) ||
+                          candidate.operated? != corporation.operated? ||
+                          (!candidate.floated? && !corporation.floated?)
+
+          # account for another player having 5+ shares
+          @players.any? do |p|
+            num_shares = p.num_shares_of(candidate) + p.num_shares_of(corporation)
+            num_shares >= 6 ||
+              (num_shares == 5 && !sold_this_round?(p, candidate) && !sold_this_round?(p, corporation))
+          end
+        end
+
+        def sold_this_round?(entity, corporation)
+          return false unless @round.players_sold
+
+          @round.players_sold[entity][corporation]
+        end
+
+        def create_system(corporations)
+          return nil unless corporations.size == 2
+
+          system_data = CORPORATIONS.find { |c| c[:sym] == corporations.first.id }.dup
+          system_data[:sym] = corporations.map(&:name).join('-')
+          system_data[:tokens] = []
+          system_data[:abilities] = []
+          system_data[:corporations] = corporations
+          system = init_system(@stock_market, system_data)
+
+          @corporations << system
+          @_corporations[system.id] = system
+          system.shares.each { |share| @_shares[share.id] = share }
+
+          corporations.each { |corporation| transfer_assets_to_system(corporation, system) }
+
+          # Order tokens for better visual
+          max_price = system.tokens.max_by(&:price).price + 1
+          system.tokens.sort_by! { |t| (t.used ? -max_price : max_price) + t.price }
+
+          place_system_blocking_tokens(system)
+
+          # Make sure the system will not own two coal markers
+          if coal_markers(system).size > 1
+            remove_coal_marker(system)
+            add_coal_marker_to_va_coalfields
+            @log << "#{system.name} cannot have two coal markers, returning one to Virginia Coalfields"
+          end
+
+          @stock_market.set_par(system, system_market_price(corporations))
+          system.ipoed = true
+
+          system
+        end
+
+        def transfer_assets_to_system(corporation, system)
+          corporation.spend(corporation.cash, system) if corporation.cash.positive?
+
+          # Transfer tokens
+          used, unused = corporation.tokens.partition(&:used)
+          used.each do |t|
+            new_token = Engine::Token.new(system, price: t.price)
+            system.tokens << new_token
+            t.swap!(new_token, check_tokenable: false)
+          end
+          unused.sort_by(&:price).each { |t| system.tokens << Engine::Token.new(system, price: t.price) }
+          corporation.tokens.clear
+
+          # Transfer companies
+          corporation.companies.each do |company|
+            company.owner = system
+            system.companies << company
+          end
+          corporation.companies.clear
+
+          # Transfer abilities
+          corporation.all_abilities.dup.each do |ability|
+            corporation.remove_ability(ability)
+            system.add_ability(ability)
+          end
+
+          # Create shell and transfer
+          shell = G1894::Shell.new(corporation.name, system)
+          system.shells << shell
+          corporation.trains.dup.each do |train|
+            buy_train(system, train, :free)
+            shell.trains << train
+          end
+        end
+
+        def ipo_reserved_name(_entity = nil)
+          'Treasury'
+        end
+
+        def coal_marker_available?
+          hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons.any? { |icon| icon.name == COAL_MARKER_ICON }
+        end
+
+        def coal_marker?(entity)
+          return false unless entity.corporation?
+
+          coal_markers(entity).any?
+        end
+
+        def coal_markers(entity)
+          entity.all_abilities.select { |ability| ability.description == @coal_marker_ability.description }
+        end
+
+        def connected_to_coalfields?(entity)
+          graph.reachable_hexes(entity).include?(hex_by_id(ENGLAND))
+        end
+
+        def can_buy_coal_marker?(entity)
+          return false unless entity.corporation?
+
+          coal_marker_available? &&
+            !coal_marker?(entity) &&
+            buying_power(entity) >= COAL_MARKER_COST &&
+            connected_to_coalfields?(entity)
+        end
+
+        def buy_coal_marker(entity)
+          return unless can_buy_coal_marker?(entity)
+
+          entity.spend(COAL_MARKER_COST, @bank)
+          entity.add_ability(@coal_marker_ability.dup)
+          @log << "#{entity.name} buys a coal marker for $#{COAL_MARKER_COST}"
+
+          tile_icons = hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons
+          tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == COAL_MARKER_ICON })
+
+          graph.clear
+        end
+
+        def acquire_va_tunnel_coal_marker(entity)
+          entity = entity.owner if entity.company?
+
+          @log << "#{entity.name} acquires a coal marker"
+          if coal_marker?(entity)
+            @log << "#{entity.name} already owns a coal marker, placing coal marker on Virginia Coalfields"
+            add_coal_marker_to_va_coalfields
+          else
+            entity.add_ability(@coal_marker_ability.dup)
+          end
+        end
+
+        def remove_coal_marker(entity)
+          coal = entity.all_abilities.find { |ability| ability.description == @coal_marker_ability.description }
+          entity.remove_ability(coal)
+        end
+
+        def add_coal_marker_to_va_coalfields
+          hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons << Engine::Part::Icon.new('1828/coal', 'coal')
+        end
+
+        def block_va_coalfields
+          coalfields = hex_by_id(ENGLAND).tile.cities.first
+
+          coalfields.instance_variable_set(:@game, self)
+
+          def coalfields.blocks?(corporation)
+            !@game.coal_marker?(corporation)
+          end
+        end
+
+        def can_run_route?(entity)
+          return false if entity.id == 'C&P' && @round.laid_hexes.empty?
+
           super
         end
 
-        def init_corporations(stock_market)
-          min_price = stock_market.par_prices.map(&:price).min
+        def city_tokened_by?(city, entity)
+          return @graph.connected_nodes(entity)[city] if entity.id == 'C&P'
 
-          corporations = self.class::CORPORATIONS.map do |corporation|
-            corporation[:needs_token_to_par] = true if corporation[:sym] == 'CN'
-            Corporation.new(
-              min_price: min_price,
-              capitalization: self.class::CAPITALIZATION,
-              **corporation,
-            )
-          end
+          super
+        end
 
-          # CN's tokens use a neutral logo, but as layed become owned by cn but don't block other players
-          cn_corp = corporations.find { |x| x.name == 'CN' }
-          logo = '/logos/1882/neutral.svg'
-          corporations.each do |x|
-            unless CORPORATIONS_WITHOUT_NEUTRAL.include?(x.name)
-              x.tokens << Token.new(cn_corp, price: 0, logo: logo, simple_logo: logo, type: :neutral)
+        def place_home_token(corporation)
+          if corporation.system? && !corporation.tokens.first&.used
+            corporation.corporations.each do |c|
+              token = Engine::Token.new(c)
+              c.tokens << token
+              place_home_token(c)
+
+              system_token = corporation.tokens.find do |t|
+                t.price.zero? && !t.used && !@round.pending_tokens.find { |p_t| p_t[:token] == t }
+              end
+              if (pending_token = @round.pending_tokens.find { |p_t| p_t[:entity] == c })
+                pending_token[:entity] = corporation
+                pending_token[:token] = system_token
+                pending_token[:hexes].first.tile.reservations.map! { |r| r == c ? corporation : r }
+              else
+                token.swap!(system_token, check_tokenable: false)
+              end
             end
+          else
+            super
           end
-          corporations
         end
 
-        def event_nwr!
-          @log << '-- Event: North West Rebellion! --'
-          name = 'NWR'
-          @hexes.each do |hex|
-            next unless hex.tile.icons.any? { |icon| icon.name == name }
-
-            next unless hex.tile.color == :yellow
-            next unless hex.tile != hex.original_tile
-
-            @log << "Rebellion destroys tile #{hex.name}"
-            old_tile = hex.tile
-            hex.lay_downgrade(hex.original_tile)
-            tiles << old_tile
-          end
-
-          # Some companies might no longer have valid routes
-          @graph.clear_graph_for_all
+        def place_blocking_token(hex, city: nil)
+          @log << "Placing a blocking token on #{hex.name} (#{hex.location_name})"
+          token = Token.new(@blocking_corporation)
+          city ||= hex.tile.cities[0]
+          city.place_token(@blocking_corporation, token, check_tokenable: false)
         end
 
-        def revenue_for(route, stops)
-          revenue = super
-
-          # East offboards I1, B2
-          east = stops.find { |stop| %w[I1 B2].include?(stop.hex.name) }
-          # Hudson B12
-          west = stops.find { |stop| stop.hex.name == 'B12' }
-          revenue += 100 if east && west
-
-          revenue
+        def blocking_token?(token)
+          token&.corporation == @blocking_corporation
         end
 
-        def action_processed(action)
-          if action.is_a?(Action::LayTile) && action.tile.name == 'R2'
-            action.tile.location_name = 'Regina'
-            return
-          end
-
-          return unless @sc_company
-          return if !@sc_company.closed? && !@sc_company&.owner&.corporation?
-
-          @log << 'Saskatchewan Central can no longer be converted to a public corporation'
-          @corporations.reject! { |c| c.id == 'SC' }
-          @sc_company = nil
-        end
-
-        def count_available_tokens(corporation)
-          corporation.tokens.sum { |t| t.used || t.corporation != corporation ? 0 : 1 }
-        end
-
-        def token_string(corporation)
-          # All neutral tokens belong to CN, so it will count them normally.
-          "#{count_available_tokens(corporation)}"\
-            "/#{corporation.tokens.sum { |t| t.corporation != corporation ? 0 : 1 }}"\
-            "#{', N' if corporation.tokens.any? { |t| t.corporation != corporation }}"
-        end
-
-        def token_note
-          'N = neutral token'
-        end
-
-        def token_ability_from_owner_usable?(_ability, _corporation)
+        def exchange_for_partial_presidency?
           true
         end
+
+        def exchange_partial_percent(share)
+          return nil unless share.president
+
+          100 / share.num_shares
+        end
+
+        def system_by_id(id)
+          corporation_by_id(id)
+        end
+
+        def close_companies_on_event!(entity, event)
+          return unless event == 'bought_train'
+
+          if entity.system?
+            entity.corporations.each { |c| super(c, event) }
+          else
+            super
+          end
+        end
+
+        def remove_train(train)
+          super
+
+          train.owner.remove_train(train) if train.owner&.system?
+        end
+
+        def hex_blocked_by_ability?(entity, _ability, hex)
+          return false if entity.name == 'C&P' && hex.id == 'C15'
+
+          super
+        end
+
+        def purchasable_companies(entity = nil)
+          return [] if entity&.minor?
+
+          super
+        end
+
+        private
+
+        # def setup_minors
+        #   @minors.each do |minor|
+        #     train = @depot.upcoming[1]
+        #     train.buyable = false
+        #     train.rusts_on = nil
+        #     buy_train(minor, train, :free)
+        #     @depot.forget_train(train)
+        #     hex = hex_by_id(minor.coordinates)
+        #     hex.tile.cities[0].place_token(minor, minor.next_token, free: true)
+        #   end
+        # end
+
+        def setup_company_min_price
+          @companies.each { |company| company.min_price = 1 }
+        end
+
+        def privates_to_remove
+          ok = false
+          until ok
+            to_remove = companies.find_all { |company| company.value == 250 }
+                                 .sort_by { rand }
+                                 .take(7 - @players.size)
+            if @optional_rules&.include?(:ensure_good_privates)
+              removed_syms = to_remove.map(&:sym)
+              ok = !%w[GT NW OSH].all? { |sym| removed_syms.include?(sym) }
+            else
+              ok = true
+            end
+          end
+          to_remove
+        end
+
+        def remove_extra_private_companies
+          to_remove = privates_to_remove
+          to_remove.each do |company|
+            company.close!
+            @round.steps.find { |step| step.is_a?(G1894::Step::WaterfallAuction) }.companies.delete(company)
+            @log << "Removing #{company.name}"
+          end
+        end
+
+        def remove_extra_trains
+          return unless @players.size < 5
+
+          to_remove = @depot.trains.reverse.find { |train| train.name == '6' }
+          @depot.forget_train(to_remove)
+          @log << "Removing #{to_remove.name} train"
+        end
+
+        def place_home_blocking_token(corporation)
+          cities = []
+
+          hex = hex_by_id(corporation.coordinates)
+          if hex.tile.reserved_by?(corporation)
+            cities.concat(hex.tile.cities)
+          else
+            cities << hex.tile.cities.find { |city| city.reserved_by?(corporation) }
+            cities.first.remove_reservation!(corporation)
+          end
+
+          cities.each { |city| place_blocking_token(hex, city: city) }
+        end
+
+        # def init_system(stock_market, system)
+        #   G1894::System.new(
+        #     min_price: stock_market.par_prices.map(&:price).min,
+        #     capitalization: self.class::CAPITALIZATION,
+        #     **system.merge(corporation_opts),
+        #   )
+        # end
+
+        # def place_system_blocking_tokens(system)
+        #   system.tokens.select(&:used).group_by(&:city).each do |city, tokens|
+        #     next unless tokens.size > 1
+
+        #     tokens[1].remove!
+        #     place_blocking_token(city.hex)
+        #   end
+        # end
+
+        # def system_market_price(corporations)
+        #   market = @stock_market.market
+        #   share_prices = corporations.map(&:share_price)
+        #   share_values = share_prices.map(&:price).sort
+
+        #   left_most_col = share_prices.min { |a, b| a.coordinates[1] <=> b.coordinates[1] }.coordinates[1]
+        #   max_share_value = share_values[1] + (share_values[0] / 2).floor
+
+        #   new_market_price = nil
+        #   if market[0][left_most_col].price < max_share_value
+        #     i = market[0].size - 1
+        #     i -= 1 while market[0][i].price > max_share_value
+        #     new_market_price = market[0][i]
+        #   else
+        #     i = 0
+        #     i += 1 while market[i][left_most_col].price > max_share_value
+        #     new_market_price = market[i][left_most_col]
+        #   end
+
+        #   new_market_price
+        # end
       end
     end
   end

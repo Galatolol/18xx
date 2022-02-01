@@ -8,14 +8,13 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :alpha
+        DEV_STAGE = :prealpha
 
-        GAME_SUBTITLE = ''
         GAME_DESIGNER = 'Galatolol'
         GAME_INFO_URL = ''
         GAME_LOCATION = 'North Eastern France and Western Belgium'
-        GAME_PUBLISHER = ''
         GAME_RULES_URL = ''
+        GAME_TITLE = '1894'
 
         PLAYER_RANGE = [3, 4].freeze
       end
