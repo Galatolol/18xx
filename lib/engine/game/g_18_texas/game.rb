@@ -24,6 +24,7 @@ module Engine
         SELL_BUY_ORDER = :sell_buy
         SELL_AFTER = :operate
         TREASURY_SHARE_LIMIT = 50
+        EBUY_OTHER_VALUE = false
 
         TOKEN_FEE = {
           'T&P' => 140,
@@ -209,10 +210,6 @@ module Engine
             .select { |bundle| @share_pool.fit_in_bank?(bundle) }
         end
 
-        def buying_power(entity, **)
-          entity.cash
-        end
-
         def redeemable_shares(entity)
           return [] unless entity.corporation?
 
@@ -236,7 +233,7 @@ module Engine
         end
 
         def ability_right_time?(ability, time, on_phase, passive_ok, strict_time)
-          return false if ability.on_phase.is_a?(Array) && !ability.on_phase.include?(@phase.name)
+          return false if %i[teleport tile_lay].include?(ability.type) && !%w[3 4].include?(@phase.name)
 
           super
         end

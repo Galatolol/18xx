@@ -166,6 +166,8 @@ module Engine
       # down_share -- down one row per share
       # down_per_10 -- down one row per 10% sold
       # down_block -- down one row per block
+      # left_share -- left one column per share
+      # left_share_pres -- left one column per share if president
       # left_block_pres -- left one column per block if president
       # left_block -- one row per block
       # none -- don't drop price
@@ -292,6 +294,9 @@ module Engine
       CORPORATE_BUY_SHARE_ALLOW_BUY_FROM_PRESIDENT = false
 
       VARIABLE_FLOAT_PERCENTAGES = false
+
+      # whether corporation cards should show percentage ownership breakdown for players
+      SHOW_SHARE_PERCENT_OWNERSHIP = false
 
       # Setting this to true is neccessary but insufficent to allow downgrading town tiles into plain track
       # See 1856 for an example
@@ -854,6 +859,17 @@ module Engine
         format_currency(val)
       end
 
+      def routes_subsidy(_routes)
+        0
+      end
+
+      def submit_revenue_str(routes, show_subsidy)
+        revenue_str = format_revenue_currency(routes_revenue(routes))
+        subsidy = routes_subsidy(routes)
+        subsidy_str = show_subsidy || subsidy.positive? ? " + #{format_currency(routes_subsidy(routes))} (subsidy)" : ''
+        revenue_str + subsidy_str
+      end
+
       def purchasable_companies(entity = nil)
         @companies.select do |company|
           company.owner&.player? && entity != company.owner && !abilities(company, :no_buy)
@@ -1018,6 +1034,10 @@ module Engine
           (percent / 10).to_i.times { @stock_market.move_down(corporation) }
         when :down_block
           @stock_market.move_down(corporation)
+        when :left_share
+          bundle.num_shares.times { @stock_market.move_left(corporation) }
+        when :left_share_pres
+          bundle.num_shares.times { @stock_market.move_left(corporation) } if was_president
         when :left_block
           @stock_market.move_left(corporation)
         when :down_block_pres
@@ -1105,7 +1125,7 @@ module Engine
       end
 
       def check_route_token(_route, token)
-        raise GameError, 'Route must contain token' unless token
+        raise NoToken, 'Route must contain token' unless token
       end
 
       def check_overlap(routes)
@@ -1148,11 +1168,12 @@ module Engine
         raise GameError, 'Route is not connected'
       end
 
-      def check_distance(route, visits)
-        distance = route.train.distance
+      def check_distance(route, visits, train = nil)
+        train ||= route.train
+        distance = train.distance
         if distance.is_a?(Numeric)
           route_distance = visits.sum(&:visit_cost)
-          raise GameError, "#{route_distance} is too many stops for #{distance} train" if distance < route_distance
+          raise RouteTooLong, "#{route_distance} is too many stops for #{distance} train" if distance < route_distance
 
           return
         end
@@ -1184,15 +1205,16 @@ module Engine
             break unless num.positive?
           end
 
-          raise GameError, 'Route has too many stops' if num.positive?
+          raise RouteTooLong, 'Route has too many stops' if num.positive?
         end
       end
 
       def check_other(_route); end
 
-      def compute_stops(route)
+      def compute_stops(route, train = nil)
+        train ||= route.train
         visits = route.visited_stops
-        distance = route.train.distance
+        distance = train.distance
         return visits if distance.is_a?(Numeric)
         return [] if visits.empty?
 
@@ -1212,8 +1234,8 @@ module Engine
           # to_i to work around Opal bug
           stops, revenue = visits.combination(num_stops.to_i).map do |stops|
             # Make sure this set of stops is legal
-            # 1) At least one stop must have a token
-            next if stops.none? { |stop| stop.tokened_by?(route.corporation) }
+            # 1) At least one stop must have a token (if enabled)
+            next if train.requires_token && stops.none? { |stop| stop.tokened_by?(route.corporation) }
 
             # 2) We can't ask for more revenue centers of a type than are allowed
             types_used = Array.new(distance.size, 0) # how many slots of each row are filled
@@ -1333,6 +1355,10 @@ module Engine
       end
 
       def graph_for_entity(_entity)
+        @graph
+      end
+
+      def token_graph_for_entity(_entity)
         @graph
       end
 
@@ -1554,7 +1580,7 @@ module Engine
       end
 
       def buying_power(entity, **)
-        entity.cash + (issuable_shares(entity).map(&:price).max || 0)
+        entity.cash
       end
 
       def company_sale_price(_company)
@@ -1641,8 +1667,20 @@ module Engine
         'IPO'
       end
 
+      def ipo_verb(_entity = nil)
+        'pars'
+      end
+
       def ipo_reserved_name(_entity = nil)
         'IPO Reserved'
+      end
+
+      def corporation_show_loans?(_corporation)
+        true
+      end
+
+      def corporation_show_shares?(corporation)
+        !corporation.minor?
       end
 
       def abilities(entity, type = nil, time: nil, on_phase: nil, passive_ok: nil, strict_time: nil)
@@ -1722,7 +1760,7 @@ module Engine
       end
 
       def crowded_corps
-        @crowded_corps ||= corporations.select do |c|
+        @crowded_corps ||= (minors + corporations).select do |c|
           trains = self.class::OBSOLETE_TRAINS_COUNT_FOR_LIMIT ? c.trains.size : c.trains.count { |t| !t.obsolete }
           trains > train_limit(c)
         end
@@ -1869,7 +1907,7 @@ module Engine
       end
 
       def init_cert_limit
-        cert_limit = self.class::CERT_LIMIT
+        cert_limit = game_cert_limit
         if cert_limit.is_a?(Hash)
           player_count = (self.class::CERT_LIMIT_COUNTS_BANKRUPTED ? players : players.reject(&:bankrupt)).size
           cert_limit = cert_limit[player_count]
@@ -1879,6 +1917,10 @@ module Engine
                          .min_by(&:first)&.last || cert_limit.first.last
         end
         cert_limit || @cert_limit
+      end
+
+      def game_cert_limit
+        self.class::CERT_LIMIT
       end
 
       def init_phase
