@@ -4,6 +4,7 @@ require_relative 'meta'
 require_relative '../base'
 require_relative 'stock_market'
 require_relative 'map'
+require_relative 'entities'
 require_relative 'system'
 require_relative 'shell'
 require_relative '../cities_plus_towns_route_distance_str'
@@ -14,6 +15,7 @@ module Engine
       class Game < Game::Base
         include_meta(G1894::Meta)
         include G1894::Map
+        include G1894::Entities
         include CitiesPlusTownsRouteDistanceStr
 
         register_colors(hanBlue: '#446CCF',
@@ -36,11 +38,11 @@ module Engine
 
         CURRENCY_FORMAT_STR = '$%d'
 
-        BANK_CASH = 99_999
+        BANK_CASH = 8000
 
         CERT_LIMIT = { 3 => 99, 4 => 99, 5 => 99 }.freeze
 
-        STARTING_CASH = { 3 => 800, 4 => 700, 5 => 620 }.freeze
+        STARTING_CASH = { 3 => 650, 4 => 550 }.freeze
 
         CAPITALIZATION = :full
 
@@ -170,49 +172,43 @@ module Engine
                     operating_rounds: 4,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '5', num: 7 },
+        TRAINS = [{ name: '2',
+                    distance: 2,
+                    price: 80,
+                    rusts_on: '5',
+                    num: 6 },
                   {
                     name: '3',
                     distance: 3,
-                    price: 160,
+                    price: 180,
                     rusts_on: '6',
-                    num: 9,
-                    events: [{ 'type' => 'green_par' }],
+                    num: 5,
+                  },
+                  {
+                    name: '4',
+                    distance: 4,
+                    price: 300,
+                    rusts_on: '7',
+                    num: 4,
                   },
                   {
                     name: '5',
-                    distance: 5,
-                    price: 250,
-                    rusts_on: '8E',
-                    num: 4,
-                    events: [{ 'type' => 'blue_par' }],
-                  },
-                  {
-                    name: '3+D',
-                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 3, 'visit' => 3, 'multiplier' => 2 },
-                               {
-                                 'nodes' => ['town'],
-                                 'pay' => 99,
-                                 'visit' => 99,
-                                 'multiplier' => 2,
-                               }],
-                    price: 350,
+                    distance: 5
+                    price: 450,
                     rusts_on: 'D',
-                    num: 6,
-                    events: [{ 'type' => 'brown_par' }],
+                    num: 4,
                   },
                   {
                     name: '6',
                     distance: 6,
-                    price: 650,
-                    num: 4,
+                    price: 600,
+                    num: 3,
                     events: [{ 'type' => 'close_companies' }],
                   },
                   {
-                    name: '8E',
-                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 8, 'visit' => 8 },
-                               { 'nodes' => ['town'], 'pay' => 0, 'visit' => 99 }],
-                    price: 800,
+                    name: '7',
+                    distance: 7,
+                    price: 750,
                     num: 3,
                   },
                   {
@@ -220,62 +216,7 @@ module Engine
                     distance: 999,
                     price: 900,
                     num: 20,
-                    events: [{ 'type' => 'remove_corporations' }],
                   }].freeze
-
-        COMPANIES = [
-          {
-            name: 'Schuylkill Valley Navigation',
-            value: 20,
-            revenue: 5,
-            desc: 'Blocks G19 while owned by a player.',
-            sym: 'SVN',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['B1'] }],
-            color: nil,
-          },
-          {
-            name: 'Saint Clair Tunnel',
-            value: 20,
-            revenue: 5,
-            desc: 'Blocks Sarnia (D10) while owned by a player. When this company is sold to a corporation, ' \
-                  'revenue increases to $10.',
-            sym: 'StCT',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['B1'] },
-                        { type: 'revenue_change', revenue: 10, when: 'sold' }],
-            color: nil,
-          },
-        ].freeze
-
-        CORPORATIONS = [
-          {
-            sym: 'B&M',
-            name: 'Boston & Maine',
-            logo: '1828/BM',
-            simple_logo: '1828/BM.alt',
-            tokens: [0, 100, 100, 100],
-            coordinates: 'B3',
-            color: '#446CCF',
-            abilities: [
-            {
-              type: 'description',
-              description: 'Place a second yellow tile for $40',
-            },
-          ],
-            reservation_color: nil,
-          },
-        ].freeze
-
-        # MINORS = [
-        #   {
-        #     sym: 'C&P',
-        #     name: 'Cobourg & Peterborough Railway',
-        #     logo: '1828/CP',
-        #     simple_logo: '1828/CP.alt',
-        #     tokens: [0],
-        #     coordinates: 'C15',
-        #     color: '#7F7F7F',
-        #   },
-        # ].freeze
 
         LAYOUT = :pointy
 
