@@ -11,7 +11,7 @@ module Engine
           include TokenTracker
 
           def place_token(entity, city, token, connected: true, extra_action: false, special_ability: nil)
-            return super if city.hex.name != Engine::Game::G1828::Game::VA_COALFIELDS_HEX
+            return super if city.hex.name != Engine::Game::G1894::Game::ENGLAND_HEX
 
             raise GameError, "#{city.hex.location_name} may not be tokened"
           end

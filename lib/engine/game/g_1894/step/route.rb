@@ -11,18 +11,13 @@ module Engine
             super
             return if @game.loading
 
-            if route_includes_coalfields?(action.routes) && !@game.coal_marker?(action.entity)
-              raise GameError, 'Cannot run to Virginia Coalfields without a Coal Marker'
+            if route_includes_england?(action.routes) && !@game.ferry_marker?(action.entity)
+              raise GameError, 'Cannot run to England without a ferry marker'
             end
-
-            # C&P route must include the tile it laid this turn
-            return unless action.entity.id == 'C&P' && !route_uses_tile_lay(action.routes)
-
-            raise GameError, "#{action.entity.name} must use laid tile in route"
           end
 
-          def route_includes_coalfields?(routes)
-            routes.flat_map(&:connection_hexes).flatten.include?(Engine::Game::G1828::Game::VA_COALFIELDS_HEX)
+          def route_includes_england?(routes)
+            routes.flat_map(&:connection_hexes).flatten.include?(Engine::Game::G1894::Game::ENGLAND_HEX)
           end
 
           def route_uses_tile_lay(routes)
@@ -39,7 +34,7 @@ module Engine
           end
 
           def available_hex(entity, hex)
-            return @game.coal_marker?(entity) if hex.id == Engine::Game::G1828::Game::VA_COALFIELDS_HEX
+            return @game.ferry_marker?(entity) if hex.id == Engine::Game::G1894::Game::ENGLAND_HEX
 
             super
           end
