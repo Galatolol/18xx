@@ -4,6 +4,7 @@ require_relative '../base'
 require_relative 'meta'
 require_relative 'map'
 require_relative 'entities'
+require_relative '../stubs_are_restricted'
 
 module Engine
   module Game
@@ -12,6 +13,7 @@ module Engine
         include_meta(G1894::Meta)
         include G1894::Map
         include G1894::Entities
+        include StubsAreRestricted
 
         CURRENCY_FORMAT_STR = '%d F'
 
@@ -107,21 +109,21 @@ module Engine
                     name: 'Green',
                     on: '3',
                     train_limit: 4,
-                    tiles: %i[yellow green brown],
+                    tiles: %i[yellow green],
                     operating_rounds: 2,
                     status: ['can_buy_companies'],
                   },
                   {
                     name: 'Blue',
-                    on: '5',
-                    train_limit: 4,
+                    on: '4',
+                    train_limit: 3,
                     tiles: %i[yellow green],
                     operating_rounds: 2,
                     status: ['can_buy_companies'],
                   },
                   {
                     name: 'Brown',
-                    on: '3+D',
+                    on: '5',
                     train_limit: 3,
                     tiles: %i[yellow green brown],
                     operating_rounds: 3,
@@ -136,7 +138,7 @@ module Engine
                   },
                   {
                     name: 'Gray',
-                    on: '8E',
+                    on: '7',
                     train_limit: 2,
                     tiles: %i[yellow green brown],
                     operating_rounds: 3,
@@ -146,14 +148,14 @@ module Engine
                     on: 'D',
                     train_limit: 2,
                     tiles: %i[yellow green brown],
-                    operating_rounds: 4,
+                    operating_rounds: 3,
                   }].freeze
 
         TRAINS = [{ name: '2',
                     distance: 2,
                     price: 80,
                     rusts_on: '5',
-                    num: 2,
+                    num: 6,
                   },
                   {
                     name: '3',
@@ -204,6 +206,10 @@ module Engine
         MUST_BID_INCREMENT_MULTIPLE = true
         MIN_BID_INCREMENT = 5
 
+        ASSIGNMENT_TOKENS = {
+          'PC' => '/icons/1894/pc_token.svg',
+        }.freeze
+
         TILE_RESERVATION_BLOCKS_OTHERS = false
 
         GAME_END_CHECK = {
@@ -230,15 +236,16 @@ module Engine
                                                             unlimited: :gray)
 
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
-          'late_corporations_available' => ['Late corporations are now available',]
+          'late_corporations_available': ['Late corporations are now available'],
         ).freeze
 
         ENGLAND_HEX = 'A10'
         ENGLAND_FERRY_SUPPLY = 'A8'
-        FERRY_MARKER_ICON = 'coal'
+        FERRY_MARKER_ICON = 'ferry'
         FERRY_MARKER_COST = 60
 
         PARIS_HEX = 'G4'
+        SQG_HEX = 'G10'
 
         def stock_round
           G1894::Round::Stock.new(self, [
@@ -251,6 +258,7 @@ module Engine
             Engine::Step::Bankrupt,
             Engine::Step::SpecialTrack,
             Engine::Step::SpecialToken,
+            Engine::Step::Assign,
             Engine::Step::BuyCompany,
             G1894::Step::SpecialBuy,
             Engine::Step::HomeToken,
@@ -265,22 +273,33 @@ module Engine
         end
 
         def setup
+          @late_corporations, @corporations = @corporations.partition do |c|
+            %w[F1 F2 B1 B2].include? c.id
+          end
+
           @log << "-- Setting game up for #{@players.size} players --"
           remove_extra_trains
+          remove_extra_late_corporations
 
           @ferry_marker_ability =
             Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
           block_england
 
-          @plm = corporations.find { |c| c.id == 'PLM' }
+          plm = corporations.find { |c| c.id == 'PLM' }
           paris_tiles_names = %w[X1 X4 X5 X7 X8]
           paris_tiles = @all_tiles.filter { |t| paris_tiles_names.include? t.name }
-          paris_tiles.each { |t| t.add_reservation!(@plm, 0) }
+          paris_tiles.each { |t| t.add_reservation!(plm, 0) }
         end
 
         def init_stock_market
           Engine::StockMarket.new(self.class::MARKET, [],
                                  multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
+        end
+
+        def event_late_corporations_available!
+          @log << "-- Event: #{EVENTS_TEXT['late_corporations_available'][0]} --"
+          @corporations.concat(@late_corporations)
+          @late_corporations = []
         end
 
         TILE_LAYS = [
@@ -308,17 +327,34 @@ module Engine
           end
         end
 
-        # def action_processed(action)
-        #   super
+        def action_processed(action)
+          super
 
-        #   case action
-        #   when Action::LayTile
-        #     if action.hex.id == PARIS_HEX && action.tile.color == :yellow
-        #       tile = hex_by_id(PARIS_HEX).tile
-        #       #tile.add_reservation!(@plm, 0)
-        #     end
-        #   end
-        # end
+          case action
+          when Action::LayTile
+            if action.hex.id == SQG_HEX
+              tile = hex_by_id(SQG_HEX).tile
+              sqg = @companies.find { |c| c.id == 'SQG' }
+              sqg.revenue = tile.cities[0].revenue['diesel']
+              @log << "Saint-Quentin à Guise's revenue increased to #{sqg.revenue}"
+            end
+          end
+        end
+
+        def revenue_for(route, stops)
+          revenue = super
+          revenue += pc_bonus(route.corporation, stops)
+          revenue += est_le_sud_bonus(route.corporation, stops)
+          revenue
+        end
+
+        def pc_bonus(corp, stops)
+          corp.assigned?('PC') && stops.map(&:hex).find { |hex| hex.assigned?('PC') } ? 10 : 0
+        end
+
+        def est_le_sud_bonus(corp, stops)
+          corp.id == 'Est' && stops.map(&:hex).find { |hex| hex.id == 'I2' } ? 20 : 0
+        end
 
         def ferry_marker_available?
           hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons.any? { |icon| icon.name == FERRY_MARKER_ICON }
@@ -366,18 +402,28 @@ module Engine
           england.instance_variable_set(:@game, self)
 
           def england.blocks?(corporation)
-            !@game.england_marker?(corporation)
+            !@game.ferry_marker?(corporation)
           end
         end
 
         private
 
         def remove_extra_trains
-          return unless @players.size < 4
+          return unless @players.size == 3
 
-          to_remove = @depot.trains.reverse.find { |train| train.name == '5' }
+          to_remove = @depot.trains.reverse.find { |t| t.name == '5' }
           @depot.forget_train(to_remove)
           @log << "Removing #{to_remove.name} train"
+        end
+        
+        def remove_extra_late_corporations
+          return unless @players.size == 3
+          
+          to_remove = @late_corporations.filter { |c| %w[F2 B2].include? c.id }
+          @late_corporations.delete(to_remove[0])
+          @late_corporations.delete(to_remove[1])
+          to_remove = []
+          @log << "Removing F2 and B2 late corporations"
         end
       end
     end

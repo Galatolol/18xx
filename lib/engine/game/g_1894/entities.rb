@@ -37,23 +37,25 @@ module Engine
                             owner_type: 'corporation',
                             hexes: ['G14'],
                             tiles: %w[14 15 35 36 57 118 619 X10 X11 X12 X13 X14 X15],
-                          },],
+                          }],
             },
             {
               name: 'Ligne de Saint-Quentin à Guise',
               sym: 'SQG',
               value: 80,
               revenue: 10,
-              desc: 'This private company never closes. The revenue is equal to the value of Saint-Quentin (G10).',
-              abilities: [{ type: 'revenue_change', revenue: 0, when: 'auction_end' }],
+              desc: 'Never closes. The revenue is equal to the value of Saint-Quentin (G10).',
+              abilities: [{ type: 'revenue_change', revenue: 0, when: 'auction_end' },
+                          { type: 'close', on_phase: 'never', owner_type: 'player' },
+                          { type: 'close', on_phase: 'never', owner_type: 'corporation' }],
             },
             {
               name: 'Port company',
               sym: 'PC',
               value: 100,
               revenue: 15,
-              desc: 'Owning corporation may place a +10 marker in England (A10). For this corporation only the value'\
-                    ' of England is considered to be 10 higher.',
+              desc: 'Owning corporation may place a +10 marker in England (A10). For this corporation only, the value'\
+                    ' of England is increased by 10.',
               abilities: [{
                             type: 'assign_hexes',
                             when: 'owning_corp_or_turn',
@@ -156,6 +158,12 @@ module Engine
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'I8',
               color: '#ff9966',
+              abilities: [
+                {
+                  type: 'description',
+                  description: 'Value of Le Sud increased by 20',
+                },
+              ],
             },
             {
               sym: 'F1',
@@ -165,6 +173,12 @@ module Engine
               tokens: [0, 40],
               color: '#ffc0cb',
               text_color: 'black',
+              abilities: [
+                {
+                  type: 'description',
+                  description: 'Home in an empty hex in France',
+                },
+              ],
             },
             {
               sym: 'F2',
@@ -174,6 +188,12 @@ module Engine
               tokens: [0, 40],
               color: 'lime',
               text_color: 'black',
+              abilities: [
+                {
+                  type: 'description',
+                  description: 'Home in an empty hex in France',
+                },
+              ],
             },
             {
                 sym: 'B1',
@@ -183,6 +203,12 @@ module Engine
                 tokens: [0, 40],
                 color: '#c9c9c9',
                 text_color: 'black',
+                abilities: [
+                  {
+                    type: 'description',
+                    description: 'Home in an empty hex in Belgium',
+                  },
+                ],
             },
             {
               sym: 'B2',
@@ -192,6 +218,12 @@ module Engine
               tokens: [0, 40],
               color: '#ffefdb',
               text_color: 'black',
+              abilities: [
+                {
+                  type: 'description',
+                  description: 'Home in an empty hex in Belgium',
+                },
+              ],
             },
           ].freeze
         end

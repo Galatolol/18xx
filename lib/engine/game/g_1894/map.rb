@@ -193,7 +193,7 @@ module Engine
             },
             gray: {
               ['A8'] => 'path=a:0,b:4,b_lane:2.1;path=a:5,b:4,b_lane:2.0;'\
-                        'icon=image:1828/coal;icon=image:1828/coal;icon=image:1828/coal;icon=image:1828/coal',
+                        'icon=image:1894/ferry;icon=image:1894/ferry;icon=image:1894/ferry;icon=image:1894/ferry',
               ['A10'] => 'city=revenue:yellow_30|brown_70;path=a:0,b:_0;path=a:1,b:_0,lanes:2;path=a:5,b:_0;',
               ['B5'] => 'path=a:1,b:5;',
               ['D1'] => 'town=revenue:20;path=a:3,b:_0;path=a:5,b:_0',
