@@ -238,6 +238,8 @@ module Engine
         FERRY_MARKER_ICON = 'coal'
         FERRY_MARKER_COST = 60
 
+        PARIS_HEX = 'G4'
+
         def stock_round
           G1894::Round::Stock.new(self, [
             G1894::Step::BuySellParShares,
@@ -251,7 +253,7 @@ module Engine
             Engine::Step::SpecialToken,
             Engine::Step::BuyCompany,
             G1894::Step::SpecialBuy,
-            G1894::Step::HomeToken,
+            Engine::Step::HomeToken,
             G1894::Step::Track,
             G1894::Step::Token,
             G1894::Step::Route,
@@ -270,10 +272,10 @@ module Engine
             Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
           block_england
 
-          plm = corporations.find { |c| c.id == 'PLM' }
+          @plm = corporations.find { |c| c.id == 'PLM' }
           paris_tiles_names = %w[X1 X4 X5 X7 X8]
           paris_tiles = @all_tiles.filter { |t| paris_tiles_names.include? t.name }
-          paris_tiles.each { |t| t.add_reservation!(plm, 0) }
+          paris_tiles.each { |t| t.add_reservation!(@plm, 0) }
         end
 
         def init_stock_market
@@ -305,6 +307,18 @@ module Engine
             end
           end
         end
+
+        # def action_processed(action)
+        #   super
+
+        #   case action
+        #   when Action::LayTile
+        #     if action.hex.id == PARIS_HEX && action.tile.color == :yellow
+        #       tile = hex_by_id(PARIS_HEX).tile
+        #       #tile.add_reservation!(@plm, 0)
+        #     end
+        #   end
+        # end
 
         def ferry_marker_available?
           hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons.any? { |icon| icon.name == FERRY_MARKER_ICON }

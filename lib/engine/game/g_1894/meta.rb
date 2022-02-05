@@ -11,7 +11,7 @@ module Engine
         DEV_STAGE = :prealpha
 
         GAME_DESIGNER = 'Galatolol'
-        GAME_INFO_URL = ''
+        GAME_INFO_URL = 'https://www.boardgamegeek.com/geeklist/50723/item/8626841#item8626841'
         GAME_LOCATION = 'North Eastern France and Western Belgium'
         GAME_RULES_URL = ''
         GAME_TITLE = '1894'
