@@ -11,9 +11,9 @@ module Engine
             super
             return if @game.loading
 
-            if route_includes_england?(action.routes) && !@game.ferry_marker?(action.entity)
-              raise GameError, 'Cannot run to England without a ferry marker'
-            end
+            return unless route_includes_england?(action.routes) && !@game.ferry_marker?(action.entity)
+
+            raise GameError, 'Cannot run to England without a ferry marker'
           end
 
           def route_includes_england?(routes)
