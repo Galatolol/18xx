@@ -461,7 +461,7 @@ module Engine
                 description: 'Ignores river cost in the home hex.',
                 desc_detail: 'Ignores river cost in G17.',
                 passive: true,
-                when: 'track',
+                when: 'track',#078800
                 hexes: ['G17'],
                 tiles: ['5', '6', '57'],
               },
