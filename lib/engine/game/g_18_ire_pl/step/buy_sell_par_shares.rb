@@ -61,7 +61,7 @@ module Engine
           def ipo_type(entity)
             # Major's are par, minors are bid
             if entity.type == :major
-              "Cannot start directly"
+              'Cannot start directly'
             elsif entity == @game.corporations.find { |c| c.ipoed == false }
               # First un-ipoed corporation
               :bid

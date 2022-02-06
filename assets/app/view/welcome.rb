@@ -36,7 +36,7 @@ module View
 
     def render_introduction
       message = <<~MESSAGE
-        
+        #{'        '}
       MESSAGE
 
       props = {

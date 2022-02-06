@@ -9,7 +9,8 @@ module Engine
             name: 'Industrialisation of Łódź',
             value: 20,
             revenue: 5,
-            desc: 'Owning corporation may place a +20 marker in Łódź (F12). For all corporations the value of the city is increased by 20.'\
+            desc: 'Owning corporation may place a +20 marker in Łódź (F12).'\
+                  ' For all corporations the value of the city is increased by 20.'\
                   ' If the marker still isn\'t placed when at the start of brown phase, it is placed immediately.'\
                   ' The marker isn\'t removed when Industrialisation of Łódź closes or when the hex is upgraded.',
             sym: 'IOL',
@@ -80,10 +81,13 @@ module Engine
             name: 'Wilhelmsbahn',
             value: 70,
             revenue: 10,
-            desc: 'When this is purchased by a corporation, that corporation may immediately lay a yellow track, following normal track laying rules.'\
-                  ' Once per game, in any moment of the laying or upgrading track step of its operating round, owning corporation may pay 20zł to lay'\
+            desc: 'When this is purchased by a corporation, that corporation may immediately lay a yellow track,'\
+                  ' following normal track laying rules.'\
+                  ' Once per game, in any moment of the laying or upgrading track step of its operating round,'\
+                  ' owning corporation may pay 20 zł to lay'\
                   ' an extra yellow track, following normal track laying rules.'\
-                  ' It is possible to lay those two additional yellow tracks in one round. It is possible to upgrade a track laid by this power in the '\
+                  ' It is possible to lay those two additional yellow tracks in one round.'\
+                  ' It is possible to upgrade a track laid by this power in the '\
                   ' same round (using normal laying or upgrading track action).',
             sym: 'WB',
             abilities: [
@@ -113,10 +117,12 @@ module Engine
             name: 'Baltic Shipping',
             value: 100,
             revenue: 15,
-            desc: 'Owning corporation may place a 50 marker in one of the ports (A3, C1, F2). The corporation is not required to be connected to the port. This forms an exclusive'\
-                  ' revenue center worth 50 that is accessible for that corporation only. The corporation may no longer access the regular port worth 10 in the same'\
-                  ' hex.'\
-                  ' The corporation may access the port with only one train per operating round, even if there are two different connections leading to the port.'\
+            desc: 'Owning corporation may place a 50 marker in one of the ports (A3, C1, F2).'\
+                  ' The corporation is not required to be connected to the port. This forms an exclusive'\
+                  ' revenue center worth 50 that is accessible for that corporation only.'\
+                  ' The corporation may no longer access the regular port worth 10 in the same hex.'\
+                  ' The corporation may access the port with only one train per operating round,'\
+                  ' even if there are two different connections leading to the port.'\
                   ' Other corprorations may still access the regular port with two trains.',
             sym: 'BS',
             abilities: [
@@ -150,12 +156,13 @@ module Engine
             name: 'Warszawa-Radom Railway',
             value: 120,
             revenue: 0,
-            desc: 'The owner of this company takes the M8 directorship. The winning bid is put into the M8 treasury. M8 share price is the highest'\
+            desc: 'The owner of this company takes the M8 directorship.'\
+                  ' The winning bid is put into the M8 treasury. M8 share price is the highest'\
                   ' yellow par value that is not more than half the bid.'\
                   ' This private company closes immediately.',
             sym: 'WRR',
             abilities: [
-              { type: 'close', when: 'par', 'corporation': 'M8' },
+              { type: 'close', when: 'par', corporation: 'M8' },
               { type: 'no_buy' },
               { type: 'shares', shares: 'M8_0' },
             ],
@@ -182,7 +189,7 @@ module Engine
             sym: 'PKP',
             name: 'Polskie Koleje Państwowe',
             logo: '18_ire_pl/PKP',
-            logo: '18_ire_pl/PKP.alt',
+            simple_logo: '18_ire_pl/PKP.alt',
             tokens: [0, 40, 40, 40],
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
@@ -196,7 +203,7 @@ module Engine
             sym: 'KWW',
             name: 'Kolej Warszawsko-Wiedeńska',
             logo: '18_ire_pl/KWW',
-            logo: '18_ire_pl/KWW.alt',
+            simple_logo: '18_ire_pl/KWW.alt',
             tokens: [0, 40, 40, 40],
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
@@ -210,7 +217,7 @@ module Engine
             sym: 'TKG',
             name: 'Towarzystwo Kolei Górnośląskiej',
             logo: '18_ire_pl/TKG',
-            logo: '18_ire_pl/TKG.alt',
+            simple_logo: '18_ire_pl/TKG.alt',
             tokens: [0, 40, 40, 40],
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
@@ -225,7 +232,7 @@ module Engine
             sym: 'LHS',
             name: 'Linia Hutniczo-Siarkowa',
             logo: '18_ire_pl/LHS',
-            logo: '18_ire_pl/LHS.alt',
+            simple_logo: '18_ire_pl/LHS.alt',
             tokens: [0, 40, 40, 40],
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
@@ -239,7 +246,7 @@ module Engine
             sym: 'MW',
             name: 'Magistrala Węglowa',
             logo: '18_ire_pl/MW',
-            logo: '18_ire_pl/MW.alt',
+            simple_logo: '18_ire_pl/MW.alt',
             tokens: [0, 40, 40, 40],
             shares: [20, 10, 10, 10, 10, 10, 10, 10, 10],
             always_market_price: true,
@@ -284,7 +291,7 @@ module Engine
                 passive: true,
                 when: 'track',
                 hexes: ['E3'],
-                tiles: ['5', '6', '57'],
+                tiles: %w[5 6 57],
               },
             ],
           },
@@ -322,7 +329,7 @@ module Engine
                 passive: true,
                 when: 'track',
                 hexes: ['G5'],
-                tiles: ['5', '6', '57'],
+                tiles: %w[5 6 57],
               },
             ],
           },
@@ -360,7 +367,7 @@ module Engine
                 passive: true,
                 when: 'track',
                 hexes: ['K7'],
-                tiles: ['5', '6', '57'],
+                tiles: %w[5 6 57],
               },
             ],
           },
@@ -461,9 +468,9 @@ module Engine
                 description: 'Ignores river cost in the home hex.',
                 desc_detail: 'Ignores river cost in G17.',
                 passive: true,
-                when: 'track',#078800
+                when: 'track',  # 078800
                 hexes: ['G17'],
-                tiles: ['5', '6', '57'],
+                tiles: %w[5 6 57],
               },
             ],
           },
@@ -488,7 +495,7 @@ module Engine
                 passive: true,
                 when: 'track',
                 hexes: ['I17'],
-                tiles: ['5', '6', '57'],
+                tiles: %w[5 6 57],
               },
             ],
           },

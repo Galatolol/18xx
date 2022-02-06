@@ -104,12 +104,12 @@ module Engine
           'K9' => 'Biała Podlaska',
           'K15' => 'Zamość',
           'K17' => 'Ukraine',
-        }.freeze        
-        
+        }.freeze
+
         HEXES = {
           white: {
             %w[A9 A11 B4 B8 B12 C3 C7 C11 C15 D4 D8 D12 D16 E9 E11 E13 E15 E17 F4 F6 F14 G13 H8 H14 I5 I7 I9
-              J6 J10 J12 J16 K11 K13] => '',
+               J6 J10 J12 J16 K11 K13] => '',
             %w[E5 F8 G9 H4 H6 H16 I11 I13 I15] => 'upgrade=cost:30,terrain:water',
             %w[A5 C9 C13 D2 D6 F12 F16 J14] => 'city=revenue:0;',
             %w[E3 G5 G17 I17 K7] => 'city=revenue:0;upgrade=cost:30,terrain:water',
@@ -122,18 +122,18 @@ module Engine
             ['H10'] => 'city=revenue:20;path=a:0,b:_0;label=W',
             ['H12'] => 'town=revenue:10;path=a:3,b:_0;path=a:0,b:_0;label=R',
           },
-          blue: { 
+          blue: {
             %w[A3 C1] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:5,b:_0',
             ['F2'] => 'offboard=revenue:10;icon=image:port,sticky:1;path=a:0,b:_0;path=a:1,b:_0',
           },
           red: {
-            ['A13'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-            ['C17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1",
-            ['G3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-            ['I3'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1",
-            ['I19'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
-            ['K5'] => "city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:2,b:_0,terminal:1",
-            ['K17'] => "city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1",
+            ['A13'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1;path=a:5,b:_0,terminal:1',
+            ['C17'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:3,b:_0,terminal:1;path=a:4,b:_0,terminal:1',
+            ['G3'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1',
+            ['I3'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:5,b:_0,terminal:1',
+            ['I19'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1',
+            ['K5'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:0,b:_0,terminal:1;path=a:1,b:_0,terminal:1;path=a:2,b:_0,terminal:1',
+            ['K17'] => 'city=revenue:yellow_30|green_40|brown_50;path=a:2,b:_0,terminal:1;path=a:3,b:_0,terminal:1',
           },
           gray: {
             ['E1'] => 'town=revenue:10;path=a:1,b:_0;path=a:0,b:_0',

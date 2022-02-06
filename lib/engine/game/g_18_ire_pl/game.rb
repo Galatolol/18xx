@@ -153,7 +153,7 @@ module Engine
             price: 720,
             events: [{ 'type' => 'train_trade_allowed' }],
             discount: {
-              "3+" => 440,
+              '3+' => 440,
               '4' => 360,
               '4+' => 240,
             },
@@ -186,11 +186,11 @@ module Engine
           revenue = super
 
           #+10 bonus
-          revenue += 10 if (stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates })
+          revenue += 10 if stops.map(&:hex).find { |hex| hex.coordinates == @plus_ten_hex_coordinates }
 
           # Bonus for assignments
           iol = iol_company&.id
-          revenue += 20 if (stops.map(&:hex).find { |hex| hex.assigned?(iol) })
+          revenue += 20 if stops.map(&:hex).find { |hex| hex.assigned?(iol) }
           bs = bs_company&.id
           revenue += 40 if route.corporation.assigned?(bs) && (stops.map(&:hex).find { |hex| hex.assigned?(bs) })
 
@@ -198,9 +198,12 @@ module Engine
             bs_hex_visits_count = 0
             route.routes.each do |route|
               route.visited_stops.each do |stop|
-                if stop.hex.assigned?(bs)
-                  bs_hex_visits_count += 1
-                  raise GameError, "#{route.train.owner.name} can't run to #{stop.hex.coordinates} more than once" if bs_hex_visits_count > 1
+                next unless stop.hex.assigned?(bs)
+
+                bs_hex_visits_count += 1
+                if bs_hex_visits_count > 1
+                  raise GameError,
+                        "#{route.train.owner.name} can't run to #{stop.hex.coordinates} more than once"
                 end
               end
             end
@@ -243,10 +246,10 @@ module Engine
           hexes = G18IrePL::Map::HEXES
 
           southern_offboards_randomized = SOUTHERN_OFFBOARDS.sort_by { rand }
-          @minor_A_starting_location = southern_offboards_randomized.shift
+          @minor_a_starting_location = southern_offboards_randomized.shift
 
           northern_offboards_randomized = NORTHERN_OFFBOARDS.sort_by { rand }
-          @minor_B_starting_location = northern_offboards_randomized.shift
+          @minor_b_starting_location = northern_offboards_randomized.shift
 
           empty_gray_hexes = southern_offboards_randomized + northern_offboards_randomized
 
@@ -271,13 +274,13 @@ module Engine
             corporation.type == :minor
           end
 
-          minor_A = corporations.find { |c| c.id == MINOR_A_ID }
-          minor_A.coordinates = @minor_A_starting_location
-          hex_by_id(minor_A.coordinates).tile.add_reservation!(minor_A, 0)
-          minor_B = corporations.find { |c| c.id == MINOR_B_ID }
-          minor_B.coordinates = @minor_B_starting_location
-          hex_by_id(minor_B.coordinates).tile.add_reservation!(minor_B, 0)
-          @log << "Offboards in play: #{@minor_A_starting_location} and #{@minor_B_starting_location}"
+          minor_a = corporations.find { |c| c.id == MINOR_A_ID }
+          minor_a.coordinates = @minor_a_starting_location
+          hex_by_id(minor_a.coordinates).tile.add_reservation!(minor_a, 0)
+          minor_b = corporations.find { |c| c.id == MINOR_B_ID }
+          minor_b.coordinates = @minor_b_starting_location
+          hex_by_id(minor_b.coordinates).tile.add_reservation!(minor_b, 0)
+          @log << "Offboards in play: #{@minor_a_starting_location} and #{@minor_b_starting_location}"
 
           potential_plus_ten_hexes_randomized = POTENTIAL_PLUS_TEN_HEXES.sort_by { rand }
           @plus_ten_hex_coordinates = potential_plus_ten_hexes_randomized.shift

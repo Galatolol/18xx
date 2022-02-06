@@ -13,9 +13,7 @@ module Engine
           end
 
           def place_token(entity, city, token)
-            if city.hex.tile.color == :red
-                raise GameError, "Cannot place token in an offboard location"
-            end
+            raise GameError, 'Cannot place token in an offboard location' if city.hex.tile.color == :red
 
             super(entity, city, token)
           end
