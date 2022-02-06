@@ -11,7 +11,7 @@ module Engine
               value: 20,
               revenue: 5,
               desc: 'Owning corporation may lay a yellow tile in I14.'\
-                    ' This is in addition ot the corporations\'s normal tile build.'\
+                    ' This is in addition to the corporation\'s tile builds.'\
                     ' No connection required. Blocks I14 while owned by a player.',
               abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['I14'] },
                           {
@@ -29,8 +29,8 @@ module Engine
               value: 50,
               revenue: 10,
               desc: 'Owning corporation may lay or upgrade a tile in Charleroi (G14) along with an optional station marker.'\
-                    ' This is in addition to the corporation\'s normal tile build. The cost of the station marker must be paid'\
-                    ' by the corporation cannot place another station marker in this operating round. Blocks B20 while owned by a player.',
+                    ' This counts as one of the corporation\'s tile builds.'\
+                    ' Blocks G14 while owned by a player.',
               abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['G14'] },
                           {
                             type: 'teleport',
@@ -97,8 +97,8 @@ module Engine
             {
               sym: 'Ouest',
               name: 'Chemins de fer de l\'Ouest',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/Ouest',
+              simple_logo: '1894/Ouest.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'D3',
               color: '#4682b4',
@@ -106,8 +106,8 @@ module Engine
             {
               sym: 'Nord',
               name: 'Chemins de fer du Nord',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/Nord',
+              simple_logo: '1894/Nord.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'D11',
               color: '#ff4040',
@@ -115,8 +115,8 @@ module Engine
             {
               sym: 'GR',
               name: 'Gent Railway',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/GR',
+              simple_logo: '1894/GR.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'D15',
               color: '#fcf75e',
@@ -125,8 +125,8 @@ module Engine
             {
               sym: 'CAB',
               name: 'Chemins de fer d\'Amiens à Boulogne',
-              logo: '1828/NW',
-              simple_logo: '1828/NW.alt',
+              logo: '1894/CAB',
+              simple_logo: '1894/CAB.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'E6',
               color: '#9c661f',
@@ -134,8 +134,8 @@ module Engine
             {
               sym: 'Belge',
               name: 'Chemins de fer de l\'État belge',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/Belge',
+              simple_logo: '1894/Belge.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'F15',
               color: '#61b229',
@@ -143,21 +143,23 @@ module Engine
             {
               sym: 'PLM',
               name: 'Chemins de fer de Paris à Lyon et à la Méditerranée',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/PLM',
+              simple_logo: '1894/PLM.alt',
               tokens: [0, 40, 60, 80],
               coordinates: 'G4',
               city: 0,
               color: '#dda0dd',
+              text_color: 'black',
             },
             {
               sym: 'Est',
               name: 'Chemins de fer de l\'Est',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/Est',
+              simple_logo: '1894/Est.alt',
               tokens: [0, 40, 60, 80, 100],
               coordinates: 'I8',
               color: '#ff9966',
+              text_color: 'black',
               abilities: [
                 {
                   type: 'description',
@@ -168,8 +170,8 @@ module Engine
             {
               sym: 'F1',
               name: 'French 1',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/F1',
+              simple_logo: '1894/F1.alt',
               tokens: [0, 40],
               color: '#ffc0cb',
               text_color: 'black',
@@ -183,8 +185,8 @@ module Engine
             {
               sym: 'F2',
               name: 'French 2',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/F2',
+              simple_logo: '1894/F2.alt',
               tokens: [0, 40],
               color: 'lime',
               text_color: 'black',
@@ -198,8 +200,8 @@ module Engine
             {
                 sym: 'B1',
                 name: 'Belgian 1',
-                logo: '1828/BM',
-                simple_logo: '1828/BM.alt',
+                logo: '1894/B1',
+                simple_logo: '1894/B1.alt',
                 tokens: [0, 40],
                 color: '#c9c9c9',
                 text_color: 'black',
@@ -213,8 +215,8 @@ module Engine
             {
               sym: 'B2',
               name: 'Belgian 2',
-              logo: '1828/BM',
-              simple_logo: '1828/BM.alt',
+              logo: '1894/B2',
+              simple_logo: '1894/B2.alt',
               tokens: [0, 40],
               color: '#ffefdb',
               text_color: 'black',
