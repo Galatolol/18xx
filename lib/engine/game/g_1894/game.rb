@@ -151,17 +151,12 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2',
-                    distance: 2,
-                    price: 80,
-                    rusts_on: '5',
-                    num: 6,
-                  },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 6 },
                   {
                     name: '3',
                     distance: 3,
                     price: 180,
-                    rusts_on: '6',
+                    rusts_on: '5',
                     num: 5,
                   },
                   {
@@ -236,7 +231,7 @@ module Engine
                                                             unlimited: :gray)
 
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
-          'late_corporations_available': ['Late corporations are now available'],
+          late_corporations_available: ['Late corporations are now available'],
         ).freeze
 
         ENGLAND_HEX = 'A10'
@@ -293,7 +288,7 @@ module Engine
 
         def init_stock_market
           Engine::StockMarket.new(self.class::MARKET, [],
-                                 multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
+                                  multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
         end
 
         def event_late_corporations_available!
@@ -415,15 +410,14 @@ module Engine
           @depot.forget_train(to_remove)
           @log << "Removing #{to_remove.name} train"
         end
-        
+
         def remove_extra_late_corporations
           return unless @players.size == 3
-          
+
           to_remove = @late_corporations.filter { |c| %w[F2 B2].include? c.id }
           @late_corporations.delete(to_remove[0])
           @late_corporations.delete(to_remove[1])
-          to_remove = []
-          @log << "Removing F2 and B2 late corporations"
+          @log << 'Removing F2 and B2 late corporations'
         end
       end
     end
