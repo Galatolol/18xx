@@ -33,6 +33,7 @@ module Engine
           end
 
           def next_entity!
+            puts entities.inspect
             next_entity_index! if @entities.any?
 
             return if @entities.all?(&:passed?)

@@ -10,8 +10,8 @@ module Engine
 
         DEV_STAGE = :alpha
 
-        GAME_DESIGNER = 'Galatolol'
-        GAME_INFO_URL = ''
+        GAME_DESIGNER = 'Jan Kłos'
+        GAME_INFO_URL = 'https://boardgamegeek.com/geeklist/50723/item/7164253#item7164253'
         GAME_LOCATION = 'Poland'
         GAME_RULES_URL = ''
         GAME_TITLE = '18IrePL'

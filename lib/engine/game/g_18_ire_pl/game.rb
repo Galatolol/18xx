@@ -44,6 +44,7 @@ module Engine
         CURRENCY_FORMAT_STR = '%d zł'
         BANK_CASH = 4000
         CERT_LIMIT = { 3 => 16, 4 => 12, 5 => 10, 6 => 8 }.freeze
+        MINOR_MARKET_SHARE_LIMIT = 40
         STARTING_CASH = { 3 => 400, 4 => 300, 5 => 240, 6 => 210 }.freeze
         LIMIT_TOKENS_AFTER_MERGER = 4
         GAME_END_CHECK = { bankrupt: :full_or, stock_market: :full_or, bank: :full_or }.freeze
@@ -300,6 +301,10 @@ module Engine
           @corporations = corporations
         end
 
+        def init_share_pool
+          G18IrePL::SharePool.new(self)
+        end
+
         def close_corporation(corporation, quiet: false)
           # Share holders gain the final value of shares on corporations from bankrupt players
           if corporation.share_price&.price&.positive? && corporation.owner&.bankrupt
@@ -361,11 +366,6 @@ module Engine
           hexes.select do |hex|
             !hex.tile.exits.empty? && hex.tile.cities.any? { |city| city.tokenable?(corporation, free: true) }
           end
-        end
-
-        def buying_power(entity, **)
-          # Cannot issue shares to buy trains
-          entity.cash
         end
 
         def issuable_shares(entity)
