@@ -13,6 +13,10 @@ module Engine
         @id ||= "#{tile.id}-#{index}"
       end
 
+      def signature
+        "#{hex&.id}-#{index}"
+      end
+
       def hex
         @tile&.hex
       end

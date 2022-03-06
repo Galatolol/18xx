@@ -27,8 +27,6 @@ module Engine
                         black: '#000',
                         white: '#ffffff')
 
-        GAME_END_CHECK = { bank: :full_or, stock_market: :current_or }.freeze
-
         BANKRUPTCY_ALLOWED = false
 
         CURRENCY_FORMAT_STR = '£%d'
@@ -46,6 +44,10 @@ module Engine
         MUST_SELL_IN_BLOCKS = false
 
         TILE_TYPE = :lawson
+
+        PLAIN_SYMBOL_HEXES = {
+          yellow: %w[D35 B43 K42 M42],
+        }.freeze
 
         MARKET = [
           ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '550', '600', '650', '700e'],
@@ -1086,6 +1088,8 @@ module Engine
         end
 
         def setup
+          @game_end_reason = nil
+
           # Setup the bidding token per player
           @bidding_token_per_player = init_bidding_token
 
@@ -1287,7 +1291,22 @@ module Engine
           @london_extra_city_index = city.tile.cities.index { |c| c == city }
         end
 
-        def after_lay_tile(hex, tile)
+        def after_lay_tile(hex, old_tile, tile)
+          if old_tile.label
+            # add temporary label to designated plain tile lays
+            if PLAIN_SYMBOL_HEXES.include?(tile.color) &&
+               PLAIN_SYMBOL_HEXES[tile.color].include?(hex.id) &&
+               !tile.label
+              tile.label = old_tile.label.to_s
+            end
+
+            # remove the label when we upgrade a temporarily labelled tile
+            if PLAIN_SYMBOL_HEXES.include?(old_tile.color) &&
+               PLAIN_SYMBOL_HEXES[old_tile.color].include?(hex.id)
+              old_tile.label = nil
+            end
+          end
+
           # If we upgraded london, check if we need to add the extra slot from minor 14
           upgrade_london(hex) if hex.name == self.class::LONDON_HEX
 
@@ -1854,6 +1873,17 @@ module Engine
 
         def must_remove_town?(entity)
           entity.id == self.class::COMPANY_MTONR
+        end
+
+        def game_end_check
+          # Once the game end has been determined, it's set in stone
+          @game_end_reason ||= compute_game_end
+        end
+
+        def compute_game_end
+          return [:bank, @round.is_a?(Round::Operating) ? :full_or : :current_or] if @bank.broken?
+
+          return %i[stock_market current_or] if @stock_market.max_reached?
         end
 
         private

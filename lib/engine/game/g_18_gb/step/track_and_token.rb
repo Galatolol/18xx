@@ -15,6 +15,7 @@ module Engine
           def actions(entity)
             actions = []
             return actions if entity != current_entity
+            return [] if entity.receivership? || @game.insolvent?(entity)
 
             actions << 'lay_tile' if can_lay_tile?(entity)
             actions << 'place_token' if can_place_token?(entity)
@@ -28,12 +29,21 @@ module Engine
             @game.companies.select { |c| entity.owner == c.owner }.any? { |c| @game.abilities(c, :tile_lay) }
           end
 
+          def potential_tile_colors(entity, hex)
+            colors = super
+            return colors if colors.include?(:green)
+
+            colors << :green if @game.special_green_hexes(entity).include?(hex.coordinates)
+            colors
+          end
+
           def lay_tile_action(action)
             tile = action.tile
             tile_lay = get_tile_lay(action.entity)
             raise GameError, 'Cannot lay a city tile now' if !tile.cities.empty? && @laid_city
 
             lay_tile(action, extra_cost: tile_lay[:cost])
+            @game.close_company_in_hex(action.hex)
             @laid_city = true unless action.tile.cities.empty?
             @round.num_laid_track += 1
             @round.laid_hexes << action.hex
@@ -73,7 +83,7 @@ module Engine
 
               tile.borders.delete(border)
               types << border.type
-              cost - border_cost_discount(entity, spender, cost, hex)
+              cost - border_cost_discount(entity, spender, border, cost, hex)
             end
 
             [total_cost, types]

@@ -823,6 +823,10 @@ module Engine
         entity.runnable_trains
       end
 
+      def discarded_train_placement
+        self.class::DISCARDED_TRAINS
+      end
+
       # Before rusting, check if this train individual should rust.
       def rust?(train, purchased_train)
         train.rusts_on == purchased_train.sym ||
@@ -949,6 +953,8 @@ module Engine
       end
 
       def value_for_dumpable(player, corporation)
+        return value_for_sellable(player, corporation) if self.class::PRESIDENT_SALES_TO_MARKET
+
         max_bundle = bundles_for_corporation(player, corporation)
           .select { |bundle| bundle.can_dump?(player) && @share_pool&.fit_in_bank?(bundle) }
           .max_by(&:price)
@@ -1379,6 +1385,10 @@ module Engine
         @graph
       end
 
+      def graph_skip_paths(_entity)
+        nil
+      end
+
       def upgrade_cost(tile, hex, entity, spender)
         ability = entity.all_abilities.find do |a|
           a.type == :tile_discount &&
@@ -1438,7 +1448,7 @@ module Engine
 
       def upgrades_to?(from, to, special = false, selected_company: nil)
         # correct color progression?
-        return false unless upgrades_to_correct_color?(from, to)
+        return false unless upgrades_to_correct_color?(from, to, selected_company: selected_company)
 
         # honors pre-existing track?
         return false unless from.paths_are_subset_of?(to.paths)
@@ -1456,13 +1466,16 @@ module Engine
         return false if from.towns.size != to.towns.size
         return false if !from.label && from.cities.size != to.cities.size
 
+        # but don't permit a labelled city to be downgraded to 0 cities.
+        return false if from.label && !from.cities.empty? && to.cities.empty?
+
         # handle case where we are laying a yellow OO tile and want to exclude single-city tiles
         return false if (from.color == :white) && from.label.to_s == 'OO' && from.cities.size != to.cities.size
 
         true
       end
 
-      def upgrades_to_correct_color?(from, to)
+      def upgrades_to_correct_color?(from, to, selected_company: nil)
         Engine::Tile::COLORS.index(to.color) == (Engine::Tile::COLORS.index(from.color) + 1)
       end
 
@@ -2036,7 +2049,7 @@ module Engine
 
       def init_hexes(companies, corporations)
         blockers = {}
-        (companies + corporations).each do |company|
+        (companies + minors + corporations).each do |company|
           abilities(company, :blocks_hexes) do |ability|
             ability.hexes.each do |hex|
               blockers[hex] = company
@@ -2195,7 +2208,7 @@ module Engine
       end
 
       def init_share_pool
-        SharePool.new(self)
+        SharePool.new(self, allow_president_sale: self.class::PRESIDENT_SALES_TO_MARKET)
       end
 
       def connect_hexes
@@ -2676,7 +2689,7 @@ module Engine
         @round.steps.find do |step|
           # currently, abilities only care about Tracker, the is_a? check could
           # be expanded to a list of possible classes/modules when needed
-          step.is_a?(Step::Tracker) && !step.passed? && step.blocks?
+          step.is_a?(Step::Tracker) && !step.passed? && step.active? && step.blocks?
         end
       end
 
@@ -2756,6 +2769,22 @@ module Engine
       end
 
       def train_power?
+        false
+      end
+
+      def show_map_legend?
+        false
+      end
+
+      def train_purchase_name(train)
+        train.name
+      end
+
+      # If a game overrides this to true, then if the possible actions for the current entity include any of
+      #   buy_train, scrap_train, or reassign_train then
+      # the Operating view will be used instead of the Merger round view for train actiosn in a merger round.
+      # See https://github.com/tobymao/18xx/issues/7169
+      def train_actions_always_use_operating_round_view?
         false
       end
     end

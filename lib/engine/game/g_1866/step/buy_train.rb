@@ -58,6 +58,14 @@ module Engine
             end
 
             super
+            @took_loan = false
+          end
+
+          def process_sell_shares(action)
+            super
+
+            entity = action.entity
+            @game.player_sold_shares[entity.owner][entity] = true
           end
 
           def process_take_loan(action)

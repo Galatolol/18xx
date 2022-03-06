@@ -453,7 +453,7 @@ module Engine
             Engine::Step::Route,
             Engine::Step::Dividend,
             Engine::Step::DiscardTrain,
-            G1836Jr30::Step::BuyTrain,
+            Engine::Step::BuySingleTrainOfType,
             [Engine::Step::BuyCompany, { blocks: true }],
           ], round_num: round_num)
         end
@@ -477,6 +477,10 @@ module Engine
           end
 
           revenue
+        end
+
+        def multiple_buy_only_from_market?
+          !optional_rules&.include?(:multiple_brown_from_ipo)
         end
       end
     end

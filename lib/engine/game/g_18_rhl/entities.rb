@@ -58,14 +58,14 @@ module Engine
             max_ownership_percent: 100,
           },
           {
-            name: 'Krefeld-Kempener Eisenbahn',
-            sym: 'KKK',
+            name: 'Krefelder Eisenbahngesellschaft',
+            sym: 'KEG',
             float_percent: 60,
             tokens: [0, 60],
             # The 2nd share decided share percentage for shares
             shares: [20, 10, 20, 20, 10, 10, 10],
-            logo: '18_rhl/KKK',
-            simple_logo: '18_rhl/KKK.alt',
+            logo: '18_rhl/KEG',
+            simple_logo: '18_rhl/KEG.alt',
             color: :orange,
             text_color: :black,
             coordinates: 'D7',
@@ -163,11 +163,12 @@ module Engine
                           hexes: %w[E12],
                           tiles: %w[1 2 55 56 69],
                           free: true,
-                          reachable: false,
+                          reachable: true,
                           special: true,
                           count: 1,
                           when: %w[owning_player_or_turn],
                           consume_tile_lay: false,
+                          closed_when_used_up: true,
                         }],
           },
           {
@@ -280,8 +281,8 @@ module Engine
           @cce_corporation ||= corporation_by_id('CCE')
         end
 
-        def kkk
-          @kkk_corporation ||= corporation_by_id('KKK')
+        def keg
+          @keg_corporation ||= corporation_by_id('KEG')
         end
 
         def rhe

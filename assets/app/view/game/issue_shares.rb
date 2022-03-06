@@ -22,6 +22,7 @@ module View
 
         if @current_actions.include?('sell_shares') && (step = @game.round.step_for(@entity, 'sell_shares'))
           issue_text = emergency? ? 'Emergency Issue' : 'Issue'
+          issue_text = step.issue_text(@entity) if step.respond_to?(:issue_text)
           children << render_shares(issue_text, step.issuable_shares(@entity), Engine::Action::SellShares)
         end
 
@@ -35,11 +36,20 @@ module View
       def render_shares(description, shares, action)
         shares = shares.map do |bundle|
           render_button(bundle) do
-            process_action(action.new(
-              @entity,
-              shares: bundle.shares,
-              share_price: bundle.share_price,
-            ))
+            process_redeem = lambda do
+              process_action(action.new(
+                @entity,
+                shares: bundle.shares,
+                share_price: bundle.share_price,
+              ))
+            end
+
+            # confirm if redeeming from a different player
+            if (bundle.owner != @game.bank) && (bundle.owner != @game.current_entity) && bundle.owner.player?
+              check_consent(bundle.owner, process_redeem)
+            else
+              process_redeem.call
+            end
           end
         end
 
@@ -52,13 +62,15 @@ module View
       end
 
       def render_button(bundle, &block)
-        ipo = if bundle.owner == @game.bank
-                'IPO '
-              else
-                ''
-              end
+        name = if @step.respond_to?(:issue_corp_name)
+                 "#{@step.issue_corp_name(bundle)} "
+               elsif bundle.owner == @game.bank
+                 'IPO '
+               else
+                 ''
+               end
 
-        str = "#{bundle.num_shares} #{ipo}(#{@game.format_currency(bundle.price)})"
+        str = "#{bundle.num_shares} #{name}(#{@game.format_currency(bundle.price)})"
         str += " from #{bundle.owner.name}" if bundle.owner.player?
         h('button.small', { on: { click: block } }, str)
       end

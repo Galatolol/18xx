@@ -27,13 +27,7 @@ module Engine
 
         BANK_CASH = 12_000
 
-        FIRST_EDITION_CERT_LIMIT = { 2 => 28, 3 => 20, 4 => 16, 5 => 13, 6 => 11 }.freeze
-        SECOND_EDITION_CERT_LIMIT = { 2 => 26, 3 => 20, 4 => 15, 5 => 12, 6 => 11 }.freeze
-
-        def game_cert_limit
-          @game_cert_limit ||= second_edition? ? SECOND_EDITION_CERT_LIMIT : FIRST_EDITION_CERT_LIMIT
-          @game_cert_limit
-        end
+        CERT_LIMIT = { 2 => 28, 3 => 20, 4 => 16, 5 => 13, 6 => 11 }.freeze
 
         STARTING_CASH = { 2 => 900, 3 => 600, 4 => 450, 5 => 360, 6 => 300 }.freeze
 
@@ -55,6 +49,13 @@ module Engine
         CLOSED_CORP_TRAINS_REMOVED = false
 
         TRACK_RESTRICTION = :permissive
+
+        # These symbols upgrade to plain tiles in these colours
+        PLAIN_SYMBOL_UPGRADES = {
+          yellow: %w[Br R S],
+          green: %w[Bu Br S],
+          brown: %w[Bu],
+        }.freeze
 
         # Two lays with one being an upgrade. Tile lays cost 20
         TILE_COST = 20
@@ -125,14 +126,14 @@ module Engine
           {
             name: '5DE',
             on: '5DE',
-            train_limit: { major: 2 },
+            train_limit: { minor: 1, major: 2 },
             tiles: %i[yellow green brown],
             operating_rounds: 3,
           },
           {
             name: 'D',
             on: 'D',
-            train_limit: { major: 2 },
+            train_limit: { minor: 1, major: 2 },
             tiles: %i[yellow green brown gray],
             operating_rounds: 3,
           },
@@ -214,7 +215,7 @@ module Engine
                   train[:rusts_on] = '4DE'
                 when '5DE'
                   train[:name] = '4DE'
-                  train[:distance] = (train[:distance].dup)[0]['pay'] = 4
+                  train[:distance][0]['pay'] = 4
                 end
                 train
               end
@@ -253,14 +254,11 @@ module Engine
                 when 'B&A'
                   corp[:tokens] = [0, 20, 20, 20]
                   change_president_certificate_to_30_percent(corp)
-                when 'ERIE', 'RWO'
+                when 'RWO'
                   change_president_certificate_to_30_percent(corp)
                 when 'NYNH'
                   corp[:tokens] = [0, 20, 20, 20]
                   corp[:sym] = 'NH'
-                  change_president_certificate_to_30_percent(corp)
-                when 'NY&H'
-                  corp[:tokens] = [0, 20]
                 end
                 corp
               end
@@ -275,20 +273,6 @@ module Engine
           corporation[:abilities] = corporation[:abilities].dup || []
           corporation[:abilities] << { type: 'description', description: "30% President's Certificate" }
           corporation
-        end
-
-        def game_companies
-          unless @game_companies
-            @game_companies = super.dup
-            if second_edition?
-              @game_companies.map! do |c|
-                company = c.dup
-                company[:value] = 180 if company[:sym] == 'DPC'
-                company
-              end
-            end
-          end
-          @game_companies
         end
 
         def location_name(coord)
@@ -552,6 +536,8 @@ module Engine
 
         def close_corporation(corporation, quiet: false)
           super
+          @loans += corporation.loans
+          corporation.loans.clear
           return unless corporation.tokens.include?(@stagecoach_token)
 
           @log << 'Stagecoach token removed from play'
@@ -561,6 +547,11 @@ module Engine
 
         def player_value(player)
           super - player.shares_by_corporation.sum { |corp, _| player.num_shares_of(corp) * corp.loans.size * 5 }
+        end
+
+        def bank_sort(corporations)
+          minors, corps = corporations.partition { |c| c.type == :minor }
+          minors.sort_by { |m| m.name.to_i } + super(corps)
         end
 
         #
@@ -675,7 +666,18 @@ module Engine
           @cities.reject { |c| c.available_slots.zero? }.map { |c| c.tile.hex }
         end
 
-        def tile_lay(_hex, old_tile, _new_tile)
+        def tile_lay(_hex, old_tile, new_tile)
+          if old_tile.label
+            # add label to new tile, if this is a plain lay on a label.
+            new_tile.label = old_tile.label.to_s unless new_tile.label
+
+            # remove the label when we remove a temporaily labelled tile.
+            if PLAIN_SYMBOL_UPGRADES.include?(old_tile.color) &&
+               PLAIN_SYMBOL_UPGRADES[old_tile.color].include?(old_tile.label.to_s)
+              old_tile.label = nil
+            end
+          end
+
           return unless old_tile.icons.any? { |icon| icon.name == ERIE_CANAL_ICON }
 
           @log << "#{erie_canal_private.name}'s revenue reduced from #{format_currency(erie_canal_private.revenue)}" \
@@ -710,20 +712,12 @@ module Engine
         end
 
         def upgrades_to_correct_label?(from, to)
-          # Handle hexes that change from standard tiles to special city tiles
-          case from.hex.location_name
-          when 'Buffalo'
-            return true if to.name == 'X35'
-            return false if to.color == :gray
-          when 'Rochester'
-            return true if to.name == 'X13'
-            return false if to.color == :green
-          when 'Syracuse'
-            return true if to.name == 'X24'
-            return false if to.color == :brown
-          when 'Brooklyn'
-            return true if to.name == 'X21'
-            return false if to.color == :brown
+          # handle lays of a plain tile over a hex/tile with a label
+
+          if PLAIN_SYMBOL_UPGRADES.include?(to.color) &&
+             PLAIN_SYMBOL_UPGRADES[to.color].include?(from.label.to_s) &&
+             !to.label
+            return true
           end
 
           super
@@ -732,6 +726,7 @@ module Engine
         def legal_tile_rotation?(entity, hex, tile)
           # NYC tiles have a specific rotation
           return tile.rotation.zero? if hex.id == 'J20' && %w[X11 X22].include?(tile.name)
+          return tile.rotation.zero? if second_edition? && hex.id == 'J20' && tile.name == 'X32'
 
           super
         end
@@ -790,7 +785,12 @@ module Engine
         end
 
         def revenue_for(route, stops)
-          super + (route_connection_bonus_hexes(route, stops: stops).size * 10)
+          additional_revenue = 0
+          if second_edition? && route.train.name == 'D'
+            additional_revenue = 30 * (stops.map(&:hex) & route.corporation.tokens.select(&:used).map(&:hex)).size
+          end
+
+          super + additional_revenue + (route_connection_bonus_hexes(route, stops: stops).size * 10)
         end
 
         def revenue_str(route)
@@ -938,6 +938,10 @@ module Engine
           @depot.reclaim_train(train)
         end
 
+        def discarded_train_placement
+          second_edition? ? :remove : super
+        end
+
         def rust(train)
           salvage_train(train) unless train.from_depot?
           super
@@ -988,7 +992,7 @@ module Engine
         end
 
         def interest_owed(entity)
-          interest_paid[entity] || interest_owed_for_loans(entity.loans.size)
+          interest_owed_for_loans(entity.loans.size)
         end
 
         def maximum_loans(entity)
@@ -1323,12 +1327,16 @@ module Engine
 
         def liquidate_remaining_minors
           active_minors.each do |minor|
-            owner = minor.owner
-            @stock_market.move_left(minor)
-            liquidation_price = minor.share_price.price * 2
-            @log << "#{minor.name} is liquidated and #{owner.name} receives #{format_currency(liquidation_price)} " \
-                    'in compensation from the bank'
-            @bank.spend(liquidation_price, owner)
+            if minor.receivership?
+              @log << "#{minor.name} is liquidated"
+            else
+              owner = minor.owner
+              @stock_market.move_left(minor)
+              liquidation_price = minor.share_price.price * 2
+              @log << "#{minor.name} is liquidated and #{owner.name} receives #{format_currency(liquidation_price)} " \
+                      'in compensation from the bank'
+              @bank.spend(liquidation_price, owner)
+            end
             close_corporation(minor, quiet: true)
             minor.close!
           end

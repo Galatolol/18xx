@@ -12,12 +12,23 @@ module Engine
             @train_export_triggered = false
           end
 
-          def after_process(action)
-            super
-            return if !finished? || @train_export_triggered
+          def finished?
+            return false unless super
 
-            @game.export_train
-            @train_export_triggered = true
+            unless @train_export_triggered
+              @game.export_train
+              @train_export_triggered = true
+            end
+
+            super
+          end
+
+          def pay_interest!(entity)
+            # 1817's pay_interest! does a 'return unless step_passed?(Engine::Step::BuyTrain)' which unintentionally
+            #   passes for the 18USA BuyPullmanStep - here we check that 18USA BuyTrain is passed before continuing
+            return unless step_passed?(G18USA::Step::BuyTrain)
+
+            super
           end
         end
       end

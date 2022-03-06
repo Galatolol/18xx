@@ -28,7 +28,7 @@ module Engine
         MUST_SELL_IN_BLOCKS = false
 
         MARKET = [
-          %w[60
+          %w[60o
              67
              71
              76
@@ -48,7 +48,7 @@ module Engine
              375
              425],
           %w[53o
-             60
+             60o
              66
              70
              76
@@ -68,7 +68,7 @@ module Engine
              330],
           %w[46o
              55o
-             60
+             60o
              65
              70
              76
@@ -85,7 +85,7 @@ module Engine
           %w[39o
              48o
              54o
-             60
+             60o
              66
              71
              76p
@@ -98,8 +98,8 @@ module Engine
           %w[32o 41o 48o 55o 62 67 71p 76 82 90 100],
           %w[25o 34o 42o 50o 58o 65 67p 71 75 80],
           %w[18o 27o 36o 45o 54o 63 67 69 70],
-          %w[10o 20o 30o 40o 50o 60 67 68],
-          ['', '10o', '20o', '30o', '40o', '50o', '60'],
+          %w[10o 20o 30o 40o 50o 60o 67 68],
+          ['', '10o', '20o', '30o', '40o', '50o', '60o'],
           ['', '', '10o', '20o', '30o', '40o', '50o'],
           ['', '', '', '10o', '20o', '30o', '40o'],
         ].freeze
@@ -151,28 +151,31 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 6 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 7 },
                   {
                     name: '3',
                     distance: 3,
-                    price: 180,
+                    price: 160,
                     rusts_on: '5',
                     num: 5,
+                    discount: { '2' => 40 },
                   },
                   {
                     name: '4',
                     distance: 4,
                     price: 300,
                     rusts_on: '7',
-                    num: 4,
+                    num: 3,
+                    discount: { '3' => 80 },
                   },
                   {
                     name: '5',
                     distance: 5,
-                    price: 450,
+                    price: 400,
                     rusts_on: 'D',
                     num: 4,
                     events: [{ 'type' => 'late_corporations_available' }],
+                    discount: { '4' => 150 },
                   },
                   {
                     name: '6',
@@ -180,18 +183,21 @@ module Engine
                     price: 600,
                     num: 3,
                     events: [{ 'type' => 'close_companies' }],
+                    discount: { '5' => 200 },
                   },
                   {
                     name: '7',
                     distance: 7,
                     price: 750,
                     num: 3,
+                    discount: { '6' => 300 },
                   },
                   {
                     name: 'D',
                     distance: 999,
                     price: 900,
                     num: 20,
+                    discount: { '5' => 200, '6' => 300, '7' => 375 },
                   }].freeze
 
         LAYOUT = :pointy
@@ -242,6 +248,11 @@ module Engine
         PARIS_HEX = 'G4'
         SQG_HEX = 'G10'
 
+        AMIENS_HEX = 'E6'
+        AMIENS_TILE = 'X3'
+
+        GREEN_CITY_TILES = %w[14 15 619].freeze
+
         def stock_round
           G1894::Round::Stock.new(self, [
             G1894::Step::BuySellParShares,
@@ -269,7 +280,7 @@ module Engine
 
         def setup
           @late_corporations, @corporations = @corporations.partition do |c|
-            %w[F1 F2 B1 B2].include? c.id
+            %w[F1 F2 B1 B2].include?(c.id)
           end
 
           @log << "-- Setting game up for #{@players.size} players --"
@@ -282,7 +293,7 @@ module Engine
 
           plm = corporations.find { |c| c.id == 'PLM' }
           paris_tiles_names = %w[X1 X4 X5 X7 X8]
-          paris_tiles = @all_tiles.filter { |t| paris_tiles_names.include? t.name }
+          paris_tiles = @all_tiles.select { |t| paris_tiles_names.include?(t.name) }
           paris_tiles.each { |t| t.add_reservation!(plm, 0) }
         end
 
@@ -312,28 +323,13 @@ module Engine
 
         def init_round_finished
           @players.rotate!(@round.entity_index)
-
-          @companies.each do |company|
-            next unless company.owner
-
-            abilities(company, :revenue_change, time: 'auction_end') do |ability|
-              company.revenue = ability.revenue
-            end
-          end
         end
 
-        def action_processed(action)
-          super
+        def upgrades_to?(from, to, _special = false, selected_company: nil)
+          return to.name == AMIENS_TILE if from.hex.name == AMIENS_HEX && from.color == :white
+          return GREEN_CITY_TILES.include?(to.name) if from.hex.name == AMIENS_HEX && from.color == :yellow
 
-          case action
-          when Action::LayTile
-            if action.hex.id == SQG_HEX
-              tile = hex_by_id(SQG_HEX).tile
-              sqg = @companies.find { |c| c.id == 'SQG' }
-              sqg.revenue = tile.cities[0].revenue['diesel']
-              @log << "Saint-Quentin à Guise's revenue increased to #{sqg.revenue}"
-            end
-          end
+          super
         end
 
         def revenue_for(route, stops)
@@ -344,11 +340,11 @@ module Engine
         end
 
         def pc_bonus(corp, stops)
-          corp.assigned?('PC') && stops.map(&:hex).find { |hex| hex.assigned?('PC') } ? 10 : 0
+          corp.assigned?('PC') && stops.any? { |s| s.hex.assigned?('PC') } ? 10 : 0
         end
 
         def est_le_sud_bonus(corp, stops)
-          corp.id == 'Est' && stops.map(&:hex).find { |hex| hex.id == 'I2' } ? 20 : 0
+          corp.id == 'Est' && stops.any? { |s| s.hex.id == 'I2' } ? 20 : 0
         end
 
         def ferry_marker_available?
@@ -358,7 +354,7 @@ module Engine
         def ferry_marker?(entity)
           return false unless entity.corporation?
 
-          ferry_markers(entity).any?
+          !ferry_markers(entity).empty?
         end
 
         def ferry_markers(entity)
@@ -386,7 +382,7 @@ module Engine
           @log << "#{entity.name} buys a ferry marker for $#{FERRY_MARKER_COST}"
 
           tile_icons = hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons
-          tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == FERRY_MARKER_ICON })
+          tile_icons.reject! { |icon| icon.name == FERRY_MARKER_ICON }
 
           graph.clear
         end
@@ -414,7 +410,7 @@ module Engine
         def remove_extra_late_corporations
           return unless @players.size == 3
 
-          to_remove = @late_corporations.filter { |c| %w[F2 B2].include? c.id }
+          to_remove = @late_corporations.select { |c| %w[F2 B2].include?(c.id) }
           @late_corporations.delete(to_remove[0])
           @late_corporations.delete(to_remove[1])
           @log << 'Removing F2 and B2 late corporations'

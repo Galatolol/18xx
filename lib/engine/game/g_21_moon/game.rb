@@ -13,7 +13,7 @@ module Engine
         include Entities
         include Map
 
-        attr_reader :bc_graph, :sp_graph, :train_base
+        attr_reader :lb_graph, :sp_graph, :train_base
 
         register_colors(black: '#16190e',
                         blue: '#0189d1',
@@ -38,14 +38,15 @@ module Engine
 
         CURRENCY_FORMAT_STR = '₡%d'
         BANK_CASH = 12_000
-        CERT_LIMIT = { 3 => 15, 4 => 12, 5 => 10 }.freeze
-        STARTING_CASH = { 3 => 540, 4 => 410, 5 => 340 }.freeze
+        CERT_LIMIT = { 2 => 18, 3 => 15, 4 => 12, 5 => 10 }.freeze
+        STARTING_CASH = { 2 => 600, 3 => 540, 4 => 410, 5 => 340 }.freeze
         CAPITALIZATION = :incremental
         MUST_SELL_IN_BLOCKS = false
         SELL_MOVEMENT = :down_block
         SOLD_OUT_INCREASE = true
         POOL_SHARE_DROP = :one
         IMPASSABLE_HEX_COLORS = %i[purple orange].freeze
+        TRACK_RESTRICTION = :city_permissive
 
         MARKET = [
           ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '330', '360', '395', '430'],
@@ -73,7 +74,7 @@ module Engine
         PHASES = [
           {
             name: '2',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -81,7 +82,7 @@ module Engine
           {
             name: '3',
             on: '3',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow green],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -89,7 +90,7 @@ module Engine
           {
             name: '4',
             on: '4',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow green],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -97,7 +98,7 @@ module Engine
           {
             name: '5',
             on: '5',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow green brown],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -105,7 +106,7 @@ module Engine
           {
             name: '6',
             on: '6',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow green brown],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -113,7 +114,7 @@ module Engine
           {
             name: '10',
             on: '10',
-            train_limit: { BC: 2, SP: 2 },
+            train_limit: { LB: 2, SP: 2 },
             tiles: %i[yellow green brown gray],
             operating_rounds: 2,
             status: ['can_buy_companies'],
@@ -184,6 +185,7 @@ module Engine
           { lay: true, upgrade: true },
         ].freeze
 
+        MAX_OWNERSHIP_2P = 60
         LAST_OR = 11
         SP_HEX = 'E9'
         SP_TILES = %w[X22 X23].freeze
@@ -196,12 +198,19 @@ module Engine
         SE_HEXES = %w[L14 M11 M13].freeze
         NW_HEXES = %w[A3 A5 B2].freeze
         SW_HEXES = %w[B14 C15].freeze
+        BONUS_LOCATIONS = {
+          'NE' => 'L4',
+          'SE' => 'L14',
+          'NW' => 'A5',
+          'SW' => 'C15',
+        }.freeze
         END_BONUS_VALUE = 50
+        END_BONUS_COUNT = 4
 
         ICON_PREFIX = '21Moon/'
 
         ICON_REVENUES = {
-          'BC' => { yellow: 30, green: 30, brown: 30, gray: 30 },
+          'LB' => { yellow: 30, green: 30, brown: 30, gray: 30 },
           'X' => { yellow: 20, green: 40, brown: 60, gray: 80 },
           'H' => { yellow: 30, green: 40, brown: 50, gray: 60 },
           'R' => { yellow: 20, green: 20, brown: 40, gray: 50 },
@@ -225,13 +234,13 @@ module Engine
 
         def setup
           # We need a total of three graphs:
-          # One from just BC (@bc_graph)
+          # One from just LB (@lb_graph)
           # One from just SP (@sp_graph)
           # One from both (@graph)
           #
-          # We always ignore non-BC non-SP tokens however
+          # We always ignore non-LB non-SP tokens however
           #
-          @bc_graph = Graph.new(self, check_tokens: true)
+          @lb_graph = Graph.new(self, check_tokens: true)
           @sp_graph = Graph.new(self, check_tokens: true)
           select_combined_graph
 
@@ -253,14 +262,15 @@ module Engine
                               end
           end
 
-          # pick one corp to wait until SR3
-
           # adjust parameters for majors to allow both IPO and treasury stock
-          # place BC and SP tokens
-          # place BC icon
+          # change percentatge for 2P
+          # place LB and SP tokens
+          # place LB icon
           #
+          @sp_tokens = {}
           @corporations.each do |corp|
             corp.ipo_owner = @bank
+            corp.max_ownership_percent = MAX_OWNERSHIP_2P if @players.size == 2
             corp.share_holders.keys.each do |sh|
               next if sh == @bank
 
@@ -268,20 +278,30 @@ module Engine
             end
             place_home_token(corp)
             place_sp_token(corp)
-            hex_by_id(corp.coordinates).tile.icons << @bc_icon
+            hex_by_id(corp.coordinates).tile.icons << @lb_icon
           end
 
           # pick one corp to wait until SR3
           #
           @reserved_corp = @corporations.min_by { rand }
+          @reserved_corp.tokens[0].status = :flipped
+          @sp_tokens[@reserved_corp].status = :flipped
           @log << "#{@reserved_corp.full_name} (#{@reserved_corp.name}) is reserved until SR3"
 
           @train_base = {}
           @or = 0
           @three_or_round = false
           @end_bonuses = Hash.new { |h, k| h[k] = [] }
+          @bonuses_left = {
+            'NE' => END_BONUS_COUNT,
+            'NW' => END_BONUS_COUNT,
+            'SE' => END_BONUS_COUNT,
+            'SW' => END_BONUS_COUNT,
+          }
           @crossed_rift = false
           @sp_tiles = SP_TILES.map { |tn| @tiles.find { |t| t.name == tn } }
+
+          update_bonus_locations
         end
 
         def transfer_share(share, new_owner)
@@ -294,10 +314,10 @@ module Engine
         end
 
         def place_sp_token(corporation)
-          sp_token = corporation.tokens.first.dup
+          @sp_tokens[corporation] = corporation.tokens.first.dup
 
           sp_tile = hex_by_id(self.class::SP_HEX).tile
-          sp_tile.cities.first.place_token(corporation, sp_token)
+          sp_tile.cities.first.place_token(corporation, @sp_tokens[corporation])
           @log << "#{corporation.name} places a token on #{self.class::SP_HEX}"
         end
 
@@ -305,9 +325,9 @@ module Engine
           @icons = Hash.new { |h, k| h[k] = {} }
           ICON_REVENUES.keys.each do |root|
             case root
-            when 'BC'
-              @bc_icon = Part::Icon.new(ICON_PREFIX + 'BC', 'BC', false, false, false)
-              %i[yellow green brown gray].each { |color| @icons[root][color] = @bc_icon }
+            when 'LB'
+              @lb_icon = Part::Icon.new(ICON_PREFIX + 'LB', 'LB', false, false, false)
+              %i[yellow green brown gray].each { |color| @icons[root][color] = @lb_icon }
             else
               %i[yellow green brown gray].each do |color|
                 full = root + '_' + color.to_s
@@ -318,7 +338,7 @@ module Engine
         end
 
         def skip_token?(graph, corporation, city)
-          if graph == @bc_graph
+          if graph == @lb_graph
             city.hex.id != corporation.coordinates
           elsif graph == @sp_graph
             city.hex.id != self.class::SP_HEX
@@ -332,8 +352,8 @@ module Engine
           @selected_graph = @graph
         end
 
-        def select_bc_graph
-          @selected_graph = @bc_graph
+        def select_lb_graph
+          @selected_graph = @lb_graph
         end
 
         def select_sp_graph
@@ -345,7 +365,11 @@ module Engine
         end
 
         def token_graph_for_entity(_entity)
-          @bc_graph
+          @graph
+        end
+
+        def can_run_route?(entity)
+          @graph.route_info(entity)&.dig(:route_available)
         end
 
         def after_buy_company(player, company, _price)
@@ -378,6 +402,9 @@ module Engine
           buyer.tokens << new_token
 
           old_token.swap!(new_token)
+          @graph.clear
+          @lb_graph.clear
+          @sp_graph.clear
           @log << "#{buyer.name} takes over OLS token in #{new_token.city.hex.id}"
 
           company.close!
@@ -395,10 +422,10 @@ module Engine
           prototype = self.class::TRAINS.find { |e| e[:name] == name }
           raise GameError, "Unable to find train #{name} in TRAINS" unless prototype
 
-          @depot.insert_train(Train.new(**prototype, index: 999), @depot.upcoming.index { |t| t.name == train.name })
+          @depot.insert_train(Train.new(**prototype, index: 999), @depot.upcoming.index { |t| t.name == name } || 0)
           update_cache(:trains)
 
-          @log << "#{corp.name} adds a #{name} transport to depot"
+          @log << "#{corp.name} adds a #{name} train to depot"
         end
 
         def remove_from_depot(name, corp)
@@ -406,7 +433,7 @@ module Engine
           raise GameError, "Unable to find train #{name} in depot" unless train
 
           @depot.forget_train(train)
-          @log << "#{corp.name} removes a #{name} transport from depot"
+          @log << "#{corp.name} removes a #{name} train from depot"
         end
 
         def crossing_border(entity, _tile)
@@ -431,11 +458,11 @@ module Engine
           super
         end
 
-        def upgrades_to_correct_color?(from, to)
+        def upgrades_to_correct_color?(from, to, selected_company: nil)
           return true if to.name == T_TILE
 
           case from.color
-          when :red, :gray
+          when :salmon, :gray, :gray60, :gray50
             to.color == :yellow
           else
             super
@@ -463,7 +490,7 @@ module Engine
         end
 
         def stock_round
-          Engine::Round::Stock.new(self, [
+          G21Moon::Round::Stock.new(self, [
             G21Moon::Step::Exchange,
             G21Moon::Step::TradeStock,
             G21Moon::Step::BuySellParShares,
@@ -479,14 +506,14 @@ module Engine
         def new_operating_round(round_num = 1)
           @or += 1
 
-          round = super
-          upgrade_space_port if @or == 6 || @or == 9
-          event_close_companies! if @or == 7
-
           if @or == 9
             @operating_rounds = 3
             @three_or_round = true
           end
+
+          round = super
+          upgrade_space_port if @or == 5 || @or == 9
+          event_close_companies! if @or == 7
 
           round
         end
@@ -498,9 +525,10 @@ module Engine
 
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
-            Engine::Step::Bankrupt,
+            G21Moon::Step::Bankrupt,
             Engine::Step::BuyCompany,
             Engine::Step::Assign,
+            Engine::Step::HomeToken,
             G21Moon::Step::SpecialTrack,
             G21Moon::Step::TrainMod,
             G21Moon::Step::Track,
@@ -517,8 +545,11 @@ module Engine
             case @round
             when Round::Corporate
               @operating_rounds = @phase.operating_rounds
+              clear_programmed_actions
+              corporate_round_finished
               new_operating_round
             when Engine::Round::Stock
+              clear_programmed_actions
               reorder_players
               new_corporate_round
             when Engine::Round::Operating
@@ -538,6 +569,32 @@ module Engine
             end
         end
 
+        def corporate_round_finished
+          @corporations.select { |c| c.floated? && c.type != :minor }.sort.each do |corp|
+            prev = corp.share_price.price
+
+            @stock_market.move_up(corp) if sold_out?(corp) && sold_out_increase?(corp)
+            if corp.operated?
+              pool_share_drop = self.class::POOL_SHARE_DROP
+              price_drops =
+                if (pool_share_drop == :none) || (shares_in_pool = corp.num_market_shares).zero?
+                  0
+                elsif pool_share_drop == :one
+                  1
+                else
+                  shares_in_pool
+                end
+              price_drops.times { @stock_market.move_down(corp) }
+            end
+
+            log_share_price(corp, prev)
+          end
+        end
+
+        def sold_out?(corporation)
+          corporation.share_holders.select { |s_h, _| s_h.player? || s_h.corporation? }.values.sum == 100
+        end
+
         # Game will end directly after the end of OR 11
         def end_now?(_after)
           @or == LAST_OR
@@ -545,6 +602,8 @@ module Engine
 
         def release_corp
           @log << "#{@reserved_corp&.full_name} is now in play"
+          @reserved_corp.tokens[0].status = nil # un-flip home token
+          @sp_tokens[@reserved_corp].status = nil # un-flip sp token
           @reserved_corp = nil
         end
 
@@ -625,8 +684,12 @@ module Engine
           corporations.reject(&:minor?).sort_by(&:name)
         end
 
-        def bc_trains(corporation)
-          corporation.trains.select { |t| @train_base[t] == :bc }
+        def player_sort(entities)
+          entities.reject(&:minor?).sort_by(&:name).group_by(&:owner)
+        end
+
+        def lb_trains(corporation)
+          corporation.trains.select { |t| @train_base[t] == :lb }
         end
 
         def sp_trains(corporation)
@@ -634,12 +697,24 @@ module Engine
         end
 
         def route_trains(entity)
-          bc_trains(entity) + sp_trains(entity)
+          lb_trains(entity) + sp_trains(entity)
+        end
+
+        def lb_city?(node, corp)
+          return false if !node&.city? || !node&.hex || !corp&.corporation?
+
+          node.hex.id == corp.coordinates
+        end
+
+        def sp_city?(node)
+          return false if !node&.city? || !node&.hex
+
+          node.hex.id == SP_HEX
         end
 
         def visited_base?(entity, base, route)
-          (base == :sp && route.visited_stops.any? { |s| s.hex.id == SP_HEX }) ||
-            (base == :bc && route.visited_stops.any? { |s| s.hex.id != SP_HEX && s.city? && s.tokened_by?(entity) })
+          (base == :sp && route.visited_stops.any? { |s| sp_city?(s) }) ||
+            (base == :lb && route.visited_stops.any? { |s| lb_city?(s, entity) })
         end
 
         def intersects?(route_a, route_b)
@@ -658,19 +733,19 @@ module Engine
 
           raise GameError, "Must visit #{base.to_s.upcase}" unless other_route
 
-          raise GameError, "Must visit #{base.to_s.upcase} or intersect with a route that does"
+          raise GameError, "Must visit #{base.to_s.upcase} or intersect with another #{base.to_s.upcase} route that does"
         end
 
         def sp_revenue(routes)
           routes_revenue(routes.select { |r| @train_base[r.train] == :sp })
         end
 
-        def bc_revenue(routes)
-          routes_revenue(routes.select { |r| @train_base[r.train] == :bc })
+        def lb_revenue(routes)
+          routes_revenue(routes.select { |r| @train_base[r.train] == :lb })
         end
 
         def submit_revenue_str(routes, _render_halts)
-          "#{format_revenue_currency(sp_revenue(routes))} (+#{format_revenue_currency(bc_revenue(routes))} Withhold)"
+          "#{format_revenue_currency(sp_revenue(routes))} (+#{format_revenue_currency(lb_revenue(routes))} Withhold)"
         end
 
         def assign_base(train, base)
@@ -681,11 +756,11 @@ module Engine
           if corporation.trains.empty?
             'None'
           else
-            bc = bc_trains(corporation)
+            lb = lb_trains(corporation)
             sp = sp_trains(corporation)
             str = ''
-            str += 'BC:' + bc.map(&:name).join(' ') unless bc.empty?
-            str += ' ' if !bc.empty? && !sp.empty?
+            str += 'LB:' + lb.map(&:name).join(' ') unless lb.empty?
+            str += ' ' if !lb.empty? && !sp.empty?
             str += 'SP:' + sp.map(&:name).join(' ') unless sp.empty?
             str
           end
@@ -696,8 +771,9 @@ module Engine
         end
 
         def update_end_bonuses(corp, routes)
-          offboards = {}
+          changed = false
           routes.each do |r|
+            offboards = {}
             r.hexes.each do |h|
               hid = h.id
               offboards['NE'] = true if NE_HEXES.include?(hid)
@@ -705,22 +781,34 @@ module Engine
               offboards['NW'] = true if NW_HEXES.include?(hid)
               offboards['SW'] = true if SW_HEXES.include?(hid)
             end
-          end
 
-          offboards.keys.each do |k|
-            unless @end_bonuses[corp].include?(k)
-              @end_bonuses[corp] << k
-              @log << "#{corp.name} receives '#{k}' end game bonus token"
+            next unless (offboards['NE'] || offboards['SE']) && (offboards['NW'] || offboards['SW'])
+
+            offboards.keys.each do |bonus|
+              next if @end_bonuses[corp].include?(bonus)
+              next unless @bonuses_left[bonus].positive?
+
+              @end_bonuses[corp] << bonus
+              @bonuses_left[bonus] -= 1
+              @log << "#{corp.name} receives '#{bonus}' end game bonus token"
+              changed = true
             end
+          end
+          update_bonus_locations if changed
+        end
+
+        def update_bonus_locations
+          BONUS_LOCATIONS.each do |bonus, hexid|
+            hex_by_id(hexid).tile.location_name = "Bonus Tokens: #{@bonuses_left[bonus]}"
           end
         end
 
         def timeline
           @timeline ||= [
             'SR 3: 7th corporation becomes available',
-            'OR 3.2: Space Port upgraded to 30c',
+            "OR 3.1: Space Port upgraded to #{format_currency(30)}",
             'OR 4.1: Remaining private companies close',
-            'OR 5.1: Space Port upgraded to 40c',
+            "OR 5.1: Space Port upgraded to #{format_currency(40)}",
             'Game ends after OR 5.3',
           ].freeze
           @timeline
@@ -774,9 +862,36 @@ module Engine
         end
 
         def player_value(player)
-          value = super
-          value += shares.sum { |s| @end_bonuses[s.corporation].size * END_BONUS_VALUE } if @finished
-          value
+          super + end_game_bonus_value(player)
+        end
+
+        def end_game_bonus_value(player)
+          return 0 unless @finished
+
+          player.shares.sum { |s| @end_bonuses[s.corporation].size * (s.percent / 10) * END_BONUS_VALUE }
+        end
+
+        def end_game!
+          super
+
+          if @end_bonuses.empty?
+            @log << 'No end of game bonuses'
+            return
+          end
+
+          @log << 'End of game bonus tokens:'
+          @corporations.reject(&:closed?).each do |c|
+            next if @end_bonuses[c].empty?
+
+            cnt = @end_bonuses[c].size
+            @log << "#{c.name} - #{cnt} bonus token#{cnt > 1 ? 's' : ''} (#{format_currency(cnt * END_BONUS_VALUE)} per share)"
+          end
+          bstring = @players.reject(&:bankrupt).map do |p|
+            next unless end_game_bonus_value(p).positive?
+
+            "#{p.name} (#{format_currency(end_game_bonus_value(p))})"
+          end.uniq.join(', ')
+          @log << "Total bonuses: #{bstring}" unless bstring.empty?
         end
 
         def entity_can_use_company?(entity, company)
@@ -793,6 +908,45 @@ module Engine
           super
         end
 
+        def sell_shares_and_change_price(bundle, allow_president_change: true, swap: nil)
+          return super if bundle.corporation.operated?
+
+          @share_pool.sell_shares(bundle, allow_president_change: allow_president_change, swap: swap)
+        end
+
+        def sellable_bundles(player, corporation)
+          return super unless @round.active_step.respond_to?(:sellable_bundles)
+
+          @round.active_step.sellable_bundles(player, corporation)
+        end
+
+        def emergency_issuable_cash(corporation)
+          emergency_issuable_bundles(corporation).group_by(&:corporation).sum do |_corp, bundles|
+            bundles.max_by(&:num_shares)&.price || 0
+          end
+        end
+
+        def emergency_issuable_bundles(entity)
+          return [] if entity.trains.any?
+          return [] unless @depot.min_depot_train
+
+          min_train_price = @depot.min_depot_price
+          return [] if entity.cash >= min_train_price
+
+          @corporations.flat_map do |corp|
+            bundles = bundles_for_corporation(entity, corp)
+            bundles.select! { |b| @share_pool.fit_in_bank?(b) }
+
+            # Cannot issue more shares than needed to buy the train from the bank
+            train_buying_bundles = bundles.select { |b| (entity.cash + b.price) >= min_train_price }
+            if train_buying_bundles.size > 1
+              excess_bundles = train_buying_bundles[1..-1]
+              bundles -= excess_bundles
+            end
+            bundles
+          end.compact
+        end
+
         def upgrade_cost(tile, hex, entity, spender)
           ability = entity.all_abilities.find do |a|
             a.type == :tile_discount &&
@@ -807,6 +961,78 @@ module Engine
             total_cost = upgrade.cost - discount
             total_cost
           end
+        end
+
+        def highlight_token?(token)
+          return false unless token
+          return false unless (corporation = token.corporation)
+
+          lb_city?(token.city, corporation)
+        end
+
+        def train_purchase_name(train)
+          "#{@train_base[train].to_s.upcase}:#{train.name}"
+        end
+
+        def show_map_legend?
+          true
+        end
+
+        def map_legend
+          [
+            # table-wide props
+            {
+              style: {
+                margin: '0.5rem 0 0.5rem 0',
+                border: '1px solid',
+                borderCollapse: 'collapse',
+              },
+            },
+            # header
+            [
+              { text: 'Tile Color:', props: { style: { border: '1px solid' } } },
+              { text: '', props: { style: { border: '1px solid', backgroundColor: '#fde900' } } },
+              { text: '', props: { style: { border: '1px solid', backgroundColor: '#71bf44' } } },
+              { text: '', props: { style: { border: '1px solid', backgroundColor: '#cb7745' } } },
+              { text: '', props: { style: { border: '1px solid', backgroundColor: '#bcbdc0' } } },
+            ],
+            # body
+            [
+              { text: 'Source-X', props: { style: { color: 'white', backgroundColor: 'black' } } },
+              { text: '20', props: { style: { border: '1px solid' } } },
+              { text: '40', props: { style: { border: '1px solid' } } },
+              { text: '60', props: { style: { border: '1px solid' } } },
+              { text: '80', props: { style: { border: '1px solid' } } },
+            ],
+            [
+              { text: 'Helium-3', props: { style: { color: 'white', backgroundColor: 'red' } } },
+              { text: '30', props: { style: { border: '1px solid' } } },
+              { text: '40', props: { style: { border: '1px solid' } } },
+              { text: '50', props: { style: { border: '1px solid' } } },
+              { text: '60', props: { style: { border: '1px solid' } } },
+            ],
+            [
+              { text: 'Regolith', props: { style: { border: '1px solid', backgroundColor: 'orange' } } },
+              { text: '20', props: { style: { border: '1px solid' } } },
+              { text: '20', props: { style: { border: '1px solid' } } },
+              { text: '40', props: { style: { border: '1px solid' } } },
+              { text: '50', props: { style: { border: '1px solid' } } },
+            ],
+            [
+              { text: 'Armacolite', props: { style: { border: '1px solid', backgroundColor: 'yellow' } } },
+              { text: '40', props: { style: { border: '1px solid' } } },
+              { text: '30', props: { style: { border: '1px solid' } } },
+              { text: '30', props: { style: { border: '1px solid' } } },
+              { text: '20', props: { style: { border: '1px solid' } } },
+            ],
+            [
+              { text: 'Magnetite', props: { style: { border: '1px solid' } } },
+              { text: '10', props: { style: { border: '1px solid' } } },
+              { text: '10', props: { style: { border: '1px solid' } } },
+              { text: '10', props: { style: { border: '1px solid' } } },
+              { text: '10', props: { style: { border: '1px solid' } } },
+            ],
+          ]
         end
       end
     end

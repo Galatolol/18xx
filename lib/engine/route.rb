@@ -20,6 +20,7 @@ module Engine
       @subsidy = opts[:subsidy]
       @halts = opts[:halts]
       @abilities = opts[:abilities]
+      @node_signatures = opts[:nodes] # node.signature for every node in the route
       @local_length = @game.local_length
 
       @node_chains = {}
@@ -33,6 +34,7 @@ module Engine
 
     def clear_cache!(all: false, only_routes: false)
       @connection_hexes = nil if all
+      @node_signatures = nil if all
       @revenue = nil
       @revenue_str = nil
 
@@ -83,6 +85,10 @@ module Engine
 
     def chains
       connection_data&.map { |c| c[:chain] }
+    end
+
+    def node_signatures
+      @node_signatures ||= chains.flat_map { |c| c[:nodes] }.uniq.compact.map(&:signature)
     end
 
     def next_chain(node, chain, other)
@@ -225,7 +231,7 @@ module Engine
     end
 
     def visited_stops
-      @visited_stops ||= connection_data.flat_map { |c| [c[:left], c[:right]] }.uniq
+      @visited_stops ||= connection_data.flat_map { |c| [c[:left], c[:right]] }.uniq.compact
     end
 
     def stops
@@ -273,8 +279,10 @@ module Engine
     def ordered_paths
       @ordered_paths ||= connection_data.flat_map do |c|
         cpaths = c[:chain][:paths]
+        next if cpaths.empty?
+
         cpaths[0].nodes.include?(c[:left]) ? cpaths : cpaths.reverse
-      end
+      end.compact
     end
 
     def ordered_hexes
@@ -303,7 +311,7 @@ module Engine
       @game.check_other(self)
     end
 
-    def revenue
+    def revenue(suppress_check_other: false)
       @revenue ||=
         begin
           visited = visited_stops
@@ -317,7 +325,7 @@ module Engine
           end
 
           check_terminals!
-          check_other!
+          check_other! unless suppress_check_other
           check_cycles!
           check_distance!(visited)
           check_overlap!
@@ -378,6 +386,7 @@ module Engine
     def find_pairwise_chain(chains_a, chains_b, other_paths)
       chains_a = chains_a.select { |a| (a[:paths] & other_paths).empty? }
       chains_b = chains_b.select { |b| (b[:paths] & other_paths).empty? }
+      candidates = []
       chains_a.each do |a|
         chains_b.each do |b|
           next if (middle = (a[:nodes] & b[:nodes])).empty?
@@ -385,11 +394,24 @@ module Engine
 
           left = (a[:nodes] - middle)[0]
           right = (b[:nodes] - middle)[0]
-          return [a, b, left, right, middle[0]]
+          candidates.append([a, b, left, right, middle[0]])
         end
       end
 
-      []
+      return [] if candidates.empty?
+
+      return candidates[0] if candidates.size == 1
+
+      # If we're reconstructing a route with multiple ways to satisfy
+      # the connection data (e.g., 457--464, IR7--8), prefer ones that
+      # pass through the nodes associated with it.
+      if @node_signatures
+        candidates.each do |a, b, left, right, middle|
+          return [a, b, left, right, middle] if [left, right, middle].all? { |n| @node_signatures.include?(n.signature) }
+        end
+      end
+
+      candidates[0]
     end
 
     def find_matching_chains(hex_ids)
@@ -437,6 +459,7 @@ module Engine
       other_paths = compute_other_paths
 
       if possibilities.one?
+        @node_signatures = nil
         chain = possibilities[0].find do |ch|
           ch[:nodes].any? { |node| @game.city_tokened_by?(node, corporation) } && (ch[:paths] & other_paths).empty?
         end
@@ -449,7 +472,10 @@ module Engine
       else
         possibilities.each_cons(2).with_index do |pair, index|
           a, b, left, right, middle = find_pairwise_chain(*pair, other_paths)
-          return @connection_data.clear if !left&.hex || !right&.hex || !middle&.hex
+          if !left&.hex || !right&.hex || !middle&.hex
+            @node_signatures = nil
+            return @connection_data.clear
+          end
 
           @connection_data << { left: left, right: middle, chain: a } if index.zero?
           @connection_data << { left: middle, right: right, chain: b }
@@ -458,6 +484,7 @@ module Engine
         end
       end
 
+      @node_signatures = nil
       @connection_data
     end
 

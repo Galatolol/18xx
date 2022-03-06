@@ -184,9 +184,11 @@ module View
         children << h(:div, "#{@corporation.name} has #{@game.format_currency(@corporation.cash)}.")
         if @step.issuable_shares(@corporation).any? &&
            (issuable_cash = @game.emergency_issuable_cash(@corporation)).positive?
-          issue_str = "#{@corporation.name} can issue shares to raise up to #{@game.format_currency(issuable_cash)}"
+          issue_verb = 'issue'
+          issue_verb = @step.issue_verb(@corporation) if @step.respond_to?(:issue_verb)
+          issue_str = "#{@corporation.name} can #{issue_verb} shares to raise up to #{@game.format_currency(issuable_cash)}"
           if @step.must_issue_before_ebuy?(@corporation)
-            issue_str += ' (the corporation must issue shares before the president may contribute)'
+            issue_str += " (the corporation must #{issue_verb} shares before the president may contribute)"
           end
           issue_str += '.'
           children << h(:div, issue_str)
@@ -303,7 +305,7 @@ module View
       def other_trains(other_corp_trains, corporation)
         hidden_trains = false
         trains_to_buy = other_corp_trains.flat_map do |other, trains|
-          trains.group_by(&:name).flat_map do |name, group|
+          trains.group_by { |t| @game.train_purchase_name(t) }.flat_map do |name, group|
             fixed_price = @step.respond_to?(:fixed_price) && @step.fixed_price(group[0])
             input = if fixed_price
                       h('div.right', @game.format_currency(fixed_price))
