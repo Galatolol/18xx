@@ -153,9 +153,9 @@ module Engine
             price: 720,
             events: [{ 'type' => 'train_trade_allowed' }],
             discount: {
-              '3+' => 440,
+              '3+' => 280,
               '4' => 360,
-              '4+' => 240,
+              '4+' => 480,
             },
           },
         ].freeze
@@ -163,9 +163,11 @@ module Engine
         EVENTS_TEXT = Base::EVENTS_TEXT.merge('corporations_can_merge' => ['Corporations can merge',
                                                                            'Players can vote to merge corporations'],
                                               'green_par' => ['Green phase pars',
-                                                              '122zł par price is now available'],
+                                                              '122 zł par price is now available'],
                                               'brown_par' => ['Brown phase pars',
-                                                              '148zł par price is now available'],
+                                                              '148 zł par price is now available'],
+                                              'iol_must_be_assigned' => ['Must assign IoŁ',
+                                                                         'Industralisation of Łódź marker must be assigned'],
                                               'train_trade_allowed' => ['Train trade in allowed',
                                                                         'Trains can be traded in for face value for more powerful trains'],).freeze
 
