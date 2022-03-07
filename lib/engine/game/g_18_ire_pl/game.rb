@@ -44,10 +44,10 @@ module Engine
         CURRENCY_FORMAT_STR = '%d zł'
         BANK_CASH = 4000
         CERT_LIMIT = { 3 => 16, 4 => 12, 5 => 10, 6 => 8 }.freeze
-        MINOR_MARKET_SHARE_LIMIT = 40
         STARTING_CASH = { 3 => 400, 4 => 300, 5 => 240, 6 => 210 }.freeze
         LIMIT_TOKENS_AFTER_MERGER = 4
         GAME_END_CHECK = { bankrupt: :full_or, stock_market: :full_or, bank: :full_or }.freeze
+        MINOR_MARKET_SHARE_LIMIT = 40
 
         MARKET = [
           ['', '62', '68', '76', '84', '92', '100p', '110', '122x', '134', '148w', '170', '196', '225', '260e'],
@@ -443,7 +443,7 @@ module Engine
               new_operating_round
             when Engine::Round::Operating
               or_round_finished
-              if @round.round_num < @operating_rounds || phase.name.to_i == 2
+              if @round.round_num < @operating_rounds || phase.name == 'Yellow'
                 new_or!
               else
                 @log << "-- #{round_description('Merger', @round.round_num)} --"
