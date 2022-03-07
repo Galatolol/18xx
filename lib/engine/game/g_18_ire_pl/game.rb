@@ -170,7 +170,8 @@ module Engine
                                               'iol_must_be_assigned' => ['Must assign IoŁ',
                                                                          'Industralisation of Łódź marker must be assigned'],
                                               'train_trade_allowed' => ['Train trade in allowed',
-                                                                        'Trains can be traded in for face value for more powerful trains'],).freeze
+                                                                        'Trains can be traded in for face value for more '\
+                                                                        'powerful trains'],).freeze
 
         MINOR_A_ID = 'MA'
         MINOR_B_ID = 'MB'
@@ -199,14 +200,14 @@ module Engine
 
           if route.train.owner.companies.include?(company_by_id('BS'))
             bs_hex_visits_count = 0
-            route.routes.each do |route|
-              route.visited_stops.each do |stop|
+            route.routes.each do |r|
+              r.visited_stops.each do |stop|
                 next unless stop.hex.assigned?(bs)
 
                 bs_hex_visits_count += 1
                 if bs_hex_visits_count > 1
                   raise GameError,
-                        "#{route.train.owner.name} can't run to #{stop.hex.coordinates} more than once"
+                        "#{r.train.owner.name} can't run to #{stop.hex.coordinates} more than once"
                 end
               end
             end
@@ -241,13 +242,11 @@ module Engine
           corporations.delete(removed_corporation)
         end
 
-        SOUTHERN_OFFBOARDS = %w[A13 C17 I19 K17]
-        NORTHERN_OFFBOARDS = %w[G3 I3 K5]
-        POTENTIAL_PLUS_TEN_HEXES = %w[C9 C13 E3 F16 G17]
+        SOUTHERN_OFFBOARDS = %w[A13 C17 I19 K17].freeze
+        NORTHERN_OFFBOARDS = %w[G3 I3 K5].freeze
+        POTENTIAL_PLUS_TEN_HEXES = %w[C9 C13 E3 F16 G17].freeze
 
         def optional_hexes
-          hexes = G18IrePL::Map::HEXES
-
           southern_offboards_randomized = SOUTHERN_OFFBOARDS.sort_by { rand }
           @minor_a_starting_location = southern_offboards_randomized.shift
 
@@ -478,10 +477,10 @@ module Engine
         def event_iol_must_be_assigned!
           iol_hex = hexes.find { |hex| hex.coordinates == IOL_HEX_COORDINATES }
           iol = iol_company&.id
-          unless iol_hex.assigned?(iol)
-            iol_hex.assign!(iol)
-            @log << "-- Event: +20 marker placed in #{IOL_HEX_COORDINATES} --"
-          end
+          return unless iol_hex.assigned?(iol)
+
+          iol_hex.assign!(iol)
+          @log << "-- Event: +20 marker placed in #{IOL_HEX_COORDINATES} --"
         end
 
         def event_train_trade_allowed!; end

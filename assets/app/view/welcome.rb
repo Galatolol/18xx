@@ -52,7 +52,16 @@ module View
 
     def render_introduction
       message = <<~MESSAGE
-        #{'        '}
+        <p>18xx.games is a website where you can play async or real-time 18xx games (based on the system originally devised by the brilliant Francis Tresham)!
+        If you are new to 18xx games then Shikoku 1889, 18Chesapeake, or 18MS are good games to begin with.</p>
+
+        <p>You can play locally with hot seat mode without an account. If you want to play multiplayer, you'll need to create an account.</p>
+
+        <p>If you look at other people's games, you can make moves to play around but it won't affect them and changes won't be saved.
+        You can clone games in the tools tab and then play around locally.</p>
+
+        <p>In multiplayer games, you'll also be able to make moves for other players, this is so people can say 'pass me this SR' and you don't
+        need to wait. To use this feature in a game, enable "Master Mode" in the Tools tab. Please use it politely!</p>
       MESSAGE
 
       props = {
@@ -88,7 +97,7 @@ module View
 
       h('div#buttons', props, [
         h(:button, create_props, 'CREATE A NEW GAME'),
-        # h(:button, tutorial_props, 'TUTORIAL'),
+        h(:button, tutorial_props, 'TUTORIAL'),
       ])
     end
   end

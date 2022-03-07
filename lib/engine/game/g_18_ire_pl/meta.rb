@@ -8,7 +8,8 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :alpha
+        DEV_STAGE = :prealpha
+        PROTOTYPE = true
 
         GAME_DESIGNER = 'Jan Kłos'
         GAME_INFO_URL = 'https://boardgamegeek.com/geeklist/50723/item/7164253#item7164253'
