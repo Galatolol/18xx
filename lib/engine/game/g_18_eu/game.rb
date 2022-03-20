@@ -226,6 +226,12 @@ module Engine
           (minors.sort_by { |m| m.name.to_i } + majors.sort_by(&:name)).group_by(&:owner)
         end
 
+        def place_home_token(corporation)
+          return if corporation.placed_tokens.any?
+
+          super
+        end
+
         def route_ends_red?(stops)
           return false unless stops.size > 1
 
@@ -447,6 +453,7 @@ module Engine
         end
 
         def hex_blocked_by_ability?(entity, ability, hex)
+          return false unless hex.tile.color == :white
           return false if entity&.owner == ability&.owner&.owner
 
           super
