@@ -24,11 +24,12 @@ module Engine
                         }],
           },
           {
-            name: 'Chrleroi-Sud',
+            name: 'Charleroi-Sud',
             sym: 'CS',
             value: 50,
             revenue: 10,
-            desc: 'Owning corporation may lay or upgrade a tile in Charleroi (G14) along with an optional station marker.'\
+            desc: 'Owning corporation may lay a yellow tile or upgrade a yellow tile in Charleroi'\
+                  ' (G14) along with an optional station marker.'\
                   ' This counts as one of the corporation\'s tile builds.'\
                   ' Blocks G14 while owned by a player.',
             abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['G14'] },
@@ -36,25 +37,24 @@ module Engine
                           type: 'teleport',
                           owner_type: 'corporation',
                           hexes: ['G14'],
-                          tiles: %w[14 15 35 36 57 118 619 X10 X11 X12 X13 X14 X15],
+                          tiles: %w[14 15 57 619],
                         }],
           },
           {
             name: 'Ligne de Saint-Quentin à Guise',
             sym: 'SQG',
-            value: 80,
-            revenue: 10,
-            desc: 'Never closes.',
-            abilities: [{ type: 'close', on_phase: 'never', owner_type: 'player' },
-                        { type: 'close', on_phase: 'never', owner_type: 'corporation' }],
+            value: 90,
+            desc: 'Revenue is equal to twice the revenue of Saint-Quentin (G10) if Saint-Quentin is green or brown, otherwise it\'s 0 F.'\
+                  ' Closes in purple                            phase.',
+            abilities: [{ type: 'close', on_phase: 'Purple' },],
           },
           {
-            name: 'Port company',
+            name: 'London shipping',
             sym: 'PC',
             value: 100,
             revenue: 15,
-            desc: 'Owning corporation may place a +10 marker in England (A10). For this corporation only, the value'\
-                  ' of England is increased by 10.',
+            desc: 'Owning corporation may place a +10 marker in London (A10). For this corporation only, the value'\
+                  ' of London is increased by 10.',
             abilities: [{
               type: 'assign_hexes',
               when: 'owning_corp_or_turn',
@@ -80,13 +80,13 @@ module Engine
           {
             name: 'PLM major shareholding',
             sym: 'PLMMS',
-            value: 180,
+            value: 200,
             revenue: 25,
             desc: 'Owning player immediately receives the President\'s certificate of the'\
                   ' PLM without further payment. This private company may not be sold to any corporation, and does'\
                   ' not exchange hands if the owning player loses the Presidency of the PLM.'\
-                  ' When the PLM purchases its first train, the private company is closed.',
-            abilities: [{ type: 'close', when: 'bought_train', corporation: 'PLM' },
+                  ' Closes in green phase.',
+            abilities: [{ type: 'close', on_phase: 'Green' },
                         { type: 'no_buy' },
                         { type: 'shares', shares: 'PLM_0' }],
           },
@@ -99,6 +99,7 @@ module Engine
             logo: '1894/Ouest',
             simple_logo: '1894/Ouest.alt',
             tokens: [0, 40, 60, 80, 100],
+            max_ownership_percent: 70,
             coordinates: 'D3',
             color: '#4682b4',
           },
@@ -108,6 +109,7 @@ module Engine
             logo: '1894/Nord',
             simple_logo: '1894/Nord.alt',
             tokens: [0, 40, 60, 80, 100],
+            max_ownership_percent: 60,
             coordinates: 'D11',
             color: '#ff4040',
           },
@@ -117,6 +119,7 @@ module Engine
             logo: '1894/GR',
             simple_logo: '1894/GR.alt',
             tokens: [0, 40, 60, 80, 100],
+            max_ownership_percent: 60,
             coordinates: 'D15',
             color: '#fcf75e',
             text_color: 'black',
@@ -127,6 +130,7 @@ module Engine
             logo: '1894/CAB',
             simple_logo: '1894/CAB.alt',
             tokens: [0, 40, 60, 80, 100],
+            max_ownership_percent: 60,
             coordinates: 'E6',
             color: '#9c661f',
           },
@@ -135,7 +139,8 @@ module Engine
             name: 'Chemins de fer de l\'État belge',
             logo: '1894/Belge',
             simple_logo: '1894/Belge.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 40, 60, 80],
+            max_ownership_percent: 60,
             coordinates: 'F15',
             color: '#61b229',
           },
@@ -145,6 +150,7 @@ module Engine
             logo: '1894/PLM',
             simple_logo: '1894/PLM.alt',
             tokens: [0, 40, 60, 80],
+            max_ownership_percent: 60,
             coordinates: 'G4',
             city: 0,
             color: '#dda0dd',
@@ -156,13 +162,16 @@ module Engine
             logo: '1894/Est',
             simple_logo: '1894/Est.alt',
             tokens: [0, 40, 60, 80, 100],
+            max_ownership_percent: 60,
             coordinates: 'I8',
             color: '#ff9966',
             text_color: 'black',
             abilities: [
               {
-                type: 'description',
-                description: 'Value of Le Sud increased by 20',
+                type: 'hex_bonus',
+                amount: 0,
+                description: 'Value of Le Sud (I2) increased by 30.',
+                hexes: ['I2'],
               },
             ],
           },
@@ -172,6 +181,7 @@ module Engine
             logo: '1894/F1',
             simple_logo: '1894/F1.alt',
             tokens: [0, 40],
+            max_ownership_percent: 60,
             color: '#ffc0cb',
             text_color: 'black',
             abilities: [
@@ -187,6 +197,7 @@ module Engine
             logo: '1894/F2',
             simple_logo: '1894/F2.alt',
             tokens: [0, 40],
+            max_ownership_percent: 60,
             color: 'lime',
             text_color: 'black',
             abilities: [
@@ -202,6 +213,7 @@ module Engine
             logo: '1894/B1',
             simple_logo: '1894/B1.alt',
             tokens: [0, 40],
+            max_ownership_percent: 60,
             color: '#c9c9c9',
             text_color: 'black',
             abilities: [
@@ -217,6 +229,7 @@ module Engine
             logo: '1894/B2',
             simple_logo: '1894/B2.alt',
             tokens: [0, 40],
+            max_ownership_percent: 60,
             color: '#ffefdb',
             text_color: 'black',
             abilities: [

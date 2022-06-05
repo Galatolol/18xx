@@ -17,21 +17,18 @@ module Engine
 
         CURRENCY_FORMAT_STR = '%d F'
 
-        BANK_CASH = 8000
+        BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 99, 4 => 99, 5 => 99 }.freeze
+        CERT_LIMIT = { 3 => 99, 4 => 99 }.freeze
 
-        STARTING_CASH = { 3 => 650, 4 => 550 }.freeze
+        STARTING_CASH = { 3 => 650, 4 => 540 }.freeze
 
         CAPITALIZATION = :full
 
         MUST_SELL_IN_BLOCKS = false
 
         MARKET = [
-          %w[60o
-             67
-             71
-             76
+          %w[76
              82
              90
              100p
@@ -46,11 +43,8 @@ module Engine
              285
              325
              375
-             425],
-          %w[53o
-             60o
-             66
-             70
+             425e],
+          %w[70
              76
              82
              90p
@@ -66,10 +60,7 @@ module Engine
              275
              300
              330],
-          %w[46o
-             55o
-             60o
-             65
+          %w[65
              70
              76
              82p
@@ -82,10 +73,7 @@ module Engine
              170
              190
              210],
-          %w[39o
-             48o
-             54o
-             60o
+          %w[60o
              66
              71
              76p
@@ -95,13 +83,13 @@ module Engine
              110
              120
              130],
-          %w[32o 41o 48o 55o 62 67 71p 76 82 90 100],
-          %w[25o 34o 42o 50o 58o 65 67p 71 75 80],
-          %w[18o 27o 36o 45o 54o 63 67 69 70],
-          %w[10o 20o 30o 40o 50o 60o 67 68],
-          ['', '10o', '20o', '30o', '40o', '50o', '60o'],
-          ['', '', '10o', '20o', '30o', '40o', '50o'],
-          ['', '', '', '10o', '20o', '30o', '40o'],
+          %w[55o 62 67 71p 76 82 90 100],
+          %w[50o 58o 65 67p 71 75 80],
+          %w[45o 54o 63 67 69 70],
+          %w[40o 50o 60o 67 68],
+          ['30o', '40o', '50o', '60o'],
+          ['20o', '30o', '40o', '50o'],
+          ['10o', '20o', '30o', '40o'],
         ].freeze
 
         PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
@@ -151,13 +139,13 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 7 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 8 },
                   {
                     name: '3',
                     distance: 3,
                     price: 160,
                     rusts_on: '5',
-                    num: 5,
+                    num: 6,
                     discount: { '2' => 40 },
                   },
                   {
@@ -181,7 +169,7 @@ module Engine
                     name: '6',
                     distance: 6,
                     price: 600,
-                    num: 3,
+                    num: 2,
                     events: [{ 'type' => 'close_companies' }],
                     discount: { '5' => 200 },
                   },
@@ -215,10 +203,11 @@ module Engine
 
         GAME_END_CHECK = {
           bankrupt: :immediate,
-          bank: :full_or,
+          stock_market: :immediate,
+          final_phase: :one_more_full_or_set,
         }.freeze
 
-        SELL_BUY_ORDER = :sell_buy_sell
+        SELL_BUY_ORDER = :sell_buy
 
         NEXT_SR_PLAYER_ORDER = :first_to_pass
 
@@ -239,21 +228,40 @@ module Engine
         IPO_RESERVED_NAME = 'Treasury'
 
         EVENTS_TEXT = Base::EVENTS_TEXT.merge(
-          late_corporations_available: ['Late corporations are now available'],
+          'late_corporations_available' => ['Late corporations available', 'Late corporations can be opened'],
         ).freeze
 
-        ENGLAND_HEX = 'A10'
-        ENGLAND_FERRY_SUPPLY = 'A8'
+        LONDON_HEX = 'A10'
+        LONDON_FERRY_SUPPLY = 'A8'
         FERRY_MARKER_ICON = 'ferry'
         FERRY_MARKER_COST = 60
 
         PARIS_HEX = 'G4'
-        SQG_HEX = 'G10'
-
+        LE_SUD_HEX = 'I2'
+        LUXEMBOURG_HEX = 'I18'
         AMIENS_HEX = 'E6'
         AMIENS_TILE = 'X3'
+        ROUEN_HEX = 'D3'
+        ROUEN_TILE = 'X16'
+        SQ_HEX = 'G10'
+        SQ_TILE = 'X17'
 
         GREEN_CITY_TILES = %w[14 15 619].freeze
+        GREEN_CITY_14_TILE = '14'
+        BROWN_CITY_14_UPGRADES_TILES = %w[X14 X15 36].freeze
+        GREEN_CITY_15_TILE = '15'
+        BROWN_CITY_15_UPGRADES_TILES = %w[X12 35 118].freeze
+        GREEN_CITY_619_TILE = '619'
+        BROWN_CITY_619_UPGRADES_TILES = %w[X10 X11 X13].freeze
+        BROWN_CITY_UPGRADES_TILES = %w[X10 X11 X12 X13 X14 X15 35 36 118]
+
+        REGULAR_CORPORATIONS = %w[PLM CAB Ouest Belge GR Nord Est].freeze
+        FRENCH_LATE_CORPORATIONS = %w[F1 F2].freeze
+        FRENCH_LATE_CORPORATIONS_HOME_HEXES = %w[B3 B9 B11 D3 D11 E6 E10 G2 G4 G10 I8].freeze
+        BELGIAN_LATE_CORPORATIONS = %w[B1 B2].freeze
+        BELGIAN_LATE_CORPORATIONS_HOME_HEXES = %w[D15 D17 E16 F15 G14 H17].freeze
+
+        DESTINATION_ABILITY_TYPES = %i[assign_hexes hex_bonus].freeze
 
         def stock_round
           G1894::Round::Stock.new(self, [
@@ -269,8 +277,8 @@ module Engine
             Engine::Step::Assign,
             Engine::Step::BuyCompany,
             G1894::Step::SpecialBuy,
-            G1894::Step::RedeemShares,
             Engine::Step::HomeToken,
+            G1894::Step::RedeemShares,
             G1894::Step::Track,
             G1894::Step::Token,
             G1894::Step::Route,
@@ -278,6 +286,7 @@ module Engine
             Engine::Step::DiscardTrain,
             G1894::Step::BuyTrain,
             [Engine::Step::BuyCompany, { blocks: true }],
+            G1894::Step::UpdateTokens,
           ], round_num: round_num)
         end
 
@@ -292,12 +301,42 @@ module Engine
 
           @ferry_marker_ability =
             Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
-          block_england
+          block_london
 
-          plm = corporations.find { |c| c.id == 'PLM' }
+          plm = corporation_by_id('PLM')
           paris_tiles_names = %w[X1 X4 X5 X7 X8]
           paris_tiles = @all_tiles.select { |t| paris_tiles_names.include?(t.name) }
           paris_tiles.each { |t| t.add_reservation!(plm, 0) }
+
+          @players.each do |player|
+            share_pool.transfer_shares(plm.ipo_shares.last.to_bundle, player)
+          end
+
+          if @players.size == 3
+            share_pool.transfer_shares(plm.ipo_shares.last.to_bundle, share_pool)
+          end
+        end
+
+        def init_hexes(companies, corporations)
+          hexes = super
+
+          @corporations.each do |corporation|
+            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
+
+            dest_hexes = dest_abilities.map(&:hexes).flatten
+
+            hexes
+              .select { |h| dest_hexes.include?(h.name) }
+              .each { |h| h.assign!(corporation) }
+          end
+
+          hexes
+        end
+
+        def assignment_tokens(assignment)
+          return "/icons/#{assignment.logo_filename}" if assignment.is_a?(Engine::Corporation)
+
+          super
         end
 
         def init_stock_market
@@ -332,44 +371,150 @@ module Engine
           @players.rotate!(@round.entity_index)
         end
 
-        def issuable_shares(entity)
-          return [] if entity.num_ipo_reserved_shares < 1 || entity.num_ipo_shares - entity.num_ipo_reserved_shares != 0
+        def action_processed(action)
+          super
 
-          bundle = Engine::ShareBundle.new(entity.shares_of(entity))
+          return unless action.is_a?(Action::LayTile)
+
+          tile = hex_by_id(action.hex.id).tile
+
+          #return unless action.hex.id == SQ_HEX
+          if action.hex.id != SQ_HEX || tile.color == :yellow
+            return
+          end
+
+          sqg = company_by_id('SQG')
+          sqg.revenue = 2 * get_current_revenue(tile.cities[0].revenue)
+          @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
+        end
+
+        def issuable_shares(entity)
+          # if the corporation has more redeemed shares than are left in IPO
+          return [] unless entity.num_ipo_reserved_shares > entity.num_ipo_shares - entity.num_ipo_reserved_shares
+
+          bundle = Engine::ShareBundle.new(entity.reserved_shares)
           bundle.share_price = 100
 
           [bundle]
         end
 
         def redeemable_shares(entity)
+          return bundles_for_corporation(share_pool, entity).reject { |bundle| bundle.shares.size > 2 || entity.cash < bundle.price } if entity.share_price.type == :unlimited
+
           bundles_for_corporation(share_pool, entity)
             .reject { |bundle| bundle.shares.size > 1 || entity.cash < bundle.price }
         end
 
+        def late_corporation_possible_home_hexes(corporation)
+          possible_home_hexes = if FRENCH_LATE_CORPORATIONS.include?(corporation.name)
+                                  FRENCH_LATE_CORPORATIONS_HOME_HEXES
+                                else
+                                  BELGIAN_LATE_CORPORATIONS_HOME_HEXES
+                                end
+
+          possible_home_hexes = possible_home_hexes.map { |coord| hex_by_id(coord) }.select do |hex|
+            hex.tile.reservations.none? && hex.tile.cities.any? { |city| city.tokenable?(corporation, free: true) }
+          end
+
+          possible_home_hexes_without_track = possible_home_hexes.select { |h| h.tile.color == :white }
+          possible_home_hexes = possible_home_hexes_without_track unless possible_home_hexes_without_track.none?
+
+          raise GameError, 'No possible home location' if possible_home_hexes.nil?
+
+          possible_home_hexes.map(&:id)
+        end
+
+        def home_hex(corporation, hex)
+          corporation.coordinates = hex
+          hex_by_id(hex).tile.add_reservation!(corporation, 0)
+        end
+
         def upgrades_to?(from, to, _special = false, selected_company: nil)
           return to.name == AMIENS_TILE if from.hex.name == AMIENS_HEX && from.color == :white
+          #return to.name == ROUEN_TILE if from.hex.name == ROUEN_HEX && from.color == :white
+          #return to.name == SQ_TILE if from.hex.name == SQ_HEX && from.color == :white
           return GREEN_CITY_TILES.include?(to.name) if from.hex.name == AMIENS_HEX && from.color == :yellow
+          #return GREEN_CITY_TILES.include?(to.name) if from.hex.name == ROUEN_HEX && from.color == :yellow
+          #return GREEN_CITY_TILES.include?(to.name) if from.hex.name == SQ_HEX && from.color == :yellow
+          return BROWN_CITY_14_UPGRADES_TILES.include?(to.name) if from.hex.tile.name == GREEN_CITY_14_TILE
+          return BROWN_CITY_15_UPGRADES_TILES.include?(to.name) if from.hex.tile.name == GREEN_CITY_15_TILE
+          return BROWN_CITY_619_UPGRADES_TILES.include?(to.name) if from.hex.tile.name == GREEN_CITY_619_TILE
 
           super
+        end
+
+        def save_tokens(tokens)
+          @saved_tokens = tokens
+          save_tokens_hex(nil) if tokens == nil || tokens.size == 0 
+        end
+
+        def saved_tokens
+          return [] if @saved_tokens == nil
+
+          @saved_tokens.sort_by { |t| operating_order.index(t[:entity]) }
+        end
+
+        def save_tokens_hex(hex)
+          @saved_tokens_hex = hex
+        end
+
+        def saved_tokens_hex
+          @saved_tokens_hex
         end
 
         def revenue_for(route, stops)
           revenue = super
           revenue += pc_bonus(route.corporation, stops)
           revenue += est_le_sud_bonus(route.corporation, stops)
+          revenue += luxembourg_value(route.corporation, stops)
+
+          raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
+
           revenue
         end
 
-        def pc_bonus(corp, stops)
-          corp.assigned?('PC') && stops.any? { |s| s.hex.assigned?('PC') } ? 10 : 0
+        def pc_bonus(corporation, stops)
+          is_pc_owner_running_to_london(corporation, stops) ? 10 : 0
         end
 
-        def est_le_sud_bonus(corp, stops)
-          corp.id == 'Est' && stops.any? { |s| s.hex.id == 'I2' } ? 20 : 0
+        def est_le_sud_bonus(corporation, stops)
+          is_est_running_to_le_sud(corporation, stops) ? 30 : 0
+        end
+
+        def is_est_running_to_le_sud(corporation, stops)
+          corporation.id == 'Est' && stops.any? { |s| s.hex.id == LE_SUD_HEX }
+        end
+
+        def is_pc_owner_running_to_london(corporation, stops)
+          corporation.assigned?('PC') && stops.any? { |s| s.hex.assigned?('PC') }
+        end
+
+        def luxembourg_value(corporation, stops)
+          return 0 unless stops.any? { |s| s.hex.id == LUXEMBOURG_HEX }
+
+          revenues = stops.map { |s| get_current_revenue(s.revenue) }
+          revenues << 60 if is_est_running_to_le_sud(corporation, stops)
+          revenues << get_current_revenue(hex_by_id(LONDON_HEX).tile.cities[0].revenue) + 10 if is_pc_owner_running_to_london(corporation, stops)
+
+          revenues.max + 10
+        end
+
+        def get_current_revenue(revenue)
+          phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
+
+          0
+        end
+
+        def check_distance(route, _visits)
+          if route.connection_hexes.flatten.include?(LONDON_HEX) && !ferry_marker?(current_entity)
+            raise GameError, 'Cannot run to London without a Ferry marker'
+          end
+
+          super
         end
 
         def ferry_marker_available?
-          hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons.any? { |icon| icon.name == FERRY_MARKER_ICON }
+          hex_by_id(LONDON_FERRY_SUPPLY).tile.icons.any? { |icon| icon.name == FERRY_MARKER_ICON }
         end
 
         def ferry_marker?(entity)
@@ -382,8 +527,8 @@ module Engine
           entity.all_abilities.select { |ability| ability.description == @ferry_marker_ability.description }
         end
 
-        def connected_to_england?(entity)
-          graph.reachable_hexes(entity).include?(hex_by_id(ENGLAND_HEX))
+        def connected_to_london?(entity)
+          graph.reachable_hexes(entity).include?(hex_by_id(LONDON_HEX))
         end
 
         def can_buy_ferry_marker?(entity)
@@ -392,7 +537,7 @@ module Engine
           ferry_marker_available? &&
             !ferry_marker?(entity) &&
             buying_power(entity) >= FERRY_MARKER_COST &&
-            connected_to_england?(entity)
+            connected_to_london?(entity)
         end
 
         def buy_ferry_marker(entity)
@@ -402,18 +547,18 @@ module Engine
           entity.add_ability(@ferry_marker_ability.dup)
           @log << "#{entity.name} buys a ferry marker for $#{FERRY_MARKER_COST}"
 
-          tile_icons = hex_by_id(ENGLAND_FERRY_SUPPLY).tile.icons
-          tile_icons.reject! { |icon| icon.name == FERRY_MARKER_ICON }
+          tile_icons = hex_by_id(LONDON_FERRY_SUPPLY).tile.icons
+          tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == FERRY_MARKER_ICON })
 
           graph.clear
         end
 
-        def block_england
-          england = hex_by_id(ENGLAND_HEX).tile.cities.first
+        def block_london
+          london = hex_by_id(LONDON_HEX).tile.cities.first
 
-          england.instance_variable_set(:@game, self)
+          london.instance_variable_set(:@game, self)
 
-          def england.blocks?(corporation)
+          def london.blocks?(corporation)
             !@game.ferry_marker?(corporation)
           end
         end
@@ -426,15 +571,26 @@ module Engine
           to_remove = @depot.trains.reverse.find { |t| t.name == '5' }
           @depot.forget_train(to_remove)
           @log << "Removing #{to_remove.name} train"
+
+          # to_remove = @depot.trains.reverse.find { |t| t.name == '6' }
+          # @depot.forget_train(to_remove)
+          # @log << "Removing #{to_remove.name} train"
         end
 
         def remove_extra_late_corporations
+          to_remove = @late_corporations.select { |c| c.id == 'B2' }
+          @late_corporations.delete(to_remove)
+          @log << 'Removing B2 late corporation'
+
           return unless @players.size == 3
 
-          to_remove = @late_corporations.select { |c| %w[F2 B2].include?(c.id) }
-          @late_corporations.delete(to_remove[0])
-          @late_corporations.delete(to_remove[1])
-          @log << 'Removing F2 and B2 late corporations'
+          to_remove = @late_corporations.select { |c| c.id == 'F2' }
+          @late_corporations.delete(to_remove)
+          @log << 'Removing F2 late corporation'
+        end
+
+        def plm_corporation
+          @plm_corporation ||= corporation_by_id('PLM')
         end
       end
     end
