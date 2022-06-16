@@ -8,7 +8,7 @@ module Mail
   API_PATH = 'https://api.elasticemail.com/v2/email/send'
 
   def self.send(user, subject, html)
-    return unless ENV['RACK_ENV'] == 'production'
+    # return unless ENV['RACK_ENV'] == 'production'
 
     uri = URI.parse(API_PATH)
     req = Net::HTTP::Post.new(uri)
