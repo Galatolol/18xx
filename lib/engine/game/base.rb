@@ -77,7 +77,7 @@ module Engine
     class Base
       include Game::Meta
 
-      attr_reader :raw_actions, :actions, :bank, :cert_limit, :cities, :companies, :corporations,
+      attr_reader :raw_actions, :actions, :bank, :cities, :companies, :corporations,
                   :depot, :finished, :graph, :hexes, :id, :loading, :loans, :log, :minors,
                   :phase, :players, :operating_rounds, :round, :share_pool, :stock_market, :tile_groups,
                   :tiles, :turn, :total_loans, :undo_possible, :redo_possible, :round_history, :all_tiles,
@@ -216,6 +216,7 @@ module Engine
       MUST_EMERGENCY_ISSUE_BEFORE_EBUY = false # corporation must issue shares before ebuy (if possible)
       EBUY_SELL_MORE_THAN_NEEDED = false # true if corporation may continue to sell shares even though enough funds
       EBUY_CAN_SELL_SHARES = true # true if a player can sell shares for ebuy
+      EBUY_OWNER_MUST_HELP = false # owner of ebuying entity is on the hook
 
       # if sold more than needed then cannot then buy a cheaper train in the depot.
       EBUY_SELL_MORE_THAN_NEEDED_LIMITS_DEPOT_TRAIN = false
@@ -313,6 +314,11 @@ module Engine
       # Setting this to true is neccessary but insufficent to allow downgrading town tiles into plain track
       # See 1856 for an example
       ALLOW_REMOVING_TOWNS = false
+
+      # Can a player have multiple outstanding programmed actions
+      # If true, will possibly need to handle incompatable programmed actions
+      # (e.g. ProgramSharePass and ProgramBuyShares)
+      ALLOW_MULTIPLE_PROGRAMS = false
 
       CACHABLE = [
         %i[players player],
@@ -462,7 +468,7 @@ module Engine
 
         @players = @names.map { |player_id, name| Player.new(player_id, name) }
         @user = user
-        @programmed_actions = {}
+        @programmed_actions = Hash.new { |h, k| h[k] = [] }
         @round_counter = 0
 
         @optional_rules = init_optional_rules(optional_rules)
@@ -583,7 +589,7 @@ module Engine
       end
 
       def active_players
-        players_ = @round.active_entities.map(&:player).compact
+        players_ = @round.active_entities.map { |e| acting_for_player(e&.player) }.compact
 
         players_.empty? ? @players.reject(&:bankrupt) : players_
       end
@@ -598,7 +604,7 @@ module Engine
 
       def valid_actors(action)
         if (player = action.entity.player)
-          [player]
+          [acting_for_player(player)]
         else
           active_players
         end
@@ -606,6 +612,10 @@ module Engine
 
       def acting_for_entity(entity)
         entity&.owner
+      end
+
+      def acting_for_player(player)
+        player
       end
 
       def player_log(entity, msg)
@@ -679,7 +689,7 @@ module Engine
         true
       end
 
-      def process_action(action, add_auto_actions: false)
+      def process_action(action, add_auto_actions: false, validate_auto_actions: false)
         action = Engine::Action::Base.action_from_h(action, self) if action.is_a?(Hash)
 
         action.id = current_action_id + 1
@@ -697,15 +707,22 @@ module Engine
           @last_game_action_id = action.id
         end
 
-        action.auto_actions.each { |a| process_single_action(a) }
-        if add_auto_actions
+        if add_auto_actions || validate_auto_actions
+          auto_actions = []
           until (actions = round.auto_actions || []).empty?
             actions.each { |a| process_single_action(a) }
-            action.auto_actions.concat(actions)
+            auto_actions.concat(actions)
           end
-          # Update the last raw actions as the hash maybe incorrect
-          action.clear_cache
-          @raw_actions[-1] = action.to_h
+          if validate_auto_actions
+            raise GameError, 'Auto actions do not match' unless auto_actions_match?(action.auto_actions, auto_actions)
+          else
+            # Update the last raw actions as the hash maybe incorrect
+            action.clear_cache
+            action.auto_actions = auto_actions
+            @raw_actions[-1] = action.to_h
+          end
+        else
+          action.auto_actions.each { |a| process_single_action(a) }
         end
         @last_processed_action = action.id
 
@@ -713,7 +730,9 @@ module Engine
       end
 
       def process_single_action(action)
-        @log << "• Action(#{action.type}) via Master Mode by: #{player_by_id(action.user)&.name || 'Owner'}" if action.user
+        if action.user && action.user != acting_for_player(action.entity&.player)&.id
+          @log << "• Action(#{action.type}) via Master Mode by: #{player_by_id(action.user)&.name || 'Owner'}"
+        end
 
         preprocess_action(action)
 
@@ -759,7 +778,17 @@ module Engine
         self
       end
 
+      def auto_actions_match?(actions_a, actions_b)
+        return false unless actions_a.size == actions_b.size
+
+        actions_a.zip(actions_b).all? do |a, b|
+          a.to_h.except('created_at') == b.to_h.except('created_at')
+        end
+      end
+
       def store_player_info
+        return unless @round.show_in_history?
+
         @players.each do |p|
           p.history << PlayerInfo.new(@round.class.short_name, turn, @round.round_num, player_value(p))
         end
@@ -1056,7 +1085,7 @@ module Engine
 
       def sell_shares_and_change_price(bundle, allow_president_change: true, swap: nil)
         corporation = bundle.corporation
-        price = corporation.share_price.price
+        old_price = corporation.share_price
         was_president = corporation.president?(bundle.owner)
         @share_pool.sell_shares(bundle, allow_president_change: allow_president_change, swap: swap)
         case self.class::SELL_MOVEMENT
@@ -1090,7 +1119,7 @@ module Engine
         else
           raise NotImplementedError
         end
-        log_share_price(corporation, price) if self.class::SELL_MOVEMENT != :none
+        log_share_price(corporation, old_price) if self.class::SELL_MOVEMENT != :none
       end
 
       def sold_out_increase?(_corporation)
@@ -1098,7 +1127,9 @@ module Engine
       end
 
       def log_share_price(entity, from, steps = nil)
-        to = entity.share_price.price
+        from_price = from.price
+        to = entity.share_price
+        to_price = to.price
         return unless from != to
 
         jumps = ''
@@ -1107,8 +1138,17 @@ module Engine
           jumps = " (#{steps} steps)" unless steps < 2
         end
 
-        @log << "#{entity.name}'s share price changes from #{format_currency(from)} "\
-                "to #{format_currency(to)}#{jumps}"
+        r1, c1 = from.coordinates
+        r2, c2 = to.coordinates
+        dirs = []
+        dirs << 'up' if r2 < r1
+        dirs << 'down' if r2 > r1
+        dirs << 'left' if c2 < c1
+        dirs << 'right' if c2 > c1
+        dir_str = dirs.join(' and ')
+
+        @log << "#{entity.name}'s share price moves #{dir_str} from #{format_currency(from_price)} "\
+                "to #{format_currency(to_price)}#{jumps}"
       end
 
       def share_jumps(steps)
@@ -1317,6 +1357,10 @@ module Engine
         end
 
         []
+      end
+
+      def visited_stops(route)
+        route.connection_data.flat_map { |c| [c[:left], c[:right]] }.uniq.compact
       end
 
       def get(type, id)
@@ -1974,6 +2018,14 @@ module Engine
         'PRIVATE COMPANY'
       end
 
+      def market_share_limit(_corporation = nil)
+        self.class::MARKET_SHARE_LIMIT
+      end
+
+      def cert_limit(_player = nil)
+        @cert_limit
+      end
+
       private
 
       def init_graph
@@ -2322,10 +2374,12 @@ module Engine
       end
 
       def check_programmed_actions
-        @programmed_actions.reject! do |entity, action|
-          if action&.disable?(self)
-            player_log(entity, "Programmed action '#{action}' removed due to round change")
-            true
+        @programmed_actions.each do |entity, action_list|
+          action_list.reject! do |action|
+            if action&.disable?(self)
+              player_log(entity, "Programmed action '#{action}' removed due to round change")
+              true
+            end
           end
         end
       end
@@ -2874,6 +2928,14 @@ module Engine
 
       def companies_sort(companies)
         companies
+      end
+
+      def stock_round_name
+        'Stock Round'
+      end
+
+      def force_unconditional_stock_pass?
+        false
       end
     end
   end

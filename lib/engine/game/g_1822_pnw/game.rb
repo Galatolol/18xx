@@ -24,31 +24,33 @@ module Engine
           '5': 3,
         }.freeze
 
-        EXCHANGE_TOKENS = {
-          'FCM' => 3,
-          'MC' => 3,
-          'CHP' => 3,
-          'FNM' => 3,
-          'MIR' => 3,
-          'FCP' => 3,
-          'IRM' => 3,
-        }.freeze
+        #        EXCHANGE_TOKENS = {
+        #          'FCM' => 3,
+        #          'MC' => 3,
+        #          'CHP' => 3,
+        #          'FNM' => 3,
+        #          'MIR' => 3,
+        #          'FCP' => 3,
+        #          'IRM' => 3,
+        #        }.freeze
 
-        STARTING_COMPANIES = %w[P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 P11 P12 P13 P14 P15 P16 P17 P18
-                                M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15
-                                M16 M17 M18 M19 M20 M21 MA MB MC].freeze
+        STARTING_COMPANIES = %w[P1 P2 P3 P4 P5 P6 P7 P8 P9 P10 P11 P12 P13 P14 P15 P16 P17 P18 P19 P20 P21
+                                M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 M13 M14 M15 M16 M17 M18 M19 M20 M21 MA MB MC].freeze
 
         STARTING_CORPORATIONS = %w[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 A B C
-                                   FCM MC CHP FNM MIR FCP IRM NDEM].freeze
+                                   NP CPR GNR ORNC SPS CMPS SWW].freeze
 
         CURRENCY_FORMAT_STR = '$%d'
 
+        MARKET_TEXT = Base::MARKET_TEXT
+        STOCKMARKET_COLORS = Base::STOCKMARKET_COLORS
         MARKET = [
           %w[40 50px 55px 60px 65px 70px 75px 80px 90px 100px
              110 120 135 150 165 180 200 220 245 270 300 330 360
              400 450 500 550 600e],
         ].freeze
 
+        # TODO
         SELL_MOVEMENT = :left_per_10_if_pres_else_left_one
         PRIVATE_TRAINS = %w[P1 P2 P3 P4 P5 P6].freeze
         EXTRA_TRAIN_PERMANENTS = %w[2P LP 3/2P].freeze
@@ -56,6 +58,7 @@ module Engine
         PRIVATE_MAIL_CONTRACTS = %w[P14 P15].freeze
         PRIVATE_PHASE_REVENUE = %w[].freeze # Stub for 1822 specific code
         P7_REVENUE = [0, 0, 0, 20, 20, 40, 40, 60].freeze
+        # /TODO
 
         # Don't run 1822 specific code for the LCDR
         COMPANY_LCDR = nil
@@ -67,18 +70,21 @@ module Engine
           'P4' => { acquire: %i[major minor], phase: 1 },
           'P5' => { acquire: %i[major minor], phase: 3 },
           'P6' => { acquire: %i[major minor], phase: 3 },
-          'P7' => { acquire: %i[major], phase: 3 },
+          'P7' => { acquire: %i[major minor], phase: 1 },
           'P8' => { acquire: %i[major minor], phase: 1 },
-          'P9' => { acquire: %i[major minor], phase: 3 },
+          'P9' => { acquire: %i[major], phase: 3 },
           'P10' => { acquire: %i[major minor], phase: 1 },
-          'P11' => { acquire: %i[major minor], phase: 1 },
-          'P12' => { acquire: %i[major minor], phase: 1 },
-          'P13' => { acquire: %i[major minor], phase: 1 },
-          'P14' => { acquire: %i[major], phase: 3 },
-          'P15' => { acquire: %i[major], phase: 3 },
-          'P16' => { acquire: %i[major], phase: 2 },
-          'P17' => { acquire: %i[major minor], phase: 2 },
-          'P18' => { acquire: %i[major], phase: 3 },
+          'P11' => { acquire: %i[major minor], phase: 3 },
+          'P12' => { acquire: %i[major minor], phase: 2 },
+          'P13' => { acquire: %i[major], phase: 3 },
+          'P14' => { acquire: %i[major minor], phase: 3 },
+          'P15' => { acquire: %i[major minor], phase: 3 },
+          'P16' => { acquire: %i[major minor], phase: 2 },
+          'P17' => { acquire: %i[major minor], phase: 5 },
+          'P18' => { acquire: %i[major minor], phase: 3 },
+          'P19' => { acquire: %i[major minor], phase: 3 },
+          'P20' => { acquire: %i[major minor], phase: 2 },
+          'P21' => { acquire: %i[major minor], phase: 2 },
         }.freeze
 
         COMPANY_SHORT_NAMES = {
@@ -90,7 +96,7 @@ module Engine
           'P6' => 'P6 (Pullman)',
           'P7' => 'P7 (Remove Town)',
           'P8' => 'P8 (Remove Town)',
-          'P9' => 'P9 (Mail Contract)',
+          'P9' => 'P9 (Mail Service)',
           'P10' => 'P10 (Builder Cubes)',
           'P11' => 'P11 (Extra Tile Lay)',
           'P12' => 'P12 (Small Port)',
@@ -100,6 +106,9 @@ module Engine
           'P16' => 'P16 (Special Tile Placement)',
           'P17' => 'P17 ($30 Route Enhancement)',
           'P18' => 'P18 (Special Tile Upgrade)',
+          'P19' => 'P19 (Rockport Coal Mine)',
+          'P20' => 'P20 (Backroom Negotiations)',
+          'P21' => 'P21 (Credit Mobiier)',
           'M1' => '1',
           'M2' => '2',
           'M3' => '3',
@@ -121,9 +130,16 @@ module Engine
           'M19' => '19',
           'M20' => '20',
           'M21' => '21',
-          'MA' => 'A',
-          'MB' => 'B',
-          'MC' => 'C',
+        }.freeze
+
+        MINOR_ASSOCIATIONS = {
+          'M1' => 'CPR',
+          'M4' => 'GNR',
+          'M5' => 'CMPS',
+          'M7' => 'SWW',
+          'M15' => 'NP',
+          'M18' => 'SPS',
+          'M19' => 'ORNC',
         }.freeze
 
         def port_company?(entity)
@@ -132,13 +148,6 @@ module Engine
 
         def cube_company?(entity)
           entity.id == 'P10' || entity.id == 'P11'
-        end
-
-        BIDDING_BOX_START_PRIVATE = 'P1'
-        BIDDING_BOX_START_MINOR = nil
-
-        def init_graph
-          Graph.new(self, home_as_token: true)
         end
 
         TRAINS = [
@@ -282,7 +291,7 @@ module Engine
         UPGRADE_COST_L_TO_2_PHASE_2 = 80
 
         def operating_round(round_num)
-          Round::Operating.new(self, [
+          Engine::Game::G1822PNW::Round::Operating.new(self, [
             G1822::Step::PendingToken,
             G1822::Step::FirstTurnHousekeeping,
             Engine::Step::AcquireCompany,
@@ -358,7 +367,7 @@ module Engine
           @player_debts = Hash.new { |h, k| h[k] = 0 }
 
           # Randomize and setup the companies
-          # setup_companies
+          setup_companies
 
           # Initialize the stock round choice for P7
           @p7_choice = nil
@@ -378,46 +387,47 @@ module Engine
 
         # setup_companies from 1822 has too much 1822-specific stuff that doesn't apply to this game
         def setup_companies
-          # Randomize from preset seed to get same order
           @companies.sort_by! { rand }
 
           minors = @companies.select { |c| c.id[0] == self.class::COMPANY_MINOR_PREFIX }
-          concessions = @companies.select { |c| c.id[0] == self.class::COMPANY_CONCESSION_PREFIX }
+          minor_6, minors = minors.partition { |c| c.id == 'M6' }
+          minors_assoc, minors = minors.partition { |c| MINOR_ASSOCIATIONS.key?(c.id) }
+
           privates = @companies.select { |c| c.id[0] == self.class::COMPANY_PRIVATE_PREFIX }
-
-          c1 = concessions.find { |c| c.id == bidbox_start_concession }
-          concessions.delete(c1)
-          concessions.unshift(c1)
-
-          p1 = privates.find { |c| c.id == bidbox_start_private }
-          privates.delete(p1)
-          privates.unshift(p1)
+          private_1 = privates.find { |c| c.id == 'P1' }
+          privates.delete(private_1)
+          privates.unshift(private_1)
 
           # Clear and add the companies in the correct randomize order sorted by type
           @companies.clear
-          @companies.concat(minors)
-          @companies.concat(concessions)
+          @companies.concat(minor_6)
+          stack_1 = (minors_assoc[0..2] + minors[0..5]).sort_by! { rand }
+          @companies.concat(stack_1)
+          stack_2 = (minors_assoc[3..4] + minors[6..10]).sort_by! { rand }
+          @companies.concat(stack_2)
+          stack_3 = (minors_assoc[5..6] + minors[11..15]).sort_by! { rand }
+          @companies.concat(stack_3)
           @companies.concat(privates)
 
           # Set the min bid on the Concessions and Minors
-          @companies.each do |c|
-            c.min_price = case c.id[0]
-                          when self.class::COMPANY_CONCESSION_PREFIX, self.class::COMPANY_MINOR_PREFIX
-                            c.value
-                          else
-                            0
-                          end
-            c.max_price = 10_000
-          end
+          # @companies.each do |c|
+          #  c.min_price = case c.id[0]
+          #                when self.class::COMPANY_CONCESSION_PREFIX, self.class::COMPANY_MINOR_PREFIX
+          #                  c.value
+          #                else
+          #                  0
+          #                end
+          #  c.max_price = 10_000
+          # end
 
           # Setup company abilities
-          @company_trains = {}
-          @company_trains['P1'] = find_and_remove_train_by_id('5P-0')
-          @company_trains['P2'] = find_and_remove_train_by_id('2P-0', buyable: false)
-          @company_trains['P3'] = find_and_remove_train_by_id('3/2P-0', buyable: false)
-          @company_trains['P4'] = find_and_remove_train_by_id('LP-0', buyable: false)
-          @company_trains['P5'] = find_and_remove_train_by_id('P+-0', buyable: false)
-          @company_trains['P6'] = find_and_remove_train_by_id('P+-1', buyable: false)
+          # @company_trains = {}
+          # @company_trains['P1'] = find_and_remove_train_by_id('5P-0')
+          # @company_trains['P2'] = find_and_remove_train_by_id('2P-0', buyable: false)
+          # @company_trains['P3'] = find_and_remove_train_by_id('3/2P-0', buyable: false)
+          # @company_trains['P4'] = find_and_remove_train_by_id('LP-0', buyable: false)
+          # @company_trains['P5'] = find_and_remove_train_by_id('P+-0', buyable: false)
+          # @company_trains['P6'] = find_and_remove_train_by_id('P+-1', buyable: false)
         end
 
         # Stubbed out because this game doesn't it, but base 22 does
@@ -550,9 +560,9 @@ module Engine
         def close_p16
           company = company_by_id('P16')
           @log << "#{company.name} closes"
-          from = company.owner.share_price.price
+          old_price = company.owner.share_price
           stock_market.move_left(company.owner)
-          log_share_price(company.owner, from)
+          log_share_price(company.owner, old_price)
           company.close!
         end
 
@@ -563,19 +573,19 @@ module Engine
           nil
         end
 
-        def terrain?(tile, terrain)
-          tile.parts.each do |part|
-            return true if part.is_a?(Engine::Part::Upgrade) && (part.terrains[0] == terrain)
-          end
-          false
+        def total_terrain_cost(tile)
+          tile.upgrades.sum(&:cost)
+        end
+
+        def can_place_river(tile)
+          @river_directions ||= { 'M4' => 5, 'N5' => 2 }
+          return false unless @river_directions.include?(tile.hex.id)
+
+          tile.paths.find { |p| p.edges[0].num == @river_directions[tile.hex.id] }.nil?
         end
 
         def max_builder_cubes(tile)
-          max = 0
-          max += 2 if terrain?(tile, 'mountain')
-          max += 1 if terrain?(tile, 'hill')
-          max += 1 if terrain?(tile, 'river')
-          max
+          ((total_terrain_cost(tile).to_f + (can_place_river(tile) ? 75.0 : 0.0)) / 40.0).ceil
         end
 
         def current_builder_cubes(tile)
@@ -586,20 +596,13 @@ module Engine
           current_builder_cubes(tile) < max_builder_cubes(tile)
         end
 
-        # Assume the company optimizes cost reduction from cubes
-        def upgrade_cost(tile, hex, entity, spender)
-          cost = super
-          num_cubes = current_builder_cubes(tile)
-          if num_cubes >= 2 && terrain?(tile, 'mountain')
-            num_cubes -= 2
-            cost -= 80
-          end
-          if num_cubes >= 1 && terrain?(tile, 'hill')
-            num_cubes -= 1
-            cost -= 40
-          end
-          cost -= 20 if num_cubes >= 1 && terrain?(tile, 'river')
-          cost
+        def tile_cost_with_discount(tile, _hex, _entity, _spender, base_cost)
+          [base_cost - (40 * current_builder_cubes(tile)), 0].max
+        end
+
+        def regional_railway?(entity)
+          @regional_railways ||= %w[A B C].freeze
+          @regional_railways.include?(entity.id)
         end
       end
     end

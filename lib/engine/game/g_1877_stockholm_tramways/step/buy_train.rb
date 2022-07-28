@@ -18,7 +18,7 @@ module Engine
           def pass!
             if current_entity.trains.empty?
               all_cash = buying_power(current_entity.owner)
-              current_entity.owner.spend(all_cash, current_entity)
+              current_entity.owner.spend(all_cash, current_entity) if all_cash.positive?
               @log << "#{current_entity.owner.name} contributes #{@game.format_currency(all_cash)}"
             end
             super
@@ -47,7 +47,6 @@ module Engine
 
             buy_train_action(action)
             pass! unless can_buy_train?(action.entity)
-            @game.update_reservations
           end
 
           def must_buy_train?(entity)
@@ -83,7 +82,7 @@ module Engine
             (train.price / 25).ceil * 5
           end
 
-          def president_may_contribute?(entity)
+          def president_may_contribute?(entity, _)
             entity.trains.empty?
           end
 

@@ -117,7 +117,6 @@ module Engine
         corporation = bundle.corporation
 
         timing = @game.check_sale_timing(entity, bundle)
-
         timing &&
           !(@game.class::TURN_SELL_LIMIT && (bundle.percent + sold_this_turn(corporation)) > @game.class::TURN_SELL_LIMIT) &&
           !(@game.class::MUST_SELL_IN_BLOCKS && @round.players_sold[entity][corporation] == :now) &&
@@ -178,6 +177,8 @@ module Engine
       end
 
       def process_par(action)
+        raise GameError, 'Cannot par on behalf of other entities' if action.purchase_for
+
         share_price = action.share_price
         corporation = action.corporation
         entity = action.entity
