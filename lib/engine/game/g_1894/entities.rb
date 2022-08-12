@@ -22,75 +22,160 @@ module Engine
                           when: 'owning_corp_or_turn',
                           count: 1,
                         }],
+            color: '#d9d9d9',
           },
           {
-            name: 'Charleroi-Sud',
-            sym: 'CS',
+            name: 'Gare de Liège-Guillemins',
+            sym: 'GLG',
             value: 50,
             revenue: 10,
-            desc: 'Owning corporation may lay a yellow tile or upgrade a yellow tile in Charleroi'\
-                  ' (G14) along with an optional station marker.'\
+            desc: 'Owning corporation may lay a yellow tile or upgrade a yellow tile in Liège'\
+                  ' (H17) along with an optional station marker.'\
                   ' This counts as one of the corporation\'s tile builds.'\
-                  ' Blocks G14 while owned by a player.',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['G14'] },
+                  ' Blocks H17 while owned by a player.',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['H17'] },
                         {
                           type: 'teleport',
                           owner_type: 'corporation',
-                          hexes: ['G14'],
+                          hexes: ['H17'],
                           tiles: %w[14 15 57 619],
-                        }],
+                          }],
+            color: '#d9d9d9',
+          },
+          {
+            name: 'London shipping',
+            sym: 'LS',
+            value: 90,
+            revenue: 15,
+            desc: 'Owning corporation may place one of its tokens for free in A12.'\
+                  ' The value of London (A10) is increased, for this corporation only,'\
+                  ' by the largest other revenue on the route.',
+            abilities: [{
+              type: 'token',
+              when: 'owning_corp_or_turn',
+              hexes: ['A12'],
+              count: 1,
+              extra_action: true,
+              from_owner: true,
+              owner_type: 'corporation',
+            }],
+            color: '#d9d9d9',
           },
           {
             name: 'Ligne de Saint-Quentin à Guise',
             sym: 'SQG',
-            value: 80,
-            desc: 'Revenue is equal to three times the revenue of Saint-Quentin (G10) if Saint-Quentin is green or brown, otherwise it\'s 0 F.'\
+            value: 100,
+            desc: 'Revenue is equal to 70 if Saint-Quentin (G10) is green, to 100 if Saint-Quentin is brown and to 0 otherwise.'\
                   ' Closes in purple phase.',
             abilities: [{ type: 'close', on_phase: 'Purple' },],
-          },
+            color: '#d9d9d9',
+          },        
           {
-            name: 'London shipping',
-            sym: 'PC',
-            value: 90,
-            revenue: 15,
-            desc: 'Owning corporation may place a +10 marker in London (A10). For this corporation only, the value'\
-                  ' of London is increased by 10.',
-            abilities: [{
-              type: 'assign_hexes',
-              when: 'owning_corp_or_turn',
-              hexes: ['A10'],
-              count: 1,
-              owner_type: 'corporation',
-            },
-                        {
-                          type: 'assign_corporation',
-                          when: 'sold',
-                          count: 1,
-                          owner_type: 'corporation',
-                        }],
-          },
-          {
-            name: 'CAB minor shareholding',
-            sym: 'CABMS',
+            name: 'Nord minor shareholding',
+            sym: 'NMinorS',
             value: 140,
             revenue: 20,
-            desc: 'Owning player immediately receives a 10% share of the CAB without further payment.'\
-                  ' Revenue increases to 30 F when owned by a corporation.',
-            abilities: [{ type: 'shares', shares: 'CAB_1' },
-                        { type: 'revenue_change', revenue: 30, when: 'sold' }],
+            desc: 'Owning player immediately receives a 10% share of the Nord without further payment.',
+            abilities: [{ type: 'shares', shares: 'Nord_1' },],
+            color: '#d9d9d9',
           },
           {
             name: 'PLM major shareholding',
             sym: 'PLMMS',
-            value: 200,
+            value: 180,
             revenue: 25,
             desc: 'Owning player immediately receives the President\'s certificate of the'\
                   ' PLM without further payment. This private company may not be sold to any corporation, and does'\
                   ' not exchange hands if the owning player loses the Presidency of the PLM.'\
-                  ' Closes in green phase.',
-            abilities: [{ type: 'close', on_phase: 'Green' },
+                  ' Closes when the PLM operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'PLM' },
                         { type: 'no_buy' },
                         { type: 'shares', shares: 'PLM_0' }],
+            color: '#dda0dd',
+          },
+          {
+            name: 'Ouest major shareholding',
+            sym: 'OMMS',
+            value: 180,
+            revenue: 25,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' Ouest without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the Ouest.'\
+                  ' Closes when the Ouest operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'Ouest' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'Ouest_0' }],
+            color: '#4682b4',
+          },
+          {
+            name: 'Nord major shareholding',
+            sym: 'NMS',
+            value: 180,
+            revenue: 25,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' Nord without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the Nord.'\
+                  ' Closes when the Nord operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'Nord' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'Nord_0' }],
+            color: '#ff4040',
+          },
+          {
+            name: 'CAB major shareholding',
+            sym: 'CMS',
+            value: 180,
+            revenue: 25,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' CAB without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the CAB.'\
+                  ' Closes when the CAB operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'CAB' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'CAB_0' }],
+            color: '#9c661f',
+          },
+          {
+            name: 'Est major shareholding',
+            sym: 'EMS',
+            value: 180,
+            revenue: 25,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' Est without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the Est.'\
+                  ' Closes when the Est operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'Est' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'Est_0' }],
+            color: '#ff9966',
+          },
+          {
+            name: 'Belge major shareholding',
+            sym: 'BMS',
+            value: 220,
+            revenue: 30,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' Belge without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the Belge.'\
+                  ' Closes when the Belge operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'Belge' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'Belge_0' }],
+            color: '#61b229',
+          },
+          {
+            name: 'GR major shareholding',
+            sym: 'GRMS',
+            value: 220,
+            revenue: 30,
+            desc: 'Owning player immediately receives the President\'s certificate of the'\
+                  ' GR without further payment. This private company may not be sold to any corporation, and does'\
+                  ' not exchange hands if the owning player loses the Presidency of the GR.'\
+                  ' Closes when the GR operates.',
+            abilities: [{ type: 'close', when: 'operated', corporation: 'GR' },
+                        { type: 'no_buy' },
+                        { type: 'shares', shares: 'GR_0' }],
+            color: '#fcf75e',
           },
         ].freeze
 
@@ -100,9 +185,15 @@ module Engine
             name: 'Chemins de fer de l\'Ouest',
             logo: '1894/Ouest',
             simple_logo: '1894/Ouest.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 0, 80, 80, 120],
             max_ownership_percent: 60,
-            coordinates: 'D3',
+            coordinates: %w[B3 E6],
+            abilities: [
+              {
+                type: 'base',
+                description: 'Two home stations (Le Havre and Amiens)',
+              },
+            ],
             color: '#4682b4',
           },
           {
@@ -110,9 +201,15 @@ module Engine
             name: 'Chemins de fer du Nord',
             logo: '1894/Nord',
             simple_logo: '1894/Nord.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 0, 80, 80, 120],
             max_ownership_percent: 60,
-            coordinates: 'D11',
+            coordinates: %w[E10 G14],
+            abilities: [
+              {
+                type: 'base',
+                description: 'Two home stations (Arras and Charleroi)',
+              },
+            ],
             color: '#ff4040',
           },
           {
@@ -120,7 +217,7 @@ module Engine
             name: 'Gent Railway',
             logo: '1894/GR',
             simple_logo: '1894/GR.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 40, 80, 80],
             max_ownership_percent: 60,
             coordinates: 'D15',
             color: '#fcf75e',
@@ -131,9 +228,15 @@ module Engine
             name: 'Chemins de fer d\'Amiens à Boulogne',
             logo: '1894/CAB',
             simple_logo: '1894/CAB.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 0, 80, 80, 120],
             max_ownership_percent: 60,
-            coordinates: 'E6',
+            coordinates: %w[D3 H1],
+            abilities: [
+              {
+                type: 'base',
+                description: 'Two home stations (Rouen and Chartres)',
+              },
+            ],
             color: '#9c661f',
           },
           {
@@ -141,9 +244,9 @@ module Engine
             name: 'Chemins de fer de l\'État belge',
             logo: '1894/Belge',
             simple_logo: '1894/Belge.alt',
-            tokens: [0, 40, 60, 80],
+            tokens: [0, 40, 80],
             max_ownership_percent: 60,
-            coordinates: 'F15',
+            coordinates: 'D17',
             color: '#61b229',
           },
           {
@@ -151,7 +254,7 @@ module Engine
             name: 'Chemins de fer de Paris à Lyon et à la Méditerranée',
             logo: '1894/PLM',
             simple_logo: '1894/PLM.alt',
-            tokens: [0, 40, 60, 80],
+            tokens: [0, 40, 80, 80, 120],
             max_ownership_percent: 60,
             coordinates: 'G4',
             city: 0,
@@ -163,11 +266,10 @@ module Engine
             name: 'Chemins de fer de l\'Est',
             logo: '1894/Est',
             simple_logo: '1894/Est.alt',
-            tokens: [0, 40, 60, 80, 100],
+            tokens: [0, 40, 40, 40, 40],
             max_ownership_percent: 60,
             coordinates: 'I8',
             color: '#ff9966',
-            text_color: 'black',
             abilities: [
               {
                 type: 'hex_bonus',
@@ -176,6 +278,7 @@ module Engine
                 hexes: ['I2'],
               },
             ],
+            text_color: 'black',
           },
           {
             sym: 'F1',
@@ -233,9 +336,6 @@ module Engine
           #   tokens: [0, 40],
           #   max_ownership_percent: 60,
           #   color: '#ffefdb',
-          #   text_color: 'black',
-          #   abilities: [
-          #     {
           #       type: 'description',
           #       description: 'Home in an empty hex in Belgium',
           #     },
