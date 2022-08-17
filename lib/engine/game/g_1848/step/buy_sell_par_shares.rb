@@ -15,6 +15,20 @@ module Engine
                        allow_president_change: @game.pres_change_ok?(action.bundle.corporation))
             track_action(action, action.bundle.corporation)
           end
+
+          def can_sell?(entity, bundle)
+            return can_sell_order? if bundle.corporation == @game.boe
+
+            super
+          end
+
+          def must_sell?(entity)
+            return false unless can_sell_any?(entity)
+            return true if @game.num_certs(entity) > @game.cert_limit(entity)
+
+            !@game.can_hold_above_corp_limit?(entity) &&
+              @game.corporations.any? { |corp| !corp.holding_ok?(entity) }
+          end
         end
       end
     end

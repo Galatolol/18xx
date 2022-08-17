@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'logger'
+require 'rufus-scheduler'
 require 'require_all'
 require_relative 'models'
 require_rel './models'
@@ -8,6 +9,7 @@ require_relative 'lib/assets'
 require_relative 'lib/bus'
 require_relative 'lib/hooks'
 require_relative 'lib/mail'
+require_relative 'lib/user_stats'
 
 PRODUCTION = ENV['RACK_ENV'] == 'production'
 
@@ -16,6 +18,13 @@ LOGGER = Logger.new($stdout)
 Bus.configure
 
 ASSETS = Assets.new(precompiled: PRODUCTION)
+
+scheduler = Rufus::Scheduler.new
+
+scheduler.cron '00 09 * * *' do
+  LOGGER.info('Calculating user stats')
+  UserStats.calculate_stats
+end
 
 def send_webhook_notification(user, message)
   return if user.settings['notifications'] != 'webhook'
@@ -33,6 +42,13 @@ MessageBus.subscribe '/test_notification' do |msg|
   user_id = msg.data
   user = User[user_id]
   send_webhook_notification(user, 'This is a test notification from 18xx.games.')
+end
+
+MessageBus.subscribe '/delete_user' do |msg|
+  user_id = msg.data
+  user = User[user_id]
+  Game.where(id: user.game_users.map(&:game_id)).delete
+  user.destroy
 end
 
 MessageBus.subscribe '/turn' do |msg|
@@ -62,7 +78,7 @@ MessageBus.subscribe '/turn' do |msg|
 
   html = ASSETS.html(
     'assets/app/mail/turn.rb',
-    game_data: game.to_h(include_actions: true),
+    game_data: game.to_h(include_actions: true, logged_in_user_id: users.first.id),
     game_url: data['game_url'],
   )
 

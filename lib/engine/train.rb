@@ -74,8 +74,10 @@ module Engine
       @variants.transform_values { |v| v[:price] }
     end
 
-    def price(exchange_train = nil)
-      @price - (@discount&.dig(exchange_train&.name) || 0)
+    def price(exchange_train = nil, variant: nil)
+      discount = variant ? variant[:discount] : self.discount
+      price = variant ? variant[:price] : @price
+      price - (discount&.dig(exchange_train&.name) || 0)
     end
 
     def id
