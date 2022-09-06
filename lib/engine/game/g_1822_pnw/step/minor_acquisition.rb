@@ -7,8 +7,10 @@ module Engine
     module G1822PNW
       module Step
         class MinorAcquisition < Engine::Game::G1822::Step::MinorAcquisition
+          include Engine::Game::G1822PNW::Connections
+
           def potentially_mergeable(entity)
-            super + @game.regionals
+            super + @game.regionals.select { |r| @game.regional_payout_count(r) > 1 } - @game.associated_minors
           end
         end
       end

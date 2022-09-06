@@ -25,7 +25,7 @@ module Engine
 
         CERT_LIMIT = { 3 => 22, 4 => 18 }.freeze
 
-        STARTING_CASH = { 3 => 560, 4 => 420 }.freeze
+        STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
         CAPITALIZATION = :full
 
@@ -115,7 +115,7 @@ module Engine
                   },
                   {
                     name: 'Brown',
-                    on: '5',
+                    on: '5+',
                     train_limit: 3,
                     tiles: %i[yellow green brown],
                     operating_rounds: 3,
@@ -127,7 +127,6 @@ module Engine
                     train_limit: 2,
                     tiles: %i[yellow green brown],
                     operating_rounds: 3,
-                    status: ['can_buy_companies'],
                   },
                   {
                     name: 'Gray',
@@ -144,13 +143,13 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 1 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 8 },
                   {
                     name: '3',
                     distance: 3,
                     price: 140,
-                    rusts_on: '5',
-                    num: 1,
+                    rusts_on: '5+',
+                    num: 5,
                     discount: { '2' => 40 },
                   },
                   {
@@ -177,7 +176,7 @@ module Engine
                     price: 600,
                     num: 3,
                     events: [{ 'type' => 'close_companies' }],
-                    discount: { '5' => 200 },
+                    discount: { '5+' => 200 },
                   },
                   {
                     name: '7',
@@ -192,7 +191,7 @@ module Engine
                     price: 800,
                     num: 20,
                     events: [{ 'type' => 'last_or_set_triggered' }],
-                    discount: { '5' => 200, '6' => 300, '7' => 350 },
+                    discount: { '5+' => 200, '6' => 300, '7' => 350 },
                   }].freeze
 
         LAYOUT = :pointy
@@ -201,10 +200,6 @@ module Engine
 
         MUST_BID_INCREMENT_MULTIPLE = true
         MIN_BID_INCREMENT = 5
-
-        # ASSIGNMENT_TOKENS = {
-        #   'PC' => '/icons/1894/pc_token.svg',
-        # }.freeze
 
         TILE_RESERVATION_BLOCKS_OTHERS = false
 
@@ -245,15 +240,9 @@ module Engine
         FERRY_MARKER_COST = 50
 
         PARIS_HEX = 'G4'
-        LE_SUD_HEX = 'I2'
+        CENTRE_BOURGOGNE_HEX = 'I2'
         LUXEMBOURG_HEX = 'I18'
-        CALAIS_HEX = 'B9'
-        #AMIENS_HEX = 'E6'
-        #AMIENS_TILE = 'X3'
-        #ROUEN_HEX = 'D3'
-        #ROUEN_TILE = 'X16'
         SQ_HEX = 'G10'
-        #SQ_TILE = 'X17'
 
         GREEN_CITY_TILES = %w[14 15 619].freeze
         GREEN_CITY_14_TILE = '14'
@@ -264,12 +253,12 @@ module Engine
         BROWN_CITY_619_UPGRADE_TILES = %w[X10 X11 X13].freeze
         BROWN_CITY_TILES = %w[X10 X11 X12 X13 X14 X15 35 36 118]
 
-        FRENCH_REGULAR_CORPORATIONS = %w[PLM Ouest Nord Est CAB].freeze
+        FRENCH_REGULAR_CORPORATIONS = %w[PLM Ouest Nord Est CFOR].freeze
         BELGIAN_REGULAR_CORPORATIONS = %w[GR Belge].freeze
         REGULAR_CORPORATIONS = FRENCH_REGULAR_CORPORATIONS + BELGIAN_REGULAR_CORPORATIONS
-        FRENCH_LATE_CORPORATIONS = %w[F1 F2].freeze
+        FRENCH_LATE_CORPORATIONS = %w[LF].freeze
         FRENCH_LATE_CORPORATIONS_HOME_HEXES = %w[B3 B9 B11 D3 D11 E6 E10 G2 G4 G10 H7 I8].freeze
-        BELGIAN_LATE_CORPORATIONS = %w[B1 B2].freeze
+        BELGIAN_LATE_CORPORATIONS = %w[LB].freeze
         BELGIAN_LATE_CORPORATIONS_HOME_HEXES = %w[D15 D17 E16 F15 G14 H17].freeze
 
         DESTINATION_ABILITY_TYPES = %i[assign_hexes hex_bonus].freeze
@@ -317,20 +306,23 @@ module Engine
           corporation_by_id('Est')
         end
 
-        def cab
-          corporation_by_id('CAB')
+        def cfor
+          corporation_by_id('CFOR')
+        end
+
+        def sqg
+          company_by_id('SQG')
         end
 
         def setup
           @late_corporations, @corporations = @corporations.partition do |c|
-            #%w[F1 F2 B1 B2].include?(c.id)
-            %w[F1 B1].include?(c.id)
+            %w[LB LF].include?(c.id)
           end
 
           @last_or_set_triggered = false
           @skip_track_and_token = false
 
-          #@log << "-- Setting game up for #{@players.size} players --"
+          @log << "-- Setting game up for #{@players.size} players --"
           #remove_extra_trains
           #remove_extra_late_corporations
 
@@ -343,13 +335,11 @@ module Engine
           paris_tiles.each { |t| t.add_reservation!(plm, 0) }
 
           french_starting_corporation = corporation_by_id(FRENCH_REGULAR_CORPORATIONS.sort_by{ rand }.take(1).first)
-          #french_starting_corporation = corporation_by_id(%w[CAB Ouest Nord].sort_by{ rand }.take(1).first)
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
-          #belgian_starting_corporation = corporation_by_id(BELGIAN_REGULAR_CORPORATIONS.sort_by{ rand }.take(1).first)
           belgian_starting_corporation = corporation_by_id('Belge')
-          #@log << "-- The Belgian major shareholding corporation is the #{belgian_starting_corporation.id}"
 
-          remove_extra_companies([french_starting_corporation.id, belgian_starting_corporation.id])
+          adjust_companies
+          remove_extra_french_major_shareholding_companies(french_starting_corporation.id)
 
           @players.each do |player|
             share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
@@ -378,6 +368,17 @@ module Engine
           hexes
         end
 
+        def after_buy_company(player, company, price)
+          # Nord share that comes with NMinorS transfered this way so the presidency doesn't change when the Nord is
+          # the random French corporation and a player buys MNinorS
+          if company.id == 'NMinorS'
+            share_pool.transfer_shares(nord.ipo_shares.last.to_bundle, player, allow_president_change: false)
+            @log << "#{player.name} receives a 10% share of Nord"
+          end
+
+          super
+        end
+
         def init_round_finished
           @players.rotate!(@round.entity_index)
         end
@@ -398,7 +399,7 @@ module Engine
         end
 
         def next_round!
-          @skip_track_and_token = @last_or_set_triggered && (@round.instance_of? G1894::Round::Stock)
+          @skip_track_and_token = @skip_track_and_token || (@last_or_set_triggered && (@round.instance_of? G1894::Round::Stock))
 
           super
         end
@@ -406,12 +407,14 @@ module Engine
         def place_home_token(corporation)
           return if corporation.tokens.first&.used == true
 
-          if [ouest, nord, cab].include?(corporation)
+          if [ouest, nord, cfor].include?(corporation)
             corporation.coordinates.each do | coordinate |
               hex = hex_by_id(coordinate)
               tile = hex&.tile
               if tile.color != :brown
-                tile.cities.first.place_token(corporation, corporation.next_token, free: true)
+                # don't take the token that's alerady pending
+                token = corporation.tokens.find { |t| !t.used && !@round.pending_tokens.find { |p_t| p_t[:token] == t } }
+                tile.cities.first.place_token(corporation, token, free: true)
               else
                 place_home_token_brown_tile(corporation, hex, tile)
               end
@@ -422,7 +425,7 @@ module Engine
             tile = hex&.tile
 
             return super if tile.color != :brown
-            
+
             place_home_token_brown_tile(corporation, hex, tile)
           end
         end
@@ -435,8 +438,8 @@ module Engine
             @log << "#{corporation.name} must choose city for home token in #{hex.id}"
             @round.pending_tokens << {
               entity: corporation,
-              hexes: hexes,
-              token: corporation.find_token_by_type,
+              hexes: [hex],
+              token: corporation.next_token,
             }
           end
         end
@@ -468,23 +471,25 @@ module Engine
 
           tile = hex_by_id(action.hex.id).tile
 
-          # The city splits into two cities, so the reservation has to be for the whole hex
           if BROWN_CITY_TILES.include?(tile.name)
+            # The city splits into two cities, so the reservation has to be for the whole hex
             reservation = tile.cities.first.reservations.first
             if reservation
               tile.cities.first.remove_all_reservations!
               tile.add_reservation!(reservation.corporation, nil, reserve_city=false)
             end
+
+            # Clear all routes as they could be affected by the cities getting disjointed
+            graph.clear_graph_for_all
           end
 
           if action.hex.id != SQ_HEX || tile.color == :yellow
             return
           end
 
-          sqg = company_by_id('SQG')
           case tile.color
           when :green
-            sqg.revenue = 70          
+            sqg.revenue = 70
           when :brown
             sqg.revenue = 100
           end
@@ -554,7 +559,7 @@ module Engine
 
         def save_tokens(tokens)
           @saved_tokens = tokens
-          save_tokens_hex(nil) if tokens == nil || tokens.size == 0 
+          save_tokens_hex(nil) if tokens == nil || tokens.size == 0
         end
 
         def saved_tokens
@@ -573,7 +578,7 @@ module Engine
 
         def revenue_for(route, stops)
           revenue = super
-          revenue += est_le_sud_bonus(route.corporation, stops)
+          revenue += est_centre_bourgogne_bonus(route.corporation, stops)
           revenue += luxembourg_value(route.corporation, stops)
           revenue += london_bonus(route.corporation, stops)
 
@@ -590,12 +595,12 @@ module Engine
           get_route_max_value(corporation, stops, ignore_london=true)
         end
 
-        def est_le_sud_bonus(corporation, stops)
-          is_est_running_to_le_sud(corporation, stops) ? 30 : 0
+        def est_centre_bourgogne_bonus(corporation, stops)
+          is_est_running_to_centre_bourgogne(corporation, stops) ? 30 : 0
         end
 
-        def is_est_running_to_le_sud(corporation, stops)
-          corporation == est && stops.any? { |s| s.hex.id == LE_SUD_HEX }
+        def is_est_running_to_centre_bourgogne(corporation, stops)
+          corporation == est && stops.any? { |s| s.hex.id == CENTRE_BOURGOGNE_HEX }
         end
 
         def luxembourg_value(corporation, stops)
@@ -604,12 +609,13 @@ module Engine
           get_route_max_value(corporation, stops)
         end
 
-        def get_route_max_value(corporation, stops, ignore_london = false)          
+        def get_route_max_value(corporation, stops, ignore_london = false)
           revenues = stops.map { |s| get_current_revenue(s.revenue) }
-          
-          revenues << 60 if is_est_running_to_le_sud(corporation, stops)
+
+          revenues << 60 if is_est_running_to_centre_bourgogne(corporation, stops)
+
           if ignore_london
-            london_revenue = get_current_revenue(hex_by_id(LONDON_HEX).tile.citiess.first.revenue)
+            london_revenue = get_current_revenue(hex_by_id(LONDON_HEX).tile.cities.first.revenue)
             revenues.delete_at(revenues.index(london_revenue) || revenues.length)
           end
 
@@ -679,44 +685,32 @@ module Engine
           end
         end
 
-        private
+        def adjust_companies()
+          return unless @players.size == 4
 
-        def remove_extra_companies(starting_corporations_ids)
-          major_shareholdings = companies.find_all { |c| [180, 220].include?(c.value) }
+          company_to_remove = companies.find { |c| c.id == 'AR' }
+
+          company_to_remove.close!
+          @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.delete(company_to_remove)
+
+          sqg.value = 70
+          sqg.min_price = 35
+          sqg.max_price = 140
+          @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.sort_by!(&:value)
+        end
+
+        def remove_extra_french_major_shareholding_companies(starting_corporation_id)
+          major_shareholdings = companies.find_all { |c| c.value == 180 }
 
           major_shareholdings.each do |company|
             close_ability = company.abilities.select { |a| a.type == :close }.first
 
-            next if starting_corporations_ids.include?(close_ability.corporation)
+            next if close_ability.corporation == starting_corporation_id
 
             company.close!
             @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.delete(company)
           end
         end
-
-        # def remove_extra_trains
-        #   return unless @players.size == 3
-
-        #   to_remove = @depot.trains.reverse.find { |t| t.name == '5' }
-        #   @depot.forget_train(to_remove)
-        #   @log << "Removing #{to_remove.name} train"
-
-        #   # to_remove = @depot.trains.reverse.find { |t| t.name == '6' }
-        #   # @depot.forget_train(to_remove)
-        #   # @log << "Removing #{to_remove.name} train"
-        # end
-
-        # def remove_extra_late_corporations
-        #   to_remove = @late_corporations.select { |c| c.id == 'B2' }
-        #   @late_corporations.delete(to_remove)
-        #   @log << 'Removing B2 late corporation'
-
-        #   return unless @players.size == 3
-
-        #   to_remove = @late_corporations.select { |c| c.id == 'F2' }
-        #   @late_corporations.delete(to_remove)
-        #   @log << 'Removing F2 late corporation'
-        # end
       end
     end
   end
