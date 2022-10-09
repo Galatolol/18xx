@@ -30,7 +30,8 @@ dev_build : dev_link data_dir
 dev_up : dev_link data_dir
 	$(CONTAINER_COMPOSE) up
 dev_up_b : dev_link data_dir
-	$(CONTAINER_COMPOSE) up --build
+	$(CONTAINER_COMPOSE) up --build && \
+		$(CONTAINER_COMPOSE) up --build --no-deps --detach queue
 
 # prod config, run locally
 prod_build : prod_link data_dir ensure_prod_env
