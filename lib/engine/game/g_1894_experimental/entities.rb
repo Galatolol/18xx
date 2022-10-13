@@ -232,6 +232,11 @@ module Engine
                 type: 'description',
                 description: 'May not redeem shares',
               },
+              {
+                type: 'description',
+                description: 'Each route +10 F per revenue center',
+
+              },
             ],
           },
           {

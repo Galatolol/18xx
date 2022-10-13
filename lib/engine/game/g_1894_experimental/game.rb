@@ -346,6 +346,9 @@ module Engine
           french_starting_corporation.add_ability(
             Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
           )
+          french_starting_corporation.add_ability(
+            Engine::Ability::Description.new(type: 'description', description: 'Each route +10 F per revenue center')
+          )
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
           belgian_starting_corporation = corporation_by_id('Belge')
 
@@ -624,6 +627,8 @@ module Engine
           revenue += est_centre_bourgogne_bonus(route.corporation, stops)
           revenue += luxembourg_value(route.corporation, stops)
           revenue += london_bonus(route.corporation, stops)
+
+          revenue += 10 * stops.size if starting_corporation_ids.include?(route.corporation.id)
 
           raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
 
