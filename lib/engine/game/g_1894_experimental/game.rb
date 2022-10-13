@@ -478,6 +478,12 @@ module Engine
         def action_processed(action)
           super
 
+          if action.is_a?(Action::BuyCompany)
+            action.entity.add_ability(
+              Engine::Ability::Description.new(type: 'description', description: 'London shipping')
+            )
+          end
+
           # If only one city tokenable, the reservation goes there
           if action.is_a?(Action::PlaceToken)
             tile = hex_by_id(action.city.hex.id).tile
