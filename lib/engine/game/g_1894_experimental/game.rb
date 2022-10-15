@@ -94,6 +94,8 @@ module Engine
           %w[10o 20o 30o 40o],
         ].freeze
 
+        LIMITED_PAR_PHASES = ['Green', 'Blue', 'Brown'].freeze
+
         PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
                   {
                     name: 'Green',
@@ -147,7 +149,7 @@ module Engine
                     distance: 3,
                     price: 140,
                     rusts_on: '5',
-                    num: 5,
+                    num: 4,
                     discount: { '2' => 40 },
                   },
                   {
@@ -329,6 +331,7 @@ module Engine
 
           @last_or_set_triggered = false
           @skip_track_and_token = false
+          @corporation_parred = false
 
           @log << "-- Setting game up for #{@players.size} players --"
           # remove_extra_trains
@@ -414,6 +417,14 @@ module Engine
 
         def next_round!
           @skip_track_and_token ||= (@last_or_set_triggered && (@round.instance_of? G1894Experimental::Round::Stock))
+          @corporation_parred = false
+
+          super
+        end
+
+        def can_par?(corporation, parrer)
+
+          return false if @corporation_parred && LIMITED_PAR_PHASES.include?(phase.current['name'])
 
           super
         end
@@ -481,14 +492,15 @@ module Engine
         def action_processed(action)
           super
 
-          if action.is_a?(Action::BuyCompany)
+          case action
+          when Action::Par
+            @corporation_parred = true
+          when Action::BuyCompany
             action.entity.add_ability(
               Engine::Ability::Description.new(type: 'description', description: 'London shipping')
             )
-          end
-
           # If only one city tokenable, the reservation goes there
-          if action.is_a?(Action::PlaceToken)
+          when Action::PlaceToken
             tile = hex_by_id(action.city.hex.id).tile
 
             return unless BROWN_CITY_TILES.include?(tile.name)
@@ -508,33 +520,31 @@ module Engine
             end
 
             tile.reservations = []
-          end
+          when Action::LayTile
+            tile = hex_by_id(action.hex.id).tile
 
-          return unless action.is_a?(Action::LayTile)
+            if BROWN_CITY_TILES.include?(tile.name)
+              # The city splits into two cities, so the reservation has to be for the whole hex
+              reservation = tile.cities.first.reservations.first
+              if reservation
+                tile.cities.first.remove_all_reservations!
+                tile.add_reservation!(reservation.corporation, nil, reserve_city: false)
+              end
 
-          tile = hex_by_id(action.hex.id).tile
-
-          if BROWN_CITY_TILES.include?(tile.name)
-            # The city splits into two cities, so the reservation has to be for the whole hex
-            reservation = tile.cities.first.reservations.first
-            if reservation
-              tile.cities.first.remove_all_reservations!
-              tile.add_reservation!(reservation.corporation, nil, reserve_city: false)
+              # Clear all routes as they could be affected by the cities getting disjointed
+              graph.clear_graph_for_all
             end
 
-            # Clear all routes as they could be affected by the cities getting disjointed
-            graph.clear_graph_for_all
-          end
+            return if action.hex.id != SQ_HEX || tile.color == :yellow
 
-          return if action.hex.id != SQ_HEX || tile.color == :yellow
-
-          case tile.color
-          when :green
-            sqg.revenue = 70
-          when :brown
-            sqg.revenue = 100
+            case tile.color
+            when :green
+              sqg.revenue = 90
+            when :brown
+              sqg.revenue = 120
+            end
+            @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
           end
-          @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
         end
 
         def issuable_shares(entity)
