@@ -143,7 +143,7 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 8 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 7 },
                   {
                     name: '3',
                     distance: 3,
@@ -352,6 +352,9 @@ module Engine
           french_starting_corporation.add_ability(
             Engine::Ability::Description.new(type: 'description', description: 'Each route +10 F per revenue center')
           )
+          # french_starting_corporation.add_ability(
+          #   Engine::Ability::Description.new(type: 'description', description: 'Revenue +10/30/50/80 if 2/4/6/8 stops')
+          # )
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
           belgian_starting_corporation = corporation_by_id('Belge')
 
@@ -632,6 +635,13 @@ module Engine
 
         attr_reader :saved_tokens_hex
 
+        # def revenue_str(route)
+        #   revenue_str = super
+        #   revenue_str += " (#{route.stops.size} stops)" if starting_corporation_ids.include?(route.corporation.id)
+
+        #   revenue_str
+        # end
+
         def revenue_for(route, stops)
           revenue = super
           revenue += est_centre_bourgogne_bonus(route.corporation, stops)
@@ -644,6 +654,21 @@ module Engine
 
           revenue
         end
+
+        # def routes_revenue(routes)
+        #   revenue = super
+
+        #   return revenue if routes.empty? || !starting_corporation_ids.include?(routes.first.corporation.id)
+
+        #   total_stops = routes.sum { |r| r.stops.size }
+
+        #   return revenue + 80 if total_stops > 7
+        #   return revenue + 50 if total_stops >  5
+        #   return revenue + 30 if total_stops > 3
+        #   return revenue + 10 if total_stops > 1
+
+        #   revenue
+        # end
 
         def london_bonus(corporation, stops)
           london_bonus_city = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.cities.first

@@ -235,8 +235,11 @@ module Engine
               {
                 type: 'description',
                 description: 'Each route +10 F per revenue center',
-
               },
+              # {
+              #   type: 'description',
+              #   description: 'Revenue +10/30/50/80 if 2/4/6/8 stops',
+              # },
             ],
           },
           {
