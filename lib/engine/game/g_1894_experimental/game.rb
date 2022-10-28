@@ -94,8 +94,6 @@ module Engine
           %w[10o 20o 30o 40o],
         ].freeze
 
-        LIMITED_PAR_PHASES = ['Green', 'Blue', 'Brown'].freeze
-
         PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
                   {
                     name: 'Green',
@@ -349,12 +347,6 @@ module Engine
           french_starting_corporation.add_ability(
             Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
           )
-          french_starting_corporation.add_ability(
-            Engine::Ability::Description.new(type: 'description', description: 'Each route +10 F per revenue center')
-          )
-          # french_starting_corporation.add_ability(
-          #   Engine::Ability::Description.new(type: 'description', description: 'Revenue +10/30/50/80 if 2/4/6/8 stops')
-          # )
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
           belgian_starting_corporation = corporation_by_id('Belge')
 
@@ -401,6 +393,7 @@ module Engine
 
         def init_round_finished
           @players.rotate!(@round.entity_index)
+          stock_market.remove_par!(stock_market.share_price(0, 3))
         end
 
         def assignment_tokens(assignment)
@@ -420,17 +413,13 @@ module Engine
 
         def next_round!
           @skip_track_and_token ||= (@last_or_set_triggered && (@round.instance_of? G1894Experimental::Round::Stock))
-          @corporation_parred = false
 
           super
         end
 
-        def can_par?(corporation, parrer)
-
-          return false if @corporation_parred && LIMITED_PAR_PHASES.include?(phase.current['name'])
-
-          super
-        end
+        # def par_prices(corporation)
+        #   @stock_market.par_prices - 100
+        # end
 
         def place_home_token(corporation)
           return if corporation.tokens.first&.used == true
@@ -496,9 +485,9 @@ module Engine
           super
 
           case action
-          when Action::Par
-            @corporation_parred = true
-          when Action::BuyCompany
+          when Action::PlaceToken
+            return unless action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
+
             action.entity.add_ability(
               Engine::Ability::Description.new(type: 'description', description: 'London shipping')
             )
@@ -635,40 +624,16 @@ module Engine
 
         attr_reader :saved_tokens_hex
 
-        # def revenue_str(route)
-        #   revenue_str = super
-        #   revenue_str += " (#{route.stops.size} stops)" if starting_corporation_ids.include?(route.corporation.id)
-
-        #   revenue_str
-        # end
-
         def revenue_for(route, stops)
           revenue = super
           revenue += est_centre_bourgogne_bonus(route.corporation, stops)
           revenue += luxembourg_value(route.corporation, stops)
           revenue += london_bonus(route.corporation, stops)
 
-          revenue += 10 * stops.size if starting_corporation_ids.include?(route.corporation.id)
-
           raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
 
           revenue
         end
-
-        # def routes_revenue(routes)
-        #   revenue = super
-
-        #   return revenue if routes.empty? || !starting_corporation_ids.include?(routes.first.corporation.id)
-
-        #   total_stops = routes.sum { |r| r.stops.size }
-
-        #   return revenue + 80 if total_stops > 7
-        #   return revenue + 50 if total_stops >  5
-        #   return revenue + 30 if total_stops > 3
-        #   return revenue + 10 if total_stops > 1
-
-        #   revenue
-        # end
 
         def london_bonus(corporation, stops)
           london_bonus_city = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.cities.first
