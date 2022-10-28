@@ -76,7 +76,7 @@ module Engine
             name: 'Ligne de Saint-Quentin à Guise',
             sym: 'SQG',
             value: 100,
-            desc: 'Revenue is equal to 90 if Saint-Quentin (G10) is green, to 120 if Saint-Quentin is brown and to 0 otherwise.'\
+            desc: 'Revenue is equal to 70 if Saint-Quentin (G10) is green, to 100 if Saint-Quentin is brown and to 0 otherwise.'\
                   ' Closes in purple phase.',
             abilities: [{ type: 'close', on_phase: 'Purple' }],
             color: '#d9d9d9',
@@ -232,14 +232,6 @@ module Engine
                 type: 'description',
                 description: 'May not redeem shares',
               },
-              {
-                type: 'description',
-                description: 'Each route +10 F per revenue center',
-              },
-              # {
-              #   type: 'description',
-              #   description: 'Revenue +10/30/50/80 if 2/4/6/8 stops',
-              # },
             ],
           },
           {

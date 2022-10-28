@@ -13,10 +13,6 @@ module Engine
             super
           end
 
-          def get_par_prices(_entity, corp)
-            @game.par_prices(corp)
-          end
-
           def can_buy_multiple?(entity, corporation, _owner)
             super && corporation.owner == entity && num_shares_bought(corporation) < 2
           end
