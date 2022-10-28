@@ -17,7 +17,7 @@ module Engine
 
         attr_accessor :skip_track_and_token
 
-        CURRENCY_FORMAT_STR = '%d F'
+        CURRENCY_FORMAT_STR = '%s F'
 
         BANK_CASH = 99_999
 
@@ -29,19 +29,24 @@ module Engine
 
         MUST_SELL_IN_BLOCKS = false
 
-        # 89,96,103,112,121,134,149,155,177,202,240,270,305,350,400,455
-
-        # 82,90,94,100,110,121,134,148,165,190,225,255,285,325,375,425
-        # 77,82,88,95,100,112,125,139,154,176,200,220,250,285,320,360
-        # 70,75,82,87,93,100,109,120,132,150,170,190,210,,,
-        # 66,70,75,80,85,92,100,110,120,130,,,,,,
-        # 63,66,70,76,81,88,97,107,,,,,,,,
-        # 59,62,65,69,74,80,88,,,,,,,,,
-        # 44,54,61,64,67,74,80,,,,,,,,,
-        # 30,40,53,54,,,,,,,,,,,,
-        # 20,30,40,50,,,,,,,,,,,,
-        # 10,20,30,40,,,,,,,,,,,,
         MARKET = [
+          %w[89
+             96
+             103
+             112
+             121
+             134
+             149
+             155
+             177
+             205
+             240
+             270
+             305
+             350
+             400
+             455e
+          ],
           %w[82
              90p
              94
@@ -57,7 +62,7 @@ module Engine
              285
              325
              375
-             425e],
+             425],
           %w[77
              82
              88
@@ -404,7 +409,7 @@ module Engine
 
         def init_round_finished
           @players.rotate!(@round.entity_index)
-          stock_market.remove_par!(stock_market.share_price(0, 3))
+          stock_market.remove_par!(stock_market.share_price(1, 3))
         end
 
         def assignment_tokens(assignment)
