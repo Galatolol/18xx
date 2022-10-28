@@ -21,7 +21,7 @@ module Engine
 
         BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 22, 4 => 18 }.freeze
+        CERT_LIMIT = { 3 => 20, 4 => 15 }.freeze
 
         STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
@@ -29,72 +29,81 @@ module Engine
 
         MUST_SELL_IN_BLOCKS = false
 
+        # 89,96,103,112,121,134,149,155,177,202,240,270,305,350,400,455
+
+        # 82,90,94,100,110,121,134,148,165,190,225,255,285,325,375,425
+        # 77,82,88,95,100,112,125,139,154,176,200,220,250,285,320,360
+        # 70,75,82,87,93,100,109,120,132,150,170,190,210,,,
+        # 66,70,75,80,85,92,100,110,120,130,,,,,,
+        # 63,66,70,76,81,88,97,107,,,,,,,,
+        # 59,62,65,69,74,80,88,,,,,,,,,
+        # 44,54,61,64,67,74,80,,,,,,,,,
+        # 30,40,53,54,,,,,,,,,,,,
+        # 20,30,40,50,,,,,,,,,,,,
+        # 10,20,30,40,,,,,,,,,,,,
         MARKET = [
-          %w[76
-             82
-             90
+          %w[82
+             90p
+             94
              100p
-             112
-             126
-             142
-             160
-             180
-             200
+             110
+             121
+             134
+             148
+             165
+             190
              225
              255
              285
              325
              375
              425e],
-          %w[70
-             76
+          %w[77
              82
-             90p
+             88
+             95
              100
              112
-             126
-             142
-             160
-             180
+             125
+             139
+             154
+             176
              200
              225
              250
              275
              300
              330],
-          %w[65
-             70
-             76
+          %w[70o
+             75
              82p
-             90
+             87
+             93
              100
-             111
-             125
-             140
-             155
+             109
+             120
+             132
+             150
              170
              190
              210],
-          %w[60o
-             66
-             71
-             76p
-             82
-             90
+          %w[66o
+             70
+             75
+             80
+             85
+             92
              100
              110
              120
              130],
-          %w[55o 62 67 71p 76 82 90 100],
-          %w[50o 58o 65 67p 71 75 80],
-          %w[45o 54o 63 67 69 70],
-          %w[40o 50o 60o 67 68],
-          %w[30o 40o 50o 60o],
+          %w[63o 66o 70 76p 81 88 97 107],
+          %w[59o 62o 65 69 74 80 88],
+          %w[44o 54o 61o 64 67p 74 80],
+          %w[30o 40o 53o 54],
           %w[20o 30o 40o 50o],
           %w[10o 20o 30o 40o],
         ].freeze
-
-        LIMITED_PAR_PHASES = ['Green', 'Blue', 'Brown'].freeze
 
         PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
                   {
@@ -349,12 +358,6 @@ module Engine
           french_starting_corporation.add_ability(
             Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
           )
-          french_starting_corporation.add_ability(
-            Engine::Ability::Description.new(type: 'description', description: 'Each route +10 F per revenue center')
-          )
-          # french_starting_corporation.add_ability(
-          #   Engine::Ability::Description.new(type: 'description', description: 'Revenue +10/30/50/80 if 2/4/6/8 stops')
-          # )
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
           belgian_starting_corporation = corporation_by_id('Belge')
 
@@ -401,6 +404,7 @@ module Engine
 
         def init_round_finished
           @players.rotate!(@round.entity_index)
+          stock_market.remove_par!(stock_market.share_price(0, 3))
         end
 
         def assignment_tokens(assignment)
@@ -420,17 +424,13 @@ module Engine
 
         def next_round!
           @skip_track_and_token ||= (@last_or_set_triggered && (@round.instance_of? G1894Experimental::Round::Stock))
-          @corporation_parred = false
 
           super
         end
 
-        def can_par?(corporation, parrer)
-
-          return false if @corporation_parred && LIMITED_PAR_PHASES.include?(phase.current['name'])
-
-          super
-        end
+        # def par_prices(corporation)
+        #   @stock_market.par_prices - 100
+        # end
 
         def place_home_token(corporation)
           return if corporation.tokens.first&.used == true
@@ -496,9 +496,9 @@ module Engine
           super
 
           case action
-          when Action::Par
-            @corporation_parred = true
-          when Action::BuyCompany
+          when Action::PlaceToken
+            return unless action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
+
             action.entity.add_ability(
               Engine::Ability::Description.new(type: 'description', description: 'London shipping')
             )
@@ -542,9 +542,9 @@ module Engine
 
             case tile.color
             when :green
-              sqg.revenue = 90
+              sqg.revenue = 70
             when :brown
-              sqg.revenue = 120
+              sqg.revenue = 100
             end
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
           end
@@ -635,40 +635,16 @@ module Engine
 
         attr_reader :saved_tokens_hex
 
-        # def revenue_str(route)
-        #   revenue_str = super
-        #   revenue_str += " (#{route.stops.size} stops)" if starting_corporation_ids.include?(route.corporation.id)
-
-        #   revenue_str
-        # end
-
         def revenue_for(route, stops)
           revenue = super
           revenue += est_centre_bourgogne_bonus(route.corporation, stops)
           revenue += luxembourg_value(route.corporation, stops)
           revenue += london_bonus(route.corporation, stops)
 
-          revenue += 10 * stops.size if starting_corporation_ids.include?(route.corporation.id)
-
           raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
 
           revenue
         end
-
-        # def routes_revenue(routes)
-        #   revenue = super
-
-        #   return revenue if routes.empty? || !starting_corporation_ids.include?(routes.first.corporation.id)
-
-        #   total_stops = routes.sum { |r| r.stops.size }
-
-        #   return revenue + 80 if total_stops > 7
-        #   return revenue + 50 if total_stops >  5
-        #   return revenue + 30 if total_stops > 3
-        #   return revenue + 10 if total_stops > 1
-
-        #   revenue
-        # end
 
         def london_bonus(corporation, stops)
           london_bonus_city = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.cities.first
