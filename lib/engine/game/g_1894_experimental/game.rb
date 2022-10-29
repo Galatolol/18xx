@@ -21,7 +21,7 @@ module Engine
 
         BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 20, 4 => 15 }.freeze
+        CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
         STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
@@ -103,8 +103,8 @@ module Engine
              120
              130],
           %w[63o 66o 70 76p 81 88 97 107],
-          %w[59o 62o 65 69 74 80 88],
-          %w[44o 54o 61o 64 67p 74 80],
+          %w[59o 62o 65 69 74 81 89],
+          %w[44o 54o 61o 64 67p 74],
           %w[30o 40o 53o 54],
           %w[20o 30o 40o 50o],
           %w[10o 20o 30o 40o],
@@ -207,7 +207,6 @@ module Engine
                     discount: { '5' => 200, '6' => 300, '7' => 355 },
                   }].freeze
 
-
         LAYOUT = :pointy
 
         MULTIPLE_BUY_TYPES = %i[unlimited].freeze
@@ -236,7 +235,8 @@ module Engine
         MARKET_TEXT = Base::MARKET_TEXT.merge(par: 'Par',
                                               unlimited: 'Corporation shares can be held above 60% and ' \
                                                          'President may buy two shares at a time and ' \
-                                                         'additional move up if sold out.')
+                                                         'additional move up if sold out and don\`t count '\
+                                                         'towards the cert limit.')
 
         STOCKMARKET_COLORS = Base::STOCKMARKET_COLORS.merge(par: :red,
                                                             unlimited: :gray)
@@ -419,7 +419,7 @@ module Engine
         end
 
         def init_stock_market
-          G1894Experimental::StockMarket.new(self.class::MARKET, [],
+          G1894Experimental::StockMarket.new(self.class::MARKET, [:unlimited],
                                  multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
         end
 
