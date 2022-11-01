@@ -157,13 +157,13 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 7 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 8 },
                   {
                     name: '3',
                     distance: 3,
                     price: 140,
                     rusts_on: '5',
-                    num: 4,
+                    num: 5,
                     discount: { '2' => 40 },
                   },
                   {
