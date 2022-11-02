@@ -345,7 +345,7 @@ module Engine
 
           @last_or_set_triggered = false
           @skip_track_and_token = false
-          @corporation_parred = false
+          @corporations_parred_this_round = 0
 
           @log << "-- Setting game up for #{@players.size} players --"
           # remove_extra_trains
@@ -429,13 +429,16 @@ module Engine
 
         def next_round!
           @skip_track_and_token ||= (@last_or_set_triggered && (@round.instance_of? G1894Experimental::Round::Stock))
+          @corporations_parred_this_round = 0
 
           super
         end
 
-        # def par_prices(corporation)
-        #   @stock_market.par_prices - 100
-        # end
+        def can_par?(corporation, parrer)
+          return false if @corporations_parred_this_round >= 2
+
+          super
+        end
 
         def place_home_token(corporation)
           return if corporation.tokens.first&.used == true
@@ -501,6 +504,8 @@ module Engine
           super
 
           case action
+          when Action::Par
+            @corporations_parred_this_round += 1
           when Action::PlaceToken
             return unless action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
 
