@@ -17,11 +17,11 @@ module Engine
 
         attr_accessor :skip_track_and_token
 
-        CURRENCY_FORMAT_STR = '%d F'
+        CURRENCY_FORMAT_STR = '%s F'
 
         BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 20, 4 => 15 }.freeze
+        CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
         STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
@@ -29,52 +29,58 @@ module Engine
 
         MUST_SELL_IN_BLOCKS = false
 
-        # 89,96,103,112,121,134,149,155,177,202,240,270,305,350,400,455
-
-        # 82,90,94,100,110,121,134,148,165,190,225,255,285,325,375,425
-        # 77,82,88,95,100,112,125,139,154,176,200,220,250,285,320,360
-        # 70,75,82,87,93,100,109,120,132,150,170,190,210,,,
-        # 66,70,75,80,85,92,100,110,120,130,,,,,,
-        # 63,66,70,76,81,88,97,107,,,,,,,,
-        # 59,62,65,69,74,80,88,,,,,,,,,
-        # 44,54,61,64,67,74,80,,,,,,,,,
-        # 30,40,53,54,,,,,,,,,,,,
-        # 20,30,40,50,,,,,,,,,,,,
-        # 10,20,30,40,,,,,,,,,,,,
         MARKET = [
-          %w[82
+          %w[77
+             83
+             89
+             96
+             103
+             111
+             120
+             131
+             145
+             160
+             185
+             217
+             248
+             285
+             325
+             375e],
+          %w[72
+             77
+             82
              90p
              94
              100p
              110
              121
              134
-             148
-             165
-             190
-             225
-             255
-             285
-             325
-             375
-             425e],
-          %w[77
+             150
+             170
+             194
+             222
+             254
+             290
+             335],
+          %w[67o
+             72
+             77
              82
              88
              95
              100
-             112
-             125
-             139
-             154
-             176
+             110
+             121
+             136
+             153
+             174
              200
-             225
-             250
-             275
-             300
-             330],
-          %w[70o
+             229
+             262
+             300],
+          %w[63o
+             66o
+             70o
              75
              82p
              87
@@ -82,27 +88,29 @@ module Engine
              100
              109
              120
-             132
-             150
-             170
-             190
-             210],
-          %w[66o
+             138
+             159
+             179
+             206
+             236],
+          %w[59o
+             63o
+             66o
              70
              75
              80
              85
              92
              100
-             110
-             120
-             130],
-          %w[63o 66o 70 76p 81 88 97 107],
-          %w[59o 62o 65 69 74 80 88],
-          %w[44o 54o 61o 64 67p 74 80],
-          %w[30o 40o 53o 54],
-          %w[20o 30o 40o 50o],
-          %w[10o 20o 30o 40o],
+             112
+             128
+             146],
+          %w[56o 59o 63o 66o 70 76p 81 88 97 107],
+          %w[42o 55o 59o 62o 65 69 74 81 89],
+          %w[30o 40o 50o 54o 60o 64 67p 74],
+          %w[20o 30o 40o 50o 54o 60o],
+          %w[10o 20o 30o 40o 50o 54o],
+          ['', '10o', '20o', '30o', '40o', '50o'],
         ].freeze
 
         PHASES = [{ name: 'Yellow', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
@@ -152,13 +160,13 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 7 },
+        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 8 },
                   {
                     name: '3',
                     distance: 3,
                     price: 140,
                     rusts_on: '5',
-                    num: 4,
+                    num: 5,
                     discount: { '2' => 40 },
                   },
                   {
@@ -202,7 +210,6 @@ module Engine
                     discount: { '5' => 200, '6' => 300, '7' => 355 },
                   }].freeze
 
-
         LAYOUT = :pointy
 
         MULTIPLE_BUY_TYPES = %i[unlimited].freeze
@@ -231,7 +238,8 @@ module Engine
         MARKET_TEXT = Base::MARKET_TEXT.merge(par: 'Par',
                                               unlimited: 'Corporation shares can be held above 60% and ' \
                                                          'President may buy two shares at a time and ' \
-                                                         'additional move up if sold out.')
+                                                         'additional move up if sold out and don\`t count '\
+                                                         'towards the cert limit.')
 
         STOCKMARKET_COLORS = Base::STOCKMARKET_COLORS.merge(par: :red,
                                                             unlimited: :gray)
@@ -340,7 +348,7 @@ module Engine
 
           @last_or_set_triggered = false
           @skip_track_and_token = false
-          @corporation_parred = false
+          @corporations_parred_this_round = 0
 
           @log << "-- Setting game up for #{@players.size} players --"
           # remove_extra_trains
@@ -404,7 +412,7 @@ module Engine
 
         def init_round_finished
           @players.rotate!(@round.entity_index)
-          stock_market.remove_par!(stock_market.share_price(0, 3))
+          stock_market.remove_par!(stock_market.share_price(1, 3))
         end
 
         def assignment_tokens(assignment)
@@ -414,7 +422,7 @@ module Engine
         end
 
         def init_stock_market
-          G1894Experimental::StockMarket.new(self.class::MARKET, [],
+          G1894Experimental::StockMarket.new(self.class::MARKET, [:unlimited],
                                  multiple_buy_types: self.class::MULTIPLE_BUY_TYPES)
         end
 
@@ -424,13 +432,16 @@ module Engine
 
         def next_round!
           @skip_track_and_token ||= (@last_or_set_triggered && (@round.instance_of? G1894Experimental::Round::Stock))
+          @corporations_parred_this_round = 0
 
           super
         end
 
-        # def par_prices(corporation)
-        #   @stock_market.par_prices - 100
-        # end
+        def can_par?(corporation, parrer)
+          return false if @corporations_parred_this_round >= 2
+
+          super
+        end
 
         def place_home_token(corporation)
           return if corporation.tokens.first&.used == true
@@ -496,6 +507,8 @@ module Engine
           super
 
           case action
+          when Action::Par
+            @corporations_parred_this_round += 1
           when Action::PlaceToken
             return unless action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
 
