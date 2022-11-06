@@ -25,13 +25,16 @@ module Engine
         TRACK_RESTRICTION = :permissive
         SELL_BUY_ORDER = :sell_buy_sell
         TILE_RESERVATION_BLOCKS_OTHERS = true
-        CURRENCY_FORMAT_STR = '$%s'
+        CURRENCY_FORMAT_STR = 'ƒ%s'
 
-        BANK_CASH = 12_000
+        BANK_CASH = 99_999
 
-        CERT_LIMIT = { 2 => 28, 3 => 20, 4 => 16, 5 => 13, 6 => 11 }.freeze
+        CERT_LIMIT = { 2 => 28, 3 => 20, 4 => 16 }.freeze
 
-        STARTING_CASH = { 2 => 1200, 3 => 800, 4 => 600, 5 => 480, 6 => 400 }.freeze
+        STARTING_CASH = { 2 => 740, 3 => 660, 4 => 580 }.freeze
+
+        OFFBOARD_COLORS = [:red, :blue, :orange]
+        RUHRGEBIED_HEXES = %w[J17 K18].freeze
 
         MARKET = [
           %w[60y
@@ -72,42 +75,6 @@ module Engine
              260
              280
              300],
-          %w[46y
-             55y
-             60y
-             65
-             70
-             76
-             82p
-             90
-             100
-             111
-             125
-             140
-             155
-             170
-             185
-             200],
-          %w[39o
-             48y
-             54y
-             60y
-             66
-             71
-             76p
-             82
-             90
-             100
-             110
-             120
-             130],
-          %w[32o 41o 48y 55y 62 67 71p 76 82 90 100],
-          %w[25b 34o 42o 50y 58y 65 67p 71 75 80],
-          %w[18b 27b 36o 45o 54y 63 67 69 70],
-          %w[10b 20b 30b 40o 50y 60y 67 68],
-          ['', '10b', '20b', '30b', '40o', '50y', '60y'],
-          ['', '', '10b', '20b', '30b', '40o', '50y'],
-          ['', '', '', '10b', '20b', '30b', '40o'],
         ].freeze
 
         PHASES = [{ name: '2', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
@@ -149,7 +116,7 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 2, price: 80, rusts_on: '4', num: 6 },
+        TRAINS = [{ name: '2', distance: 8, price: 80, rusts_on: '4', num: 6 },
                   { name: '3', distance: 3, price: 180, rusts_on: '6', num: 5 },
                   { name: '4', distance: 4, price: 300, rusts_on: 'D', num: 4 },
                   {
@@ -189,8 +156,31 @@ module Engine
           ], round_num: round_num)
         end
 
-        def multiple_buy_only_from_market?
-          !optional_rules&.include?(:multiple_brown_from_ipo)
+        def revenue_for(route, stops)
+          revenue = super
+          revenue += ruhrgebied_value(route.corporation, stops)
+
+          raise GameError, 'May not visit two offboards of the same color' if OFFBOARD_COLORS.include?(stops.first.tile.color) && stops.first.tile.color == stops.last.tile.color
+
+          revenue
+        end
+
+        def ruhrgebied_value(corporation, stops)
+          return 0 unless stops.any? { |s| RUHRGEBIED_HEXES.include?(s.hex.id) }
+          revenues = []
+          stops.each do |stop|
+            revenue = get_current_revenue(stop.revenue)
+            revenue *= 2 if OFFBOARD_COLORS.include?(stop.tile.color)
+            revenues.append(revenue)
+          end
+
+          revenues.max
+        end
+
+        def get_current_revenue(revenue)
+          phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
+
+          0
         end
       end
     end
