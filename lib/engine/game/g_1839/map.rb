@@ -407,7 +407,7 @@ module Engine
               ['G20'] => 'offboard=revenue:yellow_20|brown_40|gray_50;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;path=a:3,b:_0',
               ['J17'] => 'offboard=revenue:0,groups:Ruhrgebied;icon=image:1839/ruhrgebied;path=a:0,b:_0;path=a:1,b:_0;path=a:2,b:_0;border=edge:5',
               ['K18'] => 'offboard=revenue:0,hide:1,groups:Ruhrgebied;path=a:1,b:_0;border=edge:2',
-              ['L19'] => 'offboard=revenue:0;path=a:1,b:_0',
+              ['L19'] => 'offboard=revenue:yellow_10|brown_20|gray_30;path=a:1,b:_0',
               ['N19'] => 'offboard=revenue:yellow_20|brown_40|gray_50;path=a:1,b:_0',
             }
           }.freeze

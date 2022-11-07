@@ -6,6 +6,7 @@ require_relative 'map'
 require_relative 'entities'
 require_relative 'corporation'
 require_relative '../stubs_are_restricted'
+require_relative '../cities_plus_towns_route_distance_str'
 
 module Engine
   module Game
@@ -14,6 +15,8 @@ module Engine
         include_meta(G1839::Meta)
         include G1839::Map
         include G1839::Entities
+        include CitiesPlusTownsRouteDistanceStr
+        include StubsAreRestricted
 
         register_colors(red: '#d1232a',
                         orange: '#f58121',
@@ -117,24 +120,56 @@ module Engine
                     operating_rounds: 3,
                   }].freeze
 
-        TRAINS = [{ name: '2', distance: 8, price: 80, rusts_on: '4', num: 6 },
-                  { name: '3', distance: 3, price: 180, rusts_on: '6', num: 5 },
-                  { name: '4', distance: 4, price: 300, rusts_on: 'D', num: 4 },
-                  {
-                    name: '5',
-                    distance: 5,
-                    price: 450,
-                    num: 3,
-                    events: [{ 'type' => 'close_companies' }],
+        TRAINS = [{
+                    name: 'PR5+_exp',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 5, 'visit' => 5 },
+                               { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
+                    price: 280,
+                    num: 7,
                   },
-                  { name: '6', distance: 6, price: 630, num: 2 },
+                  { name: '2', distance: 8, price: 80, rusts_on: '4', num: 6 },
+                  {
+                    name: '3+',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 3, 'visit' => 3 },
+                               { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
+                    price: 160,
+                    rusts_on: 'R4',
+                    num: 9
+                  },
+                  {
+                    name: '4+',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 4, 'visit' => 4 },
+                               { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
+                    price: 240,
+                    rusts_on: 'PR2+',
+                    num: 7
+                  },
+                  {
+                    name: 'R4',
+                    distance: 4,
+                    price: 320,
+                    rusts_on: '4',
+                    num: 7,
+                  },
+                  {
+                    name: 'PR2+',
+                    distance: [{ 'nodes' => %w[city offboard], 'pay' => 2, 'visit' => 2 },
+                    { 'nodes' => ['town'], 'pay' => 99, 'visit' => 99 }],
+                    price: 280,
+                    num: 7,
+                  },
+                  {
+                    name: '4',
+                    distance: 4,
+                    price: 460,
+                    num: 5,
+                  },
                   {
                     name: 'D',
                     distance: 999,
-                    price: 1100,
-                    num: 20,
-                    available_on: '6',
-                    discount: { '4' => 300, '5' => 300, '6' => 300 },
+                    price: 570,
+                    rusts_on: 'D',
+                    num: 40,
                   }].freeze
 
         LAYOUT = :pointy
@@ -169,11 +204,21 @@ module Engine
           corporations
         end
 
+        def check_distance(route, visits)
+          super
+
+          stops = route.stops
+
+          raise GameError, 'Trains may not visit two offboards of the same color' if is_stop_offboard?(stops.first) && stops.first.tile.color == stops.last.tile.color
+
+          raise GameError, 'Local corporations may not visit offboards' if route.corporation.local? && (is_stop_offboard?(stops.first) || is_stop_offboard?(stops.last))
+
+          raise GameError, 'P trains may visit only one offboard' if route.train.name.include?('P') && is_stop_offboard?(stops.first) && is_stop_offboard?(stops.last)
+        end
+
         def revenue_for(route, stops)
           revenue = super
           revenue += ruhrgebied_value(route.corporation, stops)
-
-          raise GameError, 'May not visit two offboards of the same color' if OFFBOARD_COLORS.include?(stops.first.tile.color) && stops.first.tile.color == stops.last.tile.color
 
           revenue
         end
@@ -194,6 +239,10 @@ module Engine
           phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
 
           0
+        end
+
+        def is_stop_offboard?(stop)
+          OFFBOARD_COLORS.include?(stop.tile.color)
         end
       end
     end
