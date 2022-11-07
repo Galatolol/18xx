@@ -7,6 +7,8 @@ module Engine
     module G1839
       module Step
         class Token < Engine::Step::Token
+          ACTIONS = %w[place_token swap_token pass].freeze
+
           def can_place_token?(entity)
             current_entity == entity &&
               !@round.tokened &&
@@ -38,7 +40,6 @@ module Engine
 
             if old_token&.corporation&.id == 'NS'
               # Replace govt token
-
               old_token.remove!
               city.exchange_token(new_token)
 

@@ -201,8 +201,6 @@ module Engine
 
         def setup
           @govt_corporation = Corporation.new(sym: 'NS', name: 'Government', logo: '1882/neutral', tokens: [])
-
-          place_govt_token(hex_by_id('L13'))
         end
 
         def place_govt_token(hex, city: nil)
@@ -227,7 +225,7 @@ module Engine
 
         # For local corporations treat govt tokens as neutral
         def update_govt_tokens_type(entity)
-          new_type = entity.corporation.local? ? :neutral : :normal
+          new_type = entity.local? ? :neutral : :normal
           @govt_corporation.tokens.each { |t| t.type = new_type }
         end
 
