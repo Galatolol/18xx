@@ -168,63 +168,6 @@ module Engine
           ].freeze
 
           CORPORATIONS = [
-            # {
-            #   sym: 'Ouest',
-            #   name: 'Chemins de fer de l\'Ouest',
-            #   logo: '1894/Ouest',
-            #   simple_logo: '1894/Ouest.alt',
-            #   tokens: [0, 0, 100, 100, 140],
-            #   max_ownership_percent: 60,
-            #   coordinates: 'L13',
-            #   color: '#4682b4',
-            # },
-            # {
-            #   sym: 'Nord',
-            #   name: 'Chemins de fer du Nord',
-            #   logo: '1894/Nord',
-            #   simple_logo: '1894/Nord.alt',
-            #   tokens: [0, 0, 100, 100],
-            #   max_ownership_percent: 60,
-            #   coordinates: %w[E10 G14],
-            #   color: '#ff4040',
-            # },
-            # {
-            #   sym: 'AG',
-            #   name: 'Chemin de fer d\'Anvers à Gand',
-            #   logo: '1894/AG',
-            #   simple_logo: '1894/AG.alt',
-            #   tokens: [0, 40, 100, 100],
-            #   max_ownership_percent: 60,
-            #   coordinates: 'A13',
-            #   color: '#fcf75e',
-            #   text_color: 'black',
-            # },
-            # {
-            #   sym: 'CFOR',
-            #   name: 'Chemin de fer d\'Orléans à Rouen',
-            #   logo: '1894/CFOR',
-            #   simple_logo: '1894/CFOR.alt',
-            #   tokens: [0, 0, 100, 100, 140],
-            #   max_ownership_percent: 60,
-            #   coordinates: %w[D3 H1],
-            #   color: '#9c661f',
-            # },
-            # {
-            #   sym: 'Belge',
-            #   name: 'Chemins de fer de l\'État belge',
-            #   logo: '1894/Belge',
-            #   simple_logo: '1894/Belge.alt',
-            #   tokens: [0, 40, 100],
-            #   max_ownership_percent: 60,
-            #   coordinates: 'D17',
-            #   color: '#61b229',
-            #   abilities: [
-            #     {
-            #       type: 'description',
-            #       description: 'May not redeem shares',
-            #     },
-            #   ],
-            # },
             {
               sym: 'AMS',
               name: 'Aken-Maastrichtsche Spoorweg-Maatschappij',

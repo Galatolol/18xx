@@ -37,8 +37,13 @@ module Engine
 
         STARTING_CASH = { 2 => 740, 3 => 660, 4 => 580 }.freeze
 
-        OFFBOARD_COLORS = [:red, :blue, :orange]
+        OFFBOARD_COLORS = %i[red blue orange]
         RUHRGEBIED_HEXES = %w[J17 K18].freeze
+
+        TILE_LAYS = [
+          { lay: true, upgrade: true },
+          { lay: true, upgrade: :not_if_upgraded, cost: 20, cannot_reuse_same_hex: true },
+        ].freeze
 
         MARKET = [
           %w[60y
@@ -81,7 +86,7 @@ module Engine
              300],
         ].freeze
 
-        PHASES = [{ name: '2', train_limit: 4, tiles: [:yellow], operating_rounds: 1 },
+        PHASES = [{ name: '2', train_limit: 4, tiles: [:yellow, :green], operating_rounds: 1 },
                   {
                     name: '3',
                     on: '3',
@@ -192,6 +197,18 @@ module Engine
           ], round_num: round_num)
         end
 
+        def setup
+          @govt_corporation = Corporation.new(sym: 'NS', name: 'Government', logo: '1882/neutral', tokens: [])
+        end
+
+        def place_govt_token(hex, city: nil)
+          @log << "Placing a government token on #{hex.name} (#{hex.location_name})"
+          token = Token.new(@govt_corporation)
+          @govt_corporation.tokens << token
+          city ||= hex.tile.cities[0]
+          city.place_token(@govt_corporation, token, check_tokenable: false)
+        end
+
         def init_corporations(stock_market)
           corporations = self.class::CORPORATIONS.map do |corporation|
             G1839::Corporation.new(
@@ -204,6 +221,12 @@ module Engine
           corporations
         end
 
+        # For local corporations treat govt tokens as neutral
+        def update_govt_tokens_type(entity)
+          new_type = entity.corporation.local? ? :neutral : :normal
+          @govt_corporation.tokens.each { |t| t.type = new_type }
+        end
+
         def check_distance(route, visits)
           super
 
@@ -211,7 +234,7 @@ module Engine
 
           raise GameError, 'Trains may not visit two offboards of the same color' if is_stop_offboard?(stops.first) && stops.first.tile.color == stops.last.tile.color
 
-          raise GameError, 'Local corporations may not visit offboards' if route.corporation.local? && (is_stop_offboard?(stops.first) || is_stop_offboard?(stops.last))
+          #raise GameError, 'Local corporations may not visit offboards' if route.corporation.local? && (is_stop_offboard?(stops.first) || is_stop_offboard?(stops.last))
 
           raise GameError, 'P trains may visit only one offboard' if route.train.name.include?('P') && is_stop_offboard?(stops.first) && is_stop_offboard?(stops.last)
         end
@@ -237,23 +260,23 @@ module Engine
         end
 
         def revenue_for(route, stops)
-          return stops.sum { |s| get_stop_or_ruhrgebied_revenue(s, stops) } if route.train.name.include?('R')
+          return stops.sum { |s| stop_or_ruhrgebied_revenue(s, stops) } if route.train.name.include?('R')
 
           stops.sum do |stop|
-            stop_on_other_route?(route, stop) ? 0 : get_stop_or_ruhrgebied_revenue(stop, stops)
+            stop_on_other_route?(route, stop) ? 0 : stop_or_ruhrgebied_revenue(stop, stops)
           end
         end
 
-        def get_stop_or_ruhrgebied_revenue(stop, stops)
-          return get_ruhrgebied_revenue(stops) if RUHRGEBIED_HEXES.include?(stop.hex.id)
+        def stop_or_ruhrgebied_revenue(stop, stops)
+          return ruhrgebied_revenue(stops) if RUHRGEBIED_HEXES.include?(stop.hex.id)
 
-          get_stop_revenue(stop.revenue)
+          stop_revenue(stop.revenue)
         end
 
-        def get_ruhrgebied_revenue(stops)
+        def ruhrgebied_revenue(stops)
           revenues = []
           stops.each do |stop|
-            revenue = get_stop_revenue(stop.revenue)
+            revenue = stop_revenue(stop.revenue)
             revenue *= 2 if OFFBOARD_COLORS.include?(stop.tile.color)
             revenues.append(revenue)
           end
@@ -261,7 +284,7 @@ module Engine
           revenues.max
         end
 
-        def get_stop_revenue(revenue)
+        def stop_revenue(revenue)
           phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
         end
 
