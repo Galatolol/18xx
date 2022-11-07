@@ -216,6 +216,19 @@ module Engine
           raise GameError, 'P trains may visit only one offboard' if route.train.name.include?('P') && is_stop_offboard?(stops.first) && is_stop_offboard?(stops.last)
         end
 
+        def stop_on_other_route?(this_route, stop, train)
+          this_route.routes.each do |r|
+            return false if r == this_route
+
+            other_stops = r.stops
+
+            return true if other_stops.include?(stop)
+            return true unless (other_stops.flat_map(&:groups) & stop.groups).empty?
+          end
+
+          false
+        end
+
         def revenue_for(route, stops)
           revenue = super
           revenue += ruhrgebied_value(route.corporation, stops)
@@ -223,11 +236,24 @@ module Engine
           revenue
         end
 
-        def ruhrgebied_value(corporation, stops)
-          return 0 unless stops.any? { |s| RUHRGEBIED_HEXES.include?(s.hex.id) }
+        def revenue_for(route, stops)
+          return stops.sum { |s| get_stop_or_ruhrgebied_revenue(s, stops) } if route.train.name.include?('R')
+
+          stops.sum do |stop|
+            stop_on_other_route?(route, stop) ? 0 : get_stop_or_ruhrgebied_revenue(stop, stops)
+          end
+        end
+
+        def get_stop_or_ruhrgebied_revenue(stop, stops)
+          return get_ruhrgebied_revenue(stops) if RUHRGEBIED_HEXES.include?(stop.hex.id)
+
+          get_stop_revenue(stop.revenue)
+        end
+
+        def get_ruhrgebied_revenue(stops)
           revenues = []
           stops.each do |stop|
-            revenue = get_current_revenue(stop.revenue)
+            revenue = get_stop_revenue(stop.revenue)
             revenue *= 2 if OFFBOARD_COLORS.include?(stop.tile.color)
             revenues.append(revenue)
           end
@@ -235,14 +261,21 @@ module Engine
           revenues.max
         end
 
-        def get_current_revenue(revenue)
+        def get_stop_revenue(revenue)
           phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
-
-          0
         end
 
         def is_stop_offboard?(stop)
           OFFBOARD_COLORS.include?(stop.tile.color)
+        end
+
+        def rust(train)
+          if train.name.include?('R') && !train.ever_operated
+            train.obsolete = true
+            return
+          end
+
+          super
         end
       end
     end
