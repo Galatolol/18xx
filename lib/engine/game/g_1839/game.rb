@@ -37,6 +37,8 @@ module Engine
 
         STARTING_CASH = { 2 => 740, 3 => 660, 4 => 580 }.freeze
 
+        TILE_RESERVATION_BLOCKS_OTHERS = false
+
         OFFBOARD_COLORS = %i[red blue orange]
         RUHRGEBIED_HEXES = %w[J17 K18].freeze
 
@@ -188,7 +190,7 @@ module Engine
             Engine::Step::BuyCompany,
             Engine::Step::HomeToken,
             Engine::Step::Track,
-            Engine::Step::Token,
+            G1839::Step::Token,
             Engine::Step::Route,
             Engine::Step::Dividend,
             Engine::Step::DiscardTrain,
@@ -199,6 +201,8 @@ module Engine
 
         def setup
           @govt_corporation = Corporation.new(sym: 'NS', name: 'Government', logo: '1882/neutral', tokens: [])
+
+          place_govt_token(hex_by_id('L13'))
         end
 
         def place_govt_token(hex, city: nil)
@@ -227,6 +231,10 @@ module Engine
           @govt_corporation.tokens.each { |t| t.type = new_type }
         end
 
+        def calculate_token_cost(corporation, city)
+          stop_revenue(city.revenue) * (corporation.tokens.count(&:used) + 1)
+        end
+
         def check_distance(route, visits)
           super
 
@@ -234,7 +242,7 @@ module Engine
 
           raise GameError, 'Trains may not visit two offboards of the same color' if is_stop_offboard?(stops.first) && stops.first.tile.color == stops.last.tile.color
 
-          #raise GameError, 'Local corporations may not visit offboards' if route.corporation.local? && (is_stop_offboard?(stops.first) || is_stop_offboard?(stops.last))
+          raise GameError, 'Local corporations may not visit offboards' if route.corporation.local? && (is_stop_offboard?(stops.first) || is_stop_offboard?(stops.last))
 
           raise GameError, 'P trains may visit only one offboard' if route.train.name.include?('P') && is_stop_offboard?(stops.first) && is_stop_offboard?(stops.last)
         end
@@ -250,13 +258,6 @@ module Engine
           end
 
           false
-        end
-
-        def revenue_for(route, stops)
-          revenue = super
-          revenue += ruhrgebied_value(route.corporation, stops)
-
-          revenue
         end
 
         def revenue_for(route, stops)
