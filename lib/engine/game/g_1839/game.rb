@@ -4,6 +4,7 @@ require_relative 'meta'
 require_relative '../base'
 require_relative 'map'
 require_relative 'entities'
+require_relative 'corporation'
 require_relative '../stubs_are_restricted'
 
 module Engine
@@ -154,6 +155,18 @@ module Engine
             Engine::Step::BuyTrain,
             [Engine::Step::BuyCompany, { blocks: true }],
           ], round_num: round_num)
+        end
+
+        def init_corporations(stock_market)
+          corporations = self.class::CORPORATIONS.map do |corporation|
+            G1839::Corporation.new(
+              min_price: stock_market.par_prices.map(&:price).min,
+              capitalization: self.class::CAPITALIZATION,
+              **corporation.merge(corporation_opts),
+            )
+          end
+
+          corporations
         end
 
         def revenue_for(route, stops)
