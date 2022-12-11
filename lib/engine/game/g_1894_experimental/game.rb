@@ -170,7 +170,7 @@ module Engine
                   {
                     name: '4',
                     distance: 4,
-                    price: 300,
+                    price: 280,
                     rusts_on: '7',
                     num: 4,
                     discount: { '3' => 70 },
@@ -182,7 +182,7 @@ module Engine
                     rusts_on: 'D',
                     num: 4,
                     events: [{ 'type' => 'late_corporations_available' }],
-                    discount: { '4' => 150 },
+                    discount: { '4' => 140 },
                   },
                   {
                     name: '6',
@@ -195,8 +195,8 @@ module Engine
                   {
                     name: '7',
                     distance: 7,
-                    price: 710,
-                    num: 3,
+                    price: 700,
+                    num: 4,
                     discount: { '6' => 300 },
                   },
                   {
@@ -205,7 +205,7 @@ module Engine
                     price: 820,
                     num: 22,
                     events: [{ 'type' => 'last_or_set_triggered' }],
-                    discount: { '5' => 200, '6' => 300, '7' => 355 },
+                    discount: { '5' => 200, '6' => 300, '7' => 350 },
                   }].freeze
 
         LAYOUT = :pointy
@@ -645,7 +645,7 @@ module Engine
         end
 
         def london_bonus(corporation, stops)
-          london_bonus_city = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.cities.first
+          london_bonus_city = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.towns.first
 
           return 0 if !london_bonus_city.tokened_by?(corporation) || stops.none? { |s| s.hex.id == LONDON_HEX }
 
