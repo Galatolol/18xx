@@ -25,8 +25,8 @@ module Engine
       @game.phase.buying_train!(nil, train)
     end
 
-    def export_all!(name)
-      @game.log << "-- Event: All #{name} trains are exported --"
+    def export_all!(name, silent: false)
+      @game.log << "-- Event: All #{name} trains are exported --" unless silent
       while (train = @upcoming.first).name == name
         @game.remove_train(train)
         @game.phase.buying_train!(nil, train)
@@ -118,7 +118,8 @@ module Engine
 
     def other_trains(corporation)
       all_others = @trains.reject do |train|
-        !train.buyable || [corporation, self, nil].include?(train.owner)
+        !train.buyable(allow_obsolete_buys: @game.class::ALLOW_OBSOLETE_TRAIN_BUY) ||
+          [corporation, self, nil].include?(train.owner)
       end
 
       return all_others if @game.class::ALLOW_TRAIN_BUY_FROM_OTHER_PLAYERS

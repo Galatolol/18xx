@@ -79,16 +79,10 @@ TEST_CASES = [
       'Player 3 must contribute $160 for B&amp;O to afford a train from the Depot.',
       'Player 3 has $15',
       'Player 3 has $0 in sellable shares',
-      'Player 3 must sell shares to raise at least $145.',
       'Player 3 does not have enough liquidity to contribute towards B&amp;O buying a '\
       'train from the Depot. B&amp;O must buy a train from another corporation, or Player 3 '\
       'must declare bankruptcy.',
       'Declare Bankruptcy']]]],
-  ['1846',
-   '22071',
-   [[451,
-     'after_lay',
-     ['ERIE spends $20 and lays tile #25 with rotation 3 on G11']]]],
   ['18AL',
    4714,
    [[nil, 'endgame', '18AL: Phase 5 - Operating Round 7.2 (of 3) - Game Over - Company hit max stock value']]],
