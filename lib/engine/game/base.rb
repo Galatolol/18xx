@@ -198,13 +198,17 @@ module Engine
       # do tile reservations completely block other companies?
       # :never -- token can be placed as long as there is a city space for existing tile reservations
       # :always -- token cannot be placed until tile reservation resolved
-      # :yellow_only -- token cannot be placed while tile is yellow or until the tile reservation is resolved
+      # :single_slot_cities -- token cannot be placed if tile contains any single slot cities
       TILE_RESERVATION_BLOCKS_OTHERS = :never
 
       COMPANIES = [].freeze
+      COMPANY_CLASS = Company
 
       CORPORATION_CLASS = Corporation
       CORPORATIONS = [].freeze
+
+      TRAIN_CLASS = Train
+      DEPOT_CLASS = Depot
 
       MINORS = [].freeze
 
@@ -312,6 +316,16 @@ module Engine
         full_or: 'Next end of a complete OR set',
         one_more_full_or_set: 'End of the next complete OR set after the current one',
       }.freeze
+
+      GAME_END_DESCRIPTION_REASON_MAP_TEXT = {
+        bank: 'Bank Broken',
+        bankrupt: 'Bankruptcy',
+        stock_market: 'Company hit max stock value',
+        final_train: 'Final train was purchased',
+        final_phase: 'Final phase was reached',
+      }.freeze
+
+      ASSIGNMENT_TOKENS = {}.freeze
 
       OPERATING_ROUND_NAME = 'Operating'
       OPERATION_ROUND_SHORT_NAME = 'ORs'
@@ -563,7 +577,8 @@ module Engine
 
         @log << '----'
         @log << 'Your game was unable to be upgraded to the latest version of 18xx.games.'
-        @log << "It is pinned to version #{pin}, if any bugs are raised please include this version number."
+        @log << "It is pinned to version #{pin}."
+        @log << 'Please do not submit bug reports for pinned games. Pinned games cannot be debugged.'
         @log << 'Please note, pinned games may be deleted after 7 days.' if self.class::DEV_STAGE == :beta
         @log << '----'
       end
@@ -734,6 +749,9 @@ module Engine
         @last_processed_action = action.id
 
         self
+      rescue StandardError => e
+        rescue_exception(e, action)
+        self
       end
 
       def process_single_action(action)
@@ -754,21 +772,28 @@ module Engine
           @round.entities.each(&:unpass!)
 
           if end_now?(end_timing)
-
             end_game!
           else
-            store_player_info
-            next_round!
-            check_programmed_actions
-
-            finalize_round_setup
+            transition_to_next_round!
           end
         end
       rescue Engine::GameError => e
+        rescue_exception(e, action)
+      end
+
+      def rescue_exception(e, action)
         @raw_actions.pop
         @actions.pop
         @exception = e
         @broken_action = action
+      end
+
+      def transition_to_next_round!
+        store_player_info
+        next_round!
+        check_programmed_actions
+
+        finalize_round_setup
       end
 
       def finalize_round_setup
@@ -1516,14 +1541,10 @@ module Engine
             (!a.hexes || a.hexes.include?(hex.name))
         end
 
-        tile.upgrades.sum do |upgrade|
-          discount = ability && upgrade.terrains.uniq == [ability.terrain] ? ability.discount : 0
+        discount = ability&.discounts_tile?(tile) ? ability.discount : 0
+        log_cost_discount(spender, ability, discount)
 
-          log_cost_discount(spender, ability, discount)
-
-          total_cost = upgrade.cost - discount
-          total_cost
-        end
+        tile.upgrades.sum(&:cost) - discount
       end
 
       def tile_cost_with_discount(_tile, hex, entity, spender, cost)
@@ -2093,7 +2114,7 @@ module Engine
         true
       end
 
-      def after_buying_train(train); end
+      def after_buying_train(train, source); end
 
       private
 
@@ -2150,7 +2171,7 @@ module Engine
         game_companies.map do |company|
           next if players.size < (company[:min_players] || 0)
 
-          Company.new(**company)
+          self.class::COMPANY_CLASS.new(**company)
         end.compact
       end
 
@@ -2161,11 +2182,11 @@ module Engine
       def init_train_handler
         trains = game_trains.flat_map do |train|
           Array.new((train[:num] || num_trains(train))) do |index|
-            Train.new(**train, index: index)
+            self.class::TRAIN_CLASS.new(**train, index: index)
           end
         end
 
-        Depot.new(trains, self)
+        self.class::DEPOT_CLASS.new(trains, self)
       end
 
       def game_trains
@@ -2483,6 +2504,10 @@ module Engine
         nil
       end
 
+      def final_or_in_set?(round)
+        round.round_num == @operating_rounds
+      end
+
       def end_now?(after)
         return false unless after
         return true if after == :immediate
@@ -2490,7 +2515,7 @@ module Engine
         return false unless @round.is_a?(round_end)
         return true if after == :current_or
 
-        final_or_in_set = @round.round_num == @operating_rounds
+        final_or_in_set = final_or_in_set?(@round)
 
         return (@turn == @final_turn) if final_or_in_set && (after == :one_more_full_or_set)
 
@@ -2533,16 +2558,14 @@ module Engine
                          " : Game Ends at conclusion of #{round_end.short_name}"\
                          " #{@final_turn}.#{final_operating_rounds}"
                        end
+          after_text += additional_ending_after_text
         end
 
-        reason_map = {
-          bank: 'Bank Broken',
-          bankrupt: 'Bankruptcy',
-          stock_market: 'Company hit max stock value',
-          final_train: 'Final train was purchased',
-          final_phase: 'Final phase was reached',
-        }
-        "#{reason_map[reason]}#{after_text}"
+        "#{self.class::GAME_END_DESCRIPTION_REASON_MAP_TEXT[reason]}#{after_text}"
+      end
+
+      def additional_ending_after_text
+        ''
       end
 
       def action_processed(_action)
@@ -2763,6 +2786,10 @@ module Engine
 
       def show_value_of_companies?(entity)
         entity&.player?
+      end
+
+      def company_table_header
+        'Company'
       end
 
       # minors to show on player cards

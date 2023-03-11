@@ -431,9 +431,9 @@ module Engine
             train.variant = '2'
             @log << 'L Train given to NDEM is flipped to a 2 Train'
           end
-
+          source = train.owner
           buy_train(ndem, train, :free)
-          phase.buying_train!(ndem, train)
+          phase.buying_train!(ndem, train, source)
           while ndem.trains.length > phase.train_limit(ndem)
             t = ndem.trains.shift
             rust(t)
@@ -496,9 +496,8 @@ module Engine
 
         # Stubbed out because this game doesn't it, but base 22 does
         def company_tax_haven_bundle(choice); end
-
-        # Stubbed out because this game doesn't it, but base 22 does
         def company_tax_haven_payout(entity, per_share); end
+        def num_certs_modification(_entity) = 0
 
         def event_close_ndem!
           @log << '-- Event: Ndem privatizing --'
@@ -743,10 +742,6 @@ module Engine
         end
 
         def finalize_end_game_values; end
-
-        def num_certs_modification(_entity)
-          0
-        end
 
         def reduced_bundle_price_for_market_drop(bundle)
           bundle.share_price = @stock_market.find_share_price(bundle.corporation, [:left] * bundle.num_shares).price

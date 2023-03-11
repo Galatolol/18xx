@@ -8,9 +8,11 @@ module Engine
       module Meta
         include Game::Meta
 
-        DEV_STAGE = :beta
+        DEV_STAGE = :production
 
         GAME_TITLE = 'Rolling Stock'
+        GAME_ISSUE_LABEL = 'RollingStock'
+
         GAME_DESIGNER = 'Björn Rabenstein'
         GAME_PUBLISHER = :all_aboard_games
         GAME_RULES_URL = 'http://rabenste.in/rollingstock/rules.pdf'

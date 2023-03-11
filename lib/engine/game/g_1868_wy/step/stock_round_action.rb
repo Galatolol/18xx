@@ -12,12 +12,14 @@ module Engine
         # - choose new home for DPR after all its tokens BUST
         # - exchange Ames Bros private for UP double share, then may sell 1-2 of those shares
         class StockRoundAction < Engine::Step::BuySellParShares
+          include Engine::Step::Tokener
+
           def description
             'Stock Round Action'
           end
 
           def help
-            return '' unless @exchanged
+            return @game.corp_stacks_str_arr unless @exchanged
 
             case @game.share_pool.percent_of(@game.union_pacific)
             when 0
@@ -44,6 +46,7 @@ module Engine
             actions << 'sell_shares' if can_sell_any?(entity)
             actions << 'buy_shares' if can_buy_any?(entity)
             actions << 'par' if can_ipo_any?(entity)
+            actions << 'place_token' if can_token?(entity)
             actions << 'pass' unless actions.empty?
 
             actions
@@ -51,6 +54,10 @@ module Engine
 
           def get_par_prices(entity, _corp)
             @game.par_prices.select { |p| p.price * 2 <= entity.cash }
+          end
+
+          def visible_corporations
+            @game.sr_visible_corporations
           end
 
           def map_action_optional?

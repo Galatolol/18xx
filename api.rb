@@ -20,7 +20,7 @@ class Api < Roda
          'Content-Type' => 'text/html',
          'X-Frame-Options' => 'deny',
          'X-Content-Type-Options' => 'nosniff',
-         'Cache-Control' => 'no-cache, max-age=0, must-revalidate, no-store',
+         'cache-control' => 'no-cache, max-age=0, must-revalidate, no-store',
          'X-XSS-Protection' => '1; mode=block'
 
   plugin :content_security_policy do |csp|
@@ -142,6 +142,20 @@ class Api < Roda
       pin = game.settings['pin']
       render(titles: [game.title], pin: pin,
              game_data: pin ? game.to_h(include_actions: true, logged_in_user_id: user&.id) : game.to_h)
+    end
+
+    r.on 'issues', String do |str|
+      label =
+        case str
+        when 'alpha', 'beta', 'production'
+          Engine.issues_labels(str.to_sym)
+        when 'prealpha'
+          '"new games"'
+        else
+          str
+        end
+
+      r.redirect "https://github.com/tobymao/18xx/issues?q=is%3Aissue+is%3Aopen+label%3A#{label}"
     end
   end
 

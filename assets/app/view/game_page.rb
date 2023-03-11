@@ -43,7 +43,7 @@ module View
 
       inner << h(:div, [
         'Please ',
-        h(:a, { attrs: { href: 'https://github.com/tobymao/18xx/issues/' } }, 'raise a bug report'),
+        h(:a, { attrs: { href: "#{@game.meta.known_issues_url},\"needs triage\"" } }, 'raise a bug report'),
         ' and include ',
         *game_link,
       ])
@@ -401,7 +401,12 @@ module View
 
       case @round
       when Engine::Round::Stock
-        if !(%w[place_token lay_tile remove_token] & current_entity_actions).empty?
+        if current_entity_actions.include?('place_token') && step.respond_to?(:map_action_optional?) && step.map_action_optional?
+          h(:div, [
+              h(Game::Round::Stock, game: @game),
+              h(Game::Map, game: @game),
+            ])
+        elsif !(%w[place_token lay_tile remove_token] & current_entity_actions).empty?
           h(Game::Map, game: @game)
         else
           h(Game::Round::Stock, game: @game)

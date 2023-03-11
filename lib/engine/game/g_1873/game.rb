@@ -576,8 +576,9 @@ module Engine
           scrap_train(@mhe.trains.first)
           train = @depot.upcoming.first
           @log << "MHE buys a #{train.name} from bank"
+          source = train.owner
           buy_train(@mhe, train, :free)
-          phase.buying_train!(@mhe, train)
+          phase.buying_train!(@mhe, train, source)
         end
 
         def scrap_train(train)
@@ -849,8 +850,9 @@ module Engine
           price = variant[:price]
           train.variant = variant[:name]
           @log << "#{entity.name} buys a #{train.name} train for #{format_currency(price)} from depot"
+          source = train.owner
           buy_train(entity, train, price)
-          phase.buying_train!(entity, train)
+          phase.buying_train!(entity, train, source)
           train
         end
 
@@ -3049,7 +3051,7 @@ module Engine
               %w[
                 F7
               ] => 'city=revenue:20;city=revenue:20;path=a:1,b:_0,track:narrow;'\
-                   'path=a:3,b:_1,track:narrow;upgrade=cost:50,terrain:mountain;'\
+                   "path=a:3,b:_1,track:narrow;upgrade=cost:#{aag_variant? ? 100 : 50},terrain:mountain;"\
                    'icon=image:1873/11_open,sticky:1,large:1',
               %w[
                 G6
@@ -3234,6 +3236,10 @@ module Engine
             Action::ProgramHarzbahnDraftPass,
             Action::ProgramIndependentMines,
           ]
+        end
+
+        def aag_variant?
+          @aag_variant ||= @optional_rules&.include?(:aag_variant)
         end
       end
     end

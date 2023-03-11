@@ -18,6 +18,7 @@ module Engine
                   :name, :opposite, :reservations, :upgrades, :color, :future_label
     attr_reader :borders, :cities, :edges, :junction, :nodes, :labels, :parts, :preprinted, :rotation, :stops, :towns,
                 :offboards, :blockers, :city_towns, :unlimited, :stubs, :partitions, :id, :frame, :stripes, :hidden
+    attr_writer :revenue_to_render
 
     ALL_EDGES = [0, 1, 2, 3, 4, 5].freeze
 
@@ -374,7 +375,8 @@ module Engine
     def token_blocked_by_reservation?(corporation)
       return false if @reservations.empty?
 
-      if @reservation_blocks == :always || (@reservation_blocks == :yellow_only && @color == :yellow)
+      if @reservation_blocks == :always ||
+        (@reservation_blocks == :single_slot_cities && @cities.any? { |city| city.slots == 1 })
         !@reservations.include?(corporation)
       else
         @reservations.count { |x| corporation != x } >= @cities.sum(&:available_slots)
@@ -418,6 +420,14 @@ module Engine
       # edge => how many tracks/cts are on that edge, plus 0.1
       # for each track/ct on neighboring edges
       edge_count = Hash.new(0)
+
+      if @paths.empty? && @cities.size == 2 && @towns.size == 2
+        # Multiple city/town option tiles
+        div = 3
+        @cities.each_with_index { |x, index| edge_count[x] = (index * div) }
+        @towns.each_with_index { |x, index| edge_count[x] = (index * div) }
+        return edge_count
+      end
 
       if @paths.empty? && @cities.size >= 2
         # If a tile has no paths but multiple cities, avoid them rendering on top of each other
