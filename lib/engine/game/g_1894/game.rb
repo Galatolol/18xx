@@ -19,7 +19,7 @@ module Engine
 
         BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 17, 4 => 13 }.freeze
+        CERT_LIMIT = { 3 => 16, 4 => 12 }.freeze
 
         STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
@@ -653,7 +653,7 @@ module Engine
 
           return 0 unless stops.any? { |s| NON_NETHERLANDS_OFFBOARDS.include?(s.hex.id) }
 
-          return 100
+          return 50
         end
 
         def london_bonus(corporation, stops)
@@ -684,7 +684,7 @@ module Engine
           revenues << 60 if est_running_to_centre_bourgogne(corporation, stops)
 
           if ignore_london
-            london_revenue = get_current_revenue(hex_by_id(LONDON_HEX).tile.cities.first.revenue)
+            london_revenue = get_current_revenue(hex_by_id(LONDON_HEX).tile.towns.first.revenue)
             revenues.delete_at(revenues.index(london_revenue) || revenues.length)
           end
 
