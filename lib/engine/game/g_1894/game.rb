@@ -19,7 +19,7 @@ module Engine
 
         BANK_CASH = 99_999
 
-        CERT_LIMIT = { 3 => 16, 4 => 12 }.freeze
+        CERT_LIMIT = { 3 => 16, 4 => 13 }.freeze
 
         STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
 
@@ -648,12 +648,12 @@ module Engine
           revenue
         end
 
-        def netherlands_bonus(corporation, stops)
+        def netherlands_bonus(_corporation, stops)
           return 0 unless stops.any? { |s| s.hex.id == NETHERLANDS_HEX }
 
           return 0 unless stops.any? { |s| NON_NETHERLANDS_OFFBOARDS.include?(s.hex.id) }
 
-          return 50
+          50
         end
 
         def london_bonus(corporation, stops)
