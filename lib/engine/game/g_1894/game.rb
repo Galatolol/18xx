@@ -104,7 +104,7 @@ module Engine
              128
              146],
           %w[56o 59o 63o 66o 70 76p 81 88 97 107],
-          %w[42o 55o 59o 62o 65 69 74 81 89],
+          %w[42o 55o 59o 62o 65 69 73 81 89],
           %w[30o 40o 50o 54o 60o 64 67p 74],
           %w[20o 30o 40o 50o 54o 60o],
           %w[10o 20o 30o 40o 50o 54o],
@@ -371,6 +371,16 @@ module Engine
           adjust_companies
           remove_extra_french_major_shareholding_companies
 
+          @corporations.each do |corporation|
+            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
+
+            dest_abilities.each do |ability|
+              ability.hexes.each do |id|
+                hex_by_id(id).assign!(corporation)
+              end
+            end
+          end
+
           @players.each do |player|
             share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
             share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, player)
@@ -380,22 +390,6 @@ module Engine
 
           share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, share_pool)
           share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, share_pool)
-        end
-
-        def init_hexes(companies, corporations)
-          hexes = super
-
-          @corporations.each do |corporation|
-            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
-
-            dest_hexes = dest_abilities.map(&:hexes).flatten
-
-            hexes
-              .select { |h| dest_hexes.include?(h.name) }
-              .each { |h| h.assign!(corporation) }
-          end
-
-          hexes
         end
 
         def after_buy_company(player, company, price)
@@ -636,14 +630,22 @@ module Engine
 
         attr_reader :saved_tokens_hex
 
+        def check_distance(route, _visits)
+          if route.connection_hexes.flatten.include?(LONDON_HEX) && !ferry_marker?(current_entity)
+            raise GameError, 'Cannot run to London without a Ferry marker'
+          end
+
+          raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
+
+          super
+        end
+
         def revenue_for(route, stops)
           revenue = super
           revenue += est_centre_bourgogne_bonus(route.corporation, stops)
           revenue += luxembourg_value(route.corporation, stops)
           revenue += london_bonus(route.corporation, stops)
           revenue += netherlands_bonus(route.corporation, stops)
-
-          raise GameError, 'Train visits Paris more than once' if route.hexes.count { |h| h.id == PARIS_HEX } > 1
 
           revenue
         end
@@ -695,14 +697,6 @@ module Engine
           phase.tiles.reverse_each { |color| return (revenue[color]) if revenue[color] }
 
           0
-        end
-
-        def check_distance(route, _visits)
-          if route.connection_hexes.flatten.include?(LONDON_HEX) && !ferry_marker?(current_entity)
-            raise GameError, 'Cannot run to London without a Ferry marker'
-          end
-
-          super
         end
 
         def ferry_marker_available?

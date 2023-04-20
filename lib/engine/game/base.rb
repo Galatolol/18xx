@@ -635,8 +635,8 @@ module Engine
       end
 
       def valid_actors(action)
-        if (player = action.entity.player)
-          [acting_for_player(player)]
+        if (player = action.entity.player) && (actor = acting_for_player(player))
+          [actor]
         else
           active_players
         end
@@ -2027,6 +2027,7 @@ module Engine
 
       def rust_trains!(train, _entity)
         obsolete_trains = []
+        removed_obsolete_trains = []
         rusted_trains = []
         owners = Hash.new(0)
 
@@ -2041,14 +2042,21 @@ module Engine
           next if t.rusted
           next unless rust?(t, train)
 
-          rusted_trains << t.name
-          owners[t.owner.name] += 1
+          if t.obsolete && t.owner == @depot
+            removed_obsolete_trains << t.name
+          else
+            rusted_trains << t.name
+            owners[t.owner.name] += 1
+          end
           rust(t)
         end
 
         @crowded_corps = nil
 
         @log << "-- Event: #{obsolete_trains.uniq.join(', ')} trains are obsolete --" if obsolete_trains.any?
+        if removed_obsolete_trains.any?
+          @log << "-- Event: obsolete #{removed_obsolete_trains.uniq.join(', ')} trains are removed from The Depot --"
+        end
 
         return unless rusted_trains.any?
 
@@ -2903,10 +2911,10 @@ module Engine
       end
 
       def ability_blocking_step
-        supported_steps = [Step::Tracker, Step::BuyTrain]
+        supported_steps = [Step::Tracker, Step::Token, Step::BuyTrain]
         @round.steps.find do |step|
-          # currently, abilities only care about Tracker and BuyTrain. The is_a?
-          # check can be expanded to include more classes/modules when needed
+          # Currently, abilities only care about Tracker, Token and BuyTrain steps
+          # The is_a? check can be expanded to include more classes/modules when needed
           supported_steps.any? { |s| step.is_a?(s) } && !step.passed? && step.active? && step.blocks?
         end
       end
