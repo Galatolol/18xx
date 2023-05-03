@@ -62,7 +62,7 @@ module Engine
             train_limit: 3,
             tiles: %i[yellow green],
             operating_rounds: 2,
-            status: %w[investor_exchange can_buy_companies],
+            status: %w[investor_exchange can_buy_companies can_buy_companies_from_other_players],
           },
           {
             name: '4+4',
@@ -70,7 +70,7 @@ module Engine
             train_limit: 3,
             tiles: %i[yellow green],
             operating_rounds: 2,
-            status: %w[investor_exchange can_buy_companies],
+            status: %w[investor_exchange can_buy_companies can_buy_companies_from_other_players],
           },
           {
             name: '5',
@@ -78,7 +78,7 @@ module Engine
             train_limit: 2,
             tiles: %i[yellow green brown],
             operating_rounds: 3,
-            status: %w[investor_exchange can_buy_companies],
+            status: %w[investor_exchange can_buy_companies can_buy_companies_from_other_players],
           },
           {
             name: '5+5',
@@ -86,7 +86,7 @@ module Engine
             train_limit: 2,
             tiles: %i[yellow green brown],
             operating_rounds: 3,
-            status: ['can_buy_companies'],
+            status: %w[can_buy_companies can_buy_companies_from_other_players],
           },
           {
             name: '6E',
@@ -94,7 +94,7 @@ module Engine
             train_limit: 2,
             tiles: %i[yellow green brown],
             operating_rounds: 3,
-            status: ['can_buy_companies'],
+            status: %w[can_buy_companies can_buy_companies_from_other_players],
           },
           {
             name: '6+6',
@@ -102,18 +102,18 @@ module Engine
             train_limit: 2,
             tiles: %i[yellow green brown],
             operating_rounds: 3,
-            status: ['can_buy_companies'],
+            status: %w[can_buy_companies can_buy_companies_from_other_players],
           },
         ].freeze
 
-        TRAINS = [{ name: '3', distance: 3, price: 150, rusts_on: '4+4', num: 3 },
+        TRAINS = [{ name: '3', distance: 3, price: 150, rusts_on: '4+4', num: 1 },
                   {
                     name: '3+3',
                     distance: [{ 'nodes' => ['town'], 'pay' => 3, 'visit' => 3 },
                                { 'nodes' => %w[city offboard town], 'pay' => 3, 'visit' => 3 }],
                     price: 300,
                     rusts_on: '5+5',
-                    num: 2,
+                    num: 1,
                   },
                   { name: '4', distance: 4, price: 300, rusts_on: '6+6', num: 2 },
                   {
@@ -242,6 +242,10 @@ module Engine
         end
 
         def setup
+          # Place stock market markers for two companies that have their shares drafted
+          stock_market.set_par(l, stock_market.share_price([2, 1]))
+          stock_market.set_par(saar, stock_market.share_price([3, 1]))
+
           # Place L's home station in case there is a "short OR" during draft
           hex = hex_by_id(l.coordinates)
           tile = hex&.tile
