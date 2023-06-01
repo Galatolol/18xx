@@ -71,7 +71,7 @@ module Engine
           {
             'count' => 1,
             'color' => 'yellow',
-            'code' => 'city=revenue:10,loc:center;town=revenue:20;path=a:0,b:_0;path=a:_1,b:4;path=a:_0,b:_1;label=V',
+            'code' => 'city=revenue:10,loc:center;town=revenue:20;path=a:1,b:_0;path=a:_1,b:5;path=a:_0,b:_1;label=V',
           },
           '602' =>
           {
@@ -151,6 +151,10 @@ module Engine
         }.freeze
         # rubocop:enable Layout/LineLength
 
+        NO_ROTATION_TILES = %w[
+          601
+        ].freeze
+
         LOCATION_NAMES = {
           E1: 'Lyon',
           G1: 'Fréjus',
@@ -167,9 +171,9 @@ module Engine
           N6: 'Savona',
           A7: 'Gotthard',
           C7: 'Lugano',
-          E7: 'Buso Arsizio',
+          E7: 'Busto Arsizio',
           M7: 'Genova',
-          D8: 'Como',
+          D8: 'Cosmo',
           F8: 'Milano',
           H8: 'Pavia',
           E9: 'Bergamo',
@@ -181,7 +185,7 @@ module Engine
           K11: 'Parma',
           Q11: 'Pisa',
           S11: 'Livorno',
-          H12: 'Montova',
+          H12: 'Mantova',
           L12: "Reggio nell'Emilia",
           P12: 'Lucca',
           C13: 'Trento & Brennero',
@@ -236,7 +240,7 @@ module Engine
             # cities
             %w[D16 E7 H8 H10 H12 J6 K11 K13 K15 L12 S11] => 'city=revenue:0',
             %w[E9 G15 L14] => 'city=revenue:0;label=Y',
-            %w[F16] => 'city=revenue:0;upgrade=cost:50,terrain:swamp;label=V',
+            %w[F16] => 'city=revenue:0;town=revenue:0,loc:5;upgrade=cost:50,terrain:swamp;label=V',
             %w[F14] => 'city=revenue:0;border=edge:2,type:impassable',
             %w[D8] => 'city=revenue:0;border=edge:3,type:impassable',
             %w[G13] => 'city=revenue:0;border=edge:3,type:impassable;label=Y',
@@ -334,6 +338,17 @@ module Engine
             'C7' => [0, 5],
           },
         }.freeze
+
+        ZONES = [
+          %w[H4 J6 M3 M7],               # 0 PIEDMONT
+          %w[R14 P12 Q11 S11],           # 1 TUSCANY
+          %w[K11 L12 K13 L14 K15],       # 2 CONSERVATIVE_ZONE
+          %w[C7 D8 E7 F8 E9 H8 H10 E11], # 3 LOMBARDIA
+          %w[H12 G13 F14 G15 F16 D16],   # 4 VENETO
+        ].freeze
+
+        MAJOR_CITIES = %w[L14 R14 M7 F8 H4 F16].freeze
+        HISTORICAL_CITIES = %w[F8 F16 H4 J6 M3 R14 P12 Q11].freeze
 
         AXES = { x: :number, y: :letter }.freeze
       end
