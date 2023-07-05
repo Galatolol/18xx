@@ -10,15 +10,15 @@ module Engine
             sym: 'LVM',
             value: 20,
             revenue: 5,
-            desc: 'Once per game the owning corporation may pay 50 F to lay a yellow track.'\
+            desc: 'Once per game the owning corporation may pay 60 F to lay a yellow track.'\
                   ' This is in addition to the corporation\'s regular track actions.'\
-                  ' Blocks I14 while owned by a player.',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['I14'] },
+                  ' Blocks H13 while owned by a player.',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['H13'] },
                         {
                           type: 'tile_lay',
                           owner_type: 'corporation',
                           when: 'track',
-                          cost: 50,
+                          cost: 60,
                           count: 1,
                           special: false,
                           reachable: true,
@@ -42,14 +42,14 @@ module Engine
             value: 50,
             revenue: 10,
             desc: 'Owning corporation may lay or upgrade a tile in Liège'\
-                  ' (H17). If it does, it may then optionally place a token for free there.'\
+                  ' (G16). If it does, it may then optionally place a token for free there.'\
                   ' This counts as one of the corporation\'s tile builds and token laying'\
-                  ' (if token was placed). Blocks H17 while owned by a player.',
-            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['H17'] },
+                  ' (if token was placed). Blocks G16 while owned by a player.',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['G16'] },
                         {
                           type: 'teleport',
                           owner_type: 'corporation',
-                          hexes: ['H17'],
+                          hexes: ['G16'],
                           tiles: %w[14 15 57 619 X14 X15 X16 X17 X18 X19 35 36 118],
                         }],
             color: '#d9d9d9',
@@ -59,7 +59,7 @@ module Engine
             sym: 'SQG',
             value: 70,
             revenue: 0,
-            desc: 'Revenue is equal to 70 F if Saint-Quentin (G10) is green, to 100 F if'\
+            desc: 'Revenue is equal to 70 F if Saint-Quentin (F9) is green, to 100 F if'\
                   ' Saint-Quentin is brown and to 0 F otherwise.'\
                   ' Closes in purple phase. May not be sold to corporation in red and gray phase.',
             abilities: [{ type: 'close', on_phase: 'Purple' }],
@@ -70,13 +70,13 @@ module Engine
             sym: 'LS',
             value: 90,
             revenue: 15,
-            desc: 'Owning corporation may place its cheapest available token for free in A12.'\
-                  ' The value of London (A10) is increased, for this corporation only,'\
+            desc: 'Owning corporation may place its cheapest available token for free in A10.'\
+                  ' The value of London (A8) is increased, for this corporation only,'\
                   ' by the largest non-London, non-Luxembourg revenue on the route.',
             abilities: [{
               type: 'token',
               when: 'owning_corp_or_turn',
-              hexes: ['A12'],
+              hexes: ['A10'],
               count: 1,
               price: 0,
               teleport_price: 0,
@@ -189,7 +189,7 @@ module Engine
             simple_logo: '1894/Ouest.alt',
             tokens: [0, 0, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: %w[B3 E6],
+            coordinates: %w[A3 D8],
             color: '#4682b4',
           },
           {
@@ -199,7 +199,7 @@ module Engine
             simple_logo: '1894/Nord.alt',
             tokens: [0, 0, 100, 100],
             max_ownership_percent: 60,
-            coordinates: %w[E10 G14],
+            coordinates: %w[D10 F14],
             color: '#ff4040',
           },
           {
@@ -209,7 +209,7 @@ module Engine
             simple_logo: '1894/AG.alt',
             tokens: [0, 40, 100, 100],
             max_ownership_percent: 60,
-            coordinates: 'D15',
+            coordinates: 'C15',
             color: '#fcf75e',
             text_color: 'black',
           },
@@ -220,7 +220,7 @@ module Engine
             simple_logo: '1894/CFOR.alt',
             tokens: [0, 0, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: %w[D3 H1],
+            coordinates: %w[C3 F2],
             color: '#9c661f',
           },
           {
@@ -230,7 +230,7 @@ module Engine
             simple_logo: '1894/Belge.alt',
             tokens: [0, 40, 100],
             max_ownership_percent: 60,
-            coordinates: 'E16',
+            coordinates: 'D16',
             color: '#61b229',
             abilities: [
               {
@@ -246,7 +246,7 @@ module Engine
             simple_logo: '1894/PLM.alt',
             tokens: [0, 40, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: 'G4',
+            coordinates: 'E5',
             city: 0,
             color: '#dda0dd',
             text_color: 'black',
@@ -258,15 +258,15 @@ module Engine
             simple_logo: '1894/Est.alt',
             tokens: [0, 40, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: 'I8',
+            coordinates: 'G7',
             color: '#ff9966',
             text_color: 'black',
             abilities: [
               {
                 type: 'hex_bonus',
                 amount: 0,
-                description: 'Value of I2 increased to 60',
-                hexes: ['I2'],
+                description: 'Value of G1 increased to 60',
+                hexes: ['G1'],
               },
             ],
           },
@@ -285,7 +285,7 @@ module Engine
             name: 'Late Belgian',
             logo: '1894/LB',
             simple_logo: '1894/LB.alt',
-            tokens: [0, 40],
+            tokens: [0, 40, 100],
             max_ownership_percent: 60,
             color: '#c9c9c9',
             text_color: 'black',

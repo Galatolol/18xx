@@ -161,7 +161,7 @@ module Engine
                   {
                     name: '4',
                     distance: 4,
-                    price: 320,
+                    price: 280,
                     rusts_on: '7',
                     num: 4,
                     discount: { '3' => 60 },
@@ -173,7 +173,7 @@ module Engine
                     rusts_on: 'D',
                     num: 5,
                     events: [{ 'type' => 'late_corporations_available' }],
-                    discount: { '4' => 160 },
+                    discount: { '4' => 140 },
                   },
                   {
                     name: '6',
@@ -241,19 +241,19 @@ module Engine
                                       'No new tracks and tokens allowed in the last OR set'],
         ).freeze
 
-        LONDON_HEX = 'A10'
-        LONDON_BONUS_FERRY_SUPPLY_HEX = 'A12'
+        LONDON_HEX = 'A8'
+        LONDON_BONUS_FERRY_SUPPLY_HEX = 'A10'
         FERRY_MARKER_ICON = 'ferry'
-        FERRY_MARKER_COST = 50
+        FERRY_MARKER_COST = 60
 
-        PARIS_HEX = 'G4'
-        CENTRE_BOURGOGNE_HEX = 'I2'
-        LUXEMBOURG_HEX = 'I18'
-        SQ_HEX = 'G10'
-        BRUXELLES_HEX = 'F15'
-        LILLE_HEX = 'D11'
-        NETHERLANDS_HEX = 'C18'
-        GREAT_BRITAIN_HEX = 'A4'
+        PARIS_HEX = 'F5'
+        CENTRE_BOURGOGNE_HEX = 'H1'
+        LUXEMBOURG_HEX = 'H17'
+        SQ_HEX = 'F9'
+        BRUXELLES_HEX = 'E14'
+        LILLE_HEX = 'C10'
+        NETHERLANDS_HEX = 'B17'
+        GREAT_BRITAIN_HEX = 'A2'
 
         NON_NETHERLANDS_OFFBOARDS = [CENTRE_BOURGOGNE_HEX, LUXEMBOURG_HEX, GREAT_BRITAIN_HEX].freeze
 
@@ -332,57 +332,61 @@ module Engine
           company_by_id('SQG')
         end
 
+        def ls
+          company_by_id('LS')
+        end
+
         def starting_corporation_ids
           ['Belge', french_starting_corporation.id]
         end
 
-        def setup
-          @late_corporations, @corporations = @corporations.partition do |c|
-            %w[LB LF].include?(c.id)
-          end
+        # def setup
+        #   @late_corporations, @corporations = @corporations.partition do |c|
+        #     %w[LB LF].include?(c.id)
+        #   end
 
-          @last_or_set_triggered = false
-          @skip_track_and_token = false
+        #   @last_or_set_triggered = false
+        #   @skip_track_and_token = false
 
-          @log << "-- Setting game up for #{@players.size} players --"
+        #   @log << "-- Setting game up for #{@players.size} players --"
 
-          @ferry_marker_ability =
-            Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
-          block_london
+        #   @ferry_marker_ability =
+        #     Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
+        #   block_london
 
-          paris_tiles = @all_tiles.select { |t| PARIS_TILES.include?(t.name) }
-          paris_tiles.each { |t| t.add_reservation!(plm, 0) }
+        #   paris_tiles = @all_tiles.select { |t| PARIS_TILES.include?(t.name) }
+        #   paris_tiles.each { |t| t.add_reservation!(plm, 0) }
 
-          @french_starting_corporation_id = FRENCH_REGULAR_CORPORATIONS.sort_by { rand }.take(1).first
-          french_starting_corporation.add_ability(
-            Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
-          )
-          @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
-          belgian_starting_corporation = corporation_by_id('Belge')
+        #   @french_starting_corporation_id = FRENCH_REGULAR_CORPORATIONS.sort_by { rand }.take(1).first
+        #   french_starting_corporation.add_ability(
+        #     Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
+        #   )
+        #   @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
+        #   belgian_starting_corporation = corporation_by_id('Belge')
 
-          adjust_companies
-          remove_extra_french_major_shareholding_companies
+        #   adjust_companies
+        #   remove_extra_french_major_shareholding_companies
 
-          @corporations.each do |corporation|
-            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
+        #   @corporations.each do |corporation|
+        #     next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
 
-            dest_abilities.each do |ability|
-              ability.hexes.each do |id|
-                hex_by_id(id).assign!(corporation)
-              end
-            end
-          end
+        #     dest_abilities.each do |ability|
+        #       ability.hexes.each do |id|
+        #         hex_by_id(id).assign!(corporation)
+        #       end
+        #     end
+        #   end
 
-          @players.each do |player|
-            share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
-            share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, player)
-          end
+        #   @players.each do |player|
+        #     share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
+        #     share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, player)
+        #   end
 
-          return unless @players.size == 3
+        #   return unless @players.size == 3
 
-          share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, share_pool)
-          share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, share_pool)
-        end
+        #   share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, share_pool)
+        #   share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, share_pool)
+        # end
 
         def after_buy_company(player, company, price)
           # Nord share that comes with NMinorS transfered this way so the presidency doesn't change when the Nord is
@@ -541,6 +545,11 @@ module Engine
               sqg.revenue = 100
             end
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
+          when Action::BuyCompany
+            return unless action.company == ls
+
+            action.entity.add_ability(@ferry_marker_ability.dup)
+            @log << "#{action.entity.name} gets a ferry marker"
           end
         end
 
@@ -654,7 +663,7 @@ module Engine
 
           return 0 unless stops.any? { |s| NON_NETHERLANDS_OFFBOARDS.include?(s.hex.id) }
 
-          50
+          60
         end
 
         def london_bonus(corporation, stops)
