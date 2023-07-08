@@ -241,19 +241,19 @@ module Engine
                                       'No new tracks and tokens allowed in the last OR set'],
         ).freeze
 
-        LONDON_HEX = 'A8'
-        LONDON_BONUS_FERRY_SUPPLY_HEX = 'A10'
+        LONDON_HEX = 'A9'
+        LONDON_BONUS_FERRY_SUPPLY_HEX = 'A11'
         FERRY_MARKER_ICON = 'ferry'
-        FERRY_MARKER_COST = 60
+        FERRY_MARKER_COST = 70
 
-        PARIS_HEX = 'F5'
-        CENTRE_BOURGOGNE_HEX = 'H1'
-        LUXEMBOURG_HEX = 'H17'
-        SQ_HEX = 'F9'
-        BRUXELLES_HEX = 'E14'
-        LILLE_HEX = 'C10'
-        NETHERLANDS_HEX = 'B17'
-        GREAT_BRITAIN_HEX = 'A2'
+        PARIS_HEX = 'E5'
+        CENTRE_BOURGOGNE_HEX = 'G1'
+        LUXEMBOURG_HEX = 'G17'
+        SQ_HEX = 'F8'
+        BRUXELLES_HEX = 'D14'
+        LILLE_HEX = 'C11'
+        NETHERLANDS_HEX = 'B18'
+        GREAT_BRITAIN_HEX = 'A1'
 
         NON_NETHERLANDS_OFFBOARDS = [CENTRE_BOURGOGNE_HEX, LUXEMBOURG_HEX, GREAT_BRITAIN_HEX].freeze
 
@@ -340,53 +340,53 @@ module Engine
           ['Belge', french_starting_corporation.id]
         end
 
-        # def setup
-        #   @late_corporations, @corporations = @corporations.partition do |c|
-        #     %w[LB LF].include?(c.id)
-        #   end
+        def setup
+          @late_corporations, @corporations = @corporations.partition do |c|
+            %w[LB LF].include?(c.id)
+          end
 
-        #   @last_or_set_triggered = false
-        #   @skip_track_and_token = false
+          @last_or_set_triggered = false
+          @skip_track_and_token = false
 
-        #   @log << "-- Setting game up for #{@players.size} players --"
+          @log << "-- Setting game up for #{@players.size} players --"
 
-        #   @ferry_marker_ability =
-        #     Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
-        #   block_london
+          @ferry_marker_ability =
+            Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
+          block_london
 
-        #   paris_tiles = @all_tiles.select { |t| PARIS_TILES.include?(t.name) }
-        #   paris_tiles.each { |t| t.add_reservation!(plm, 0) }
+          paris_tiles = @all_tiles.select { |t| PARIS_TILES.include?(t.name) }
+          paris_tiles.each { |t| t.add_reservation!(plm, 0) }
 
-        #   @french_starting_corporation_id = FRENCH_REGULAR_CORPORATIONS.sort_by { rand }.take(1).first
-        #   french_starting_corporation.add_ability(
-        #     Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
-        #   )
-        #   @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
-        #   belgian_starting_corporation = corporation_by_id('Belge')
+          @french_starting_corporation_id = FRENCH_REGULAR_CORPORATIONS.sort_by { rand }.take(1).first
+          french_starting_corporation.add_ability(
+            Engine::Ability::Description.new(type: 'description', description: 'May not redeem shares')
+          )
+          @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
+          belgian_starting_corporation = corporation_by_id('Belge')
 
-        #   adjust_companies
-        #   remove_extra_french_major_shareholding_companies
+          adjust_companies
+          remove_extra_french_major_shareholding_companies
 
-        #   @corporations.each do |corporation|
-        #     next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
+          @corporations.each do |corporation|
+            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
 
-        #     dest_abilities.each do |ability|
-        #       ability.hexes.each do |id|
-        #         hex_by_id(id).assign!(corporation)
-        #       end
-        #     end
-        #   end
+            dest_abilities.each do |ability|
+              ability.hexes.each do |id|
+                hex_by_id(id).assign!(corporation)
+              end
+            end
+          end
 
-        #   @players.each do |player|
-        #     share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
-        #     share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, player)
-        #   end
+          @players.each do |player|
+            share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
+            share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, player)
+          end
 
-        #   return unless @players.size == 3
+          return unless @players.size == 3
 
-        #   share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, share_pool)
-        #   share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, share_pool)
-        # end
+          share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, share_pool)
+          share_pool.transfer_shares(belgian_starting_corporation.ipo_shares.last.to_bundle, share_pool)
+        end
 
         def after_buy_company(player, company, price)
           # Nord share that comes with NMinorS transfered this way so the presidency doesn't change when the Nord is
@@ -663,7 +663,7 @@ module Engine
 
           return 0 unless stops.any? { |s| NON_NETHERLANDS_OFFBOARDS.include?(s.hex.id) }
 
-          60
+          50
         end
 
         def london_bonus(corporation, stops)
@@ -675,7 +675,7 @@ module Engine
         end
 
         def est_centre_bourgogne_bonus(corporation, stops)
-          est_running_to_centre_bourgogne(corporation, stops) ? 30 : 0
+          est_running_to_centre_bourgogne(corporation, stops) ? 20 : 0
         end
 
         def est_running_to_centre_bourgogne(corporation, stops)
