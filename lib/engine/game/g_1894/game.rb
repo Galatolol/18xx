@@ -21,7 +21,7 @@ module Engine
 
         CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
-        STARTING_CASH = { 3 => 580, 4 => 440 }.freeze
+        STARTING_CASH = { 3 => 570, 4 => 440 }.freeze
 
         CAPITALIZATION = :full
 
@@ -161,7 +161,7 @@ module Engine
                   {
                     name: '4',
                     distance: 4,
-                    price: 320,
+                    price: 280,
                     rusts_on: '7',
                     num: 4,
                     discount: { '3' => 60 },
@@ -173,7 +173,7 @@ module Engine
                     rusts_on: 'D',
                     num: 5,
                     events: [{ 'type' => 'late_corporations_available' }],
-                    discount: { '4' => 160 },
+                    discount: { '4' => 140 },
                   },
                   {
                     name: '6',
@@ -244,13 +244,14 @@ module Engine
         LONDON_HEX = 'A10'
         LONDON_BONUS_FERRY_SUPPLY_HEX = 'A12'
         FERRY_MARKER_ICON = 'ferry'
-        FERRY_MARKER_COST = 50
+        FERRY_MARKER_COST = 70
 
-        PARIS_HEX = 'G4'
+        PARIS_HEX = 'G6'
         CENTRE_BOURGOGNE_HEX = 'I2'
         LUXEMBOURG_HEX = 'I18'
         SQ_HEX = 'G10'
         BRUXELLES_HEX = 'F15'
+        LILLE_HEX = 'D11'
         NETHERLANDS_HEX = 'C18'
         GREAT_BRITAIN_HEX = 'A4'
 
@@ -348,7 +349,7 @@ module Engine
           @ferry_marker_ability =
             Engine::Ability::Description.new(type: 'description', description: 'Ferry marker')
           block_london
-          
+
           paris_tiles = @all_tiles.select { |t| PARIS_TILES.include?(t.name) }
           paris_tiles.each { |t| t.add_reservation!(plm, 0) }
 
@@ -540,6 +541,11 @@ module Engine
               sqg.revenue = 100
             end
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
+          when Action::BuyCompany
+            return unless action.company == ls
+
+            action.entity.add_ability(@ferry_marker_ability.dup)
+            @log << "#{action.entity.name} gets a ferry marker"
           end
         end
 
@@ -591,9 +597,16 @@ module Engine
 
           return tile.add_reservation!(corporation, 0) if tile.color != :brown
 
-          return tile.add_reservation!(corporation, 0) if coordinates == BRUXELLES_HEX
+          return tile.add_reservation!(corporation, 0) if [BRUXELLES_HEX, LILLE_HEX].include?(coordinates)
 
-          tile.add_reservation!(corporation, nil, false)
+          # tile is brown, non-Bruxelles, non-Lille
+          if tile.cities.first.tokenable?(corporation) && !tile.cities[1].tokenable?(corporation)
+            tile.add_reservation!(corporation, 0)
+          elsif !tile.cities.first.tokenable?(corporation) && tile.cities[1].tokenable?
+            tile.add_reservation!(corporation, 1)
+          else
+            tile.add_reservation!(corporation, nil, false)
+          end
         end
 
         def upgrades_to?(from, to, _special = false, selected_company: nil)
@@ -646,7 +659,7 @@ module Engine
 
           return 0 unless stops.any? { |s| NON_NETHERLANDS_OFFBOARDS.include?(s.hex.id) }
 
-          50
+          100
         end
 
         def london_bonus(corporation, stops)
@@ -658,7 +671,7 @@ module Engine
         end
 
         def est_centre_bourgogne_bonus(corporation, stops)
-          est_running_to_centre_bourgogne(corporation, stops) ? 30 : 0
+          est_running_to_centre_bourgogne(corporation, stops) ? 20 : 0
         end
 
         def est_running_to_centre_bourgogne(corporation, stops)
@@ -746,11 +759,6 @@ module Engine
 
           company_to_remove.close!
           @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.delete(company_to_remove)
-
-          sqg.value = 70
-          sqg.min_price = 35
-          sqg.max_price = 140
-          @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.sort_by!(&:value)
         end
 
         def remove_extra_french_major_shareholding_companies
