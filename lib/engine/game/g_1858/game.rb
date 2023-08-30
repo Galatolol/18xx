@@ -50,19 +50,6 @@ module Engine
           { lay: true, upgrade: true, cost: 20, cannot_reuse_same_hex: true },
         ].freeze
 
-        def init_optional_rules(optional_rules)
-          rules = super
-
-          # Quick start variant doesn't work for two players.
-          rules -= [:quick_start] if two_player?
-
-          # The alternate set of private packets can only be used with the
-          # quick start variant.
-          rules -= [:set_b] unless rules.include?(:quick_start)
-
-          rules
-        end
-
         def corporation_opts
           two_player? ? { max_ownership_percent: 70 } : {}
         end
@@ -78,11 +65,11 @@ module Engine
         end
 
         def option_quick_start?
-          optional_rules.include?(:quick_start)
+          optional_rules.include?(:quick_start_a) || optional_rules.include?(:quick_start_b)
         end
 
         def option_quick_start_packets
-          if optional_rules.include?(:set_b)
+          if optional_rules.include?(:quick_start_b)
             QUICK_START_PACKETS_B
           else
             QUICK_START_PACKETS_A
@@ -342,6 +329,17 @@ module Engine
           return unless bundle.shares.first.owner.corporation?
 
           bundle.corporation.owner
+        end
+
+        # Consent for a share exchange in the private closure round is needed
+        # if the corporation whose share is being taken is not run by the same
+        # player as the private railway company being exchanged, and the share
+        # is from the corporation's treasury.
+        def consenter_for_choice(minor, choice, _label)
+          return if choice['from'] == 'market'
+
+          corporation = @corporations.find { |c| c.id == choice['corporation'] }
+          corporation.owner unless corporation.owner == minor.owner
         end
 
         def tile_lays(entity)
@@ -646,11 +644,47 @@ module Engine
           corporation
         end
 
+        # Finds any reservation abilities for a hex that have custom icons,
+        # and clears these icons. This is to be used for the cities which have
+        # two private railway companies competing for the same slots. Once one
+        # there is no longer competition for a slot (either because one of the
+        # reservation abilities is used, or the city is upgraded to two slots)
+        # then the default reservation display is needed to show a single
+        # company's name.
+        def clear_reservation_icons(hex)
+          hex.tile.cities.each do |city|
+            city.reservations.compact.each do |entity|
+              entity.all_abilities.each do |ability|
+                next unless ability.type == :reservation
+                next unless ability.hex == hex.coordinates
+                next unless ability.icon
+
+                ability.icon = nil
+              end
+            end
+
+            # If there's still a single slot in the city and one of the two
+            # companies reserving the slot has closed, make sure that its
+            # reservation is pointing to this slot. Without this the city's
+            # reservations array could be [nil, company] and no reservation
+            # would be shown on the map.
+            city.reservations.compact! if city.reservations.size > city.slots
+          end
+        end
+
         # Removes all of the icons on the map for a private railway company.
+        # Also resets reservation icons in the private's home cities.
         def delete_icons(company)
           icon_name = company.sym.delete('&')
           @hexes.each do |hex|
             hex.tile.icons.reject! { |icon| icon.name == icon_name }
+          end
+
+          minor = private_minor(company)
+          return unless minor
+
+          minor.coordinates.each do |coord|
+            clear_reservation_icons(hex_by_id(coord))
           end
         end
 

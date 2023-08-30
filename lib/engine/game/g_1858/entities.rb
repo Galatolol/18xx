@@ -294,7 +294,7 @@ module Engine
             abilities: [
               { type: 'no_buy' },
               { type: 'revenue_change', revenue: 29, on_phase: '3' },
-              { type: 'reservation', hex: 'L7' },
+              { type: 'reservation', hex: 'L7', icon: '1858/MZ+ZP' },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -317,8 +317,8 @@ module Engine
             abilities: [
               { type: 'no_buy' },
               { type: 'revenue_change', revenue: 32, on_phase: '3' },
-              { type: 'reservation', hex: 'E18' },
-              { type: 'reservation', hex: 'G18' },
+              { type: 'reservation', hex: 'E18', icon: '1858/CS+SJC' },
+              { type: 'reservation', hex: 'G18', icon: '1858/CM+CS' },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -341,7 +341,7 @@ module Engine
             abilities: [
               { type: 'no_buy' },
               { type: 'revenue_change', revenue: 21, on_phase: '3' },
-              { type: 'reservation', hex: 'E18' },
+              { type: 'reservation', hex: 'E18', icon: '1858/CS+SJC' },
               { type: 'reservation', hex: 'E20' },
               {
                 type: 'exchange',
@@ -365,7 +365,7 @@ module Engine
             abilities: [
               { type: 'no_buy' },
               { type: 'revenue_change', revenue: 24, on_phase: '3' },
-              { type: 'reservation', hex: 'L7' },
+              { type: 'reservation', hex: 'L7', icon: '1858/MZ+ZP' },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -411,7 +411,7 @@ module Engine
             abilities: [
               { type: 'no_buy' },
               { type: 'revenue_change', revenue: 26, on_phase: '3' },
-              { type: 'reservation', hex: 'G18' },
+              { type: 'reservation', hex: 'G18', icon: '1858/CM+CS' },
               { type: 'reservation', hex: 'G20' },
               {
                 type: 'exchange',
@@ -596,7 +596,7 @@ module Engine
             logo: '1858/BM',
             coordinates: %w[O8],
             abilities: [
-              { type: 'blocks_hexes', hexes: %w[O8] },
+              { type: 'blocks_hexes', hexes: %w[O8], hidden: true },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -653,7 +653,7 @@ module Engine
             logo: '1858/VJ',
             coordinates: %w[L13],
             abilities: [
-              { type: 'blocks_hexes', hexes: %w[L13] },
+              { type: 'blocks_hexes', hexes: %w[L13], hidden: true },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -672,7 +672,7 @@ module Engine
             logo: '1858/RT',
             coordinates: %w[N9],
             abilities: [
-              { type: 'blocks_hexes', hexes: %w[N9] },
+              { type: 'blocks_hexes', hexes: %w[N9], hidden: true },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -806,7 +806,7 @@ module Engine
             logo: '1858/CB',
             coordinates: %w[I2],
             abilities: [
-              { type: 'blocks_hexes', hexes: %w[I2] },
+              { type: 'blocks_hexes', hexes: %w[I2], hidden: true },
               {
                 type: 'exchange',
                 owner_type: 'player',
@@ -920,7 +920,7 @@ module Engine
             logo: '1858/MS',
             coordinates: %w[F9],
             abilities: [
-              { type: 'blocks_hexes', hexes: %w[F9] },
+              { type: 'blocks_hexes', hexes: %w[F9], hidden: true },
               {
                 type: 'exchange',
                 owner_type: 'player',
