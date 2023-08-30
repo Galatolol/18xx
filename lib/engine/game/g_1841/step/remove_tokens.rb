@@ -51,6 +51,10 @@ module Engine
             pending_removal[:max]
           end
 
+          def pending_oo
+            pending_removal[:oo] || false
+          end
+
           def pending_removal
             @round.pending_removals&.first || {}
           end
@@ -69,8 +73,11 @@ module Engine
             super
             return unless active?
 
+            oo = pending_oo
             @round.pending_removals.shift
-            @game.finish_merge
+            return @game.merger_tokens_finish if oo
+
+            @game.merger_finish
           end
 
           def process_remove_token(action)
@@ -81,7 +88,8 @@ module Engine
             raise GameError, "Cannot remove #{token.corporation.name} token" unless can_replace_token?(entity, token)
 
             city_tokens = pending_corporations.first.tokens.select { |t| t.used && t.city.city? && !t.city.pass? }
-            city_tokens << pending_corporations.last.tokens.select { |t| t.used && t.city.city? && !t.city.pass? }
+            city_tokens.concat(pending_corporations.last.tokens.select { |t| t.used && t.city.city? && !t.city.pass? })
+            city_tokens.compact!
 
             raise GameError, 'Cannot remove last non-pass token' if city_tokens.one? && token == city_tokens[0]
 
@@ -93,8 +101,11 @@ module Engine
 
             return if count < pending_max
 
+            oo = pending_oo
             @round.pending_removals.shift
-            @game.finish_merge
+            return @game.merger_tokens_finish if oo
+
+            @game.merger_finish
           end
 
           def available_hex(entity, hex)

@@ -21,7 +21,7 @@ module Engine
 
         CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
-        STARTING_CASH = { 3 => 570, 4 => 460 }.freeze
+        STARTING_CASH = { 3 => 570, 4 => 470 }.freeze
 
         CAPITALIZATION = :full
 
@@ -144,7 +144,7 @@ module Engine
                   {
                     name: 'Purple',
                     on: 'D',
-                    train_limit: 3,
+                    train_limit: 2,
                     tiles: %i[yellow green brown],
                     operating_rounds: 3,
                   }].freeze
@@ -244,7 +244,7 @@ module Engine
         LONDON_HEX = 'A10'
         LONDON_BONUS_FERRY_SUPPLY_HEX = 'A12'
         FERRY_MARKER_ICON = 'ferry'
-        FERRY_MARKER_COST = 60
+        FERRY_MARKER_COST = 80
 
         PARIS_HEX = 'G6'
         CENTRE_BOURGOGNE_HEX = 'I2'
@@ -274,8 +274,9 @@ module Engine
         REGULAR_CORPORATIONS = FRENCH_REGULAR_CORPORATIONS + BELGIAN_REGULAR_CORPORATIONS
         FRENCH_LATE_CORPORATIONS = %w[LF].freeze
         BELGIAN_LATE_CORPORATIONS = %w[LB].freeze
+        #CORPORATIONS_CAPITALIZED_AT_110_PCT = %w[Ouest Est]
 
-        DESTINATION_ABILITY_TYPES = %i[assign_hexes hex_bonus].freeze
+        #DESTINATION_ABILITY_TYPES = %i[assign_hexes hex_bonus].freeze
 
         def stock_round
           G1894::Round::Stock.new(self, [
@@ -367,15 +368,15 @@ module Engine
           #adjust_companies
           remove_extra_french_major_shareholding_companies
 
-          @corporations.each do |corporation|
-            next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
+          # @corporations.each do |corporation|
+          #   next unless (dest_abilities = Array(abilities(corporation)).select { |a| DESTINATION_ABILITY_TYPES.include?(a.type) })
 
-            dest_abilities.each do |ability|
-              ability.hexes.each do |id|
-                hex_by_id(id).assign!(corporation)
-              end
-            end
-          end
+          #   dest_abilities.each do |ability|
+          #     ability.hexes.each do |id|
+          #       hex_by_id(id).assign!(corporation)
+          #     end
+          #   end
+          # end
 
           @players.each do |player|
             share_pool.transfer_shares(french_starting_corporation.ipo_shares.last.to_bundle, player)
@@ -492,13 +493,14 @@ module Engine
           super
 
           case action
-          when Action::Par
-            if action.corporation == ouest
-              ouest.remove_ability_when(:par)
-              subsidy = ouest.par_price&.price
-              @bank.spend(subsidy, ouest)
-              @log << "#{ouest.name} receives a #{format_currency(subsidy)} subsidy"
-            end
+          # when Action::Par
+          #   if CORPORATION_CAPITALIZED_AT_110_PCT.include?(action.corporation.id)
+          #     corporation = action.corporation
+          #     corporation.remove_ability_when(:par)
+          #     subsidy = corporation.par_price&.price
+          #     @bank.spend(subsidy, corporation)
+          #     @log << "#{corporation.name} receives a #{format_currency(subsidy)} subsidy"
+          #   end
 
           when Action::PlaceToken
             # Mark the corporation that has London bonus
@@ -555,6 +557,8 @@ module Engine
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
           when Action::BuyCompany
             return unless action.company == ls
+
+            return add_ferry_marker_to_common_supply if ferry_marker?(action.entity)
 
             action.entity.add_ability(@ferry_marker_ability.dup)
             @log << "#{action.entity.name} gets a ferry marker"
@@ -740,10 +744,13 @@ module Engine
           graph.clear
         end
 
+        def add_ferry_marker_to_common_supply
+          @log << "Reserved ferry marker returned to the common supply"
+          hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons << Part::Icon.new('1894/ferry')
+        end
+
         def event_close_companies!
-          if ls.owner.player?
-            hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons << Part::Icon.new('1894/ferry')
-          end
+          add_ferry_marker_to_common_supply if ls.owner.player?
 
           super
         end
