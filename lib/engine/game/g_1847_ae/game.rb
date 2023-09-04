@@ -214,6 +214,12 @@ module Engine
 
         LAYOUT = :pointy
 
+        def init_stock_market
+          market = G1847AE::StockMarket.new(self.class::MARKET, [])
+          market.game = self
+          market
+        end
+
         def init_round
           G1847AE::Round::Draft.new(self,
                                     [G1847AE::Step::Draft],
@@ -426,7 +432,7 @@ module Engine
             tile.cities.first.place_token(hlb, hlb.next_token)
           end
           hlb.coordinates = [hlb.coordinates.first]
-          ability = hlb.all_abilities.find { |a| a.description.include?('Two home stations') }
+          ability = hlb.all_abilities.find { |a| a.description&.include?('Two home stations') }
           hlb.remove_ability(ability)
         end
 
@@ -435,6 +441,24 @@ module Engine
           return false if LAST_TRANCH_CORPORATIONS.include?(corporation.id) && !hlb.floated?
 
           !corporation.ipoed
+        end
+
+        def bundles_for_corporation(share_holder, corporation, shares: nil)
+          return [] unless corporation.ipoed
+
+          shares = (shares || share_holder.shares_of(corporation)).sort_by { |h| [h.president ? 1 : 0, h.percent] }
+  
+          bundles = (1..shares.size).flat_map do |n|
+            shares.combination(n).to_a.map { |ss| Engine::ShareBundle.new(ss) }
+          end
+
+          bundles = bundles.uniq do |b|
+            [b.shares.count { |s| s.percent == 10 },
+             b.presidents_share ? 1 : 0,
+             b.shares.find(&:double_cert) ? 1 : 0]
+          end
+  
+          bundles.sort_by(&:percent)
         end
 
         # Cannot build in E9 before Phase 5
@@ -475,7 +499,7 @@ module Engine
             return unless ipo_shares.zero?
 
             # Remove IPO description ability that is no longer relevant
-            ability = corporation.all_abilities.find { |a| a.description.include?('IPO:') }
+            ability = corporation.all_abilities.find { |a| a.description&.include?('IPO:') }
             corporation.remove_ability(ability)
             corporation.has_ipo_description_ability = false
           when Action::LayTile
