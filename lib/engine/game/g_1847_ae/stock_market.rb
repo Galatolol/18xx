@@ -7,7 +7,7 @@ module Engine
     module G1847AE
       class StockMarket < Engine::StockMarket
         attr_writer :game
-        
+
         def move_up(corporation)
           return if corporation == @game.lfk
 
