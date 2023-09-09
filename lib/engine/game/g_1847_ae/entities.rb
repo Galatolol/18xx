@@ -387,7 +387,7 @@ module Engine
               },
               {
                 type: 'base',
-                description: 'IPO: 2nd and last cert are double',
+                description: 'IPO: 2nd and last certs are double',
               },
             ],
           },
@@ -439,7 +439,8 @@ module Engine
             last_share_double: true,
             required_par_price: 66,
             hex_color: 'blue',
-            color: '#ff9966',
+            color: '#ffc04d',
+            text_color: 'black',
             has_ipo_description_ability: true,
             abilities: [
               {
@@ -473,6 +474,7 @@ module Engine
             required_par_price: 66,
             hex_color: 'pink',
             color: '#ffc0cb',
+            text_color: 'black',
             has_ipo_description_ability: true,
             abilities: [
               {
