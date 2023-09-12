@@ -6,21 +6,24 @@ module Engine
       module Entities
         COMPANIES = [
           {
-            name: 'Ligne Longwy-Villerupt-Micheville',
-            sym: 'LVM',
+            name: 'Ligne de Reims à Charleville',
+            sym: 'LRC',
             value: 20,
             revenue: 5,
-            desc: 'Owning corporation may lay a yellow tile in I14.'\
-                  ' This is in addition to the corporation\'s tile builds.'\
-                  ' No connection required. Blocks I14 while owned by a player.',
+            desc: 'Once per game the owning corporation may pay 60 F to lay a yellow track.'\
+                  ' This is in addition to the corporation\'s regular track actions.'\
+                  ' Blocks I14 while owned by a player.',
             abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['I14'] },
                         {
                           type: 'tile_lay',
                           owner_type: 'corporation',
-                          hexes: ['I14'],
-                          tiles: %w[7 8 9],
-                          when: 'owning_corp_or_turn',
+                          when: 'track',
+                          cost: 60,
                           count: 1,
+                          special: false,
+                          reachable: true,
+                          hexes: [],
+                          tiles: %w[X1 X2 X3 1 7 8 9 55 56 57 58 69 630],
                         }],
             color: '#d9d9d9',
           },
@@ -29,7 +32,7 @@ module Engine
             sym: 'AR',
             value: 25,
             revenue: 5,
-            desc: 'When owned by a corporation, the revenue is equal to 10.',
+            desc: 'When owned by a corporation, the revenue is equal to 10 F.',
             abilities: [{ type: 'revenue_change', revenue: 10, when: 'sold' }],
             color: '#d9d9d9',
           },
@@ -38,17 +41,28 @@ module Engine
             sym: 'GLG',
             value: 50,
             revenue: 10,
-            desc: 'Owning corporation may lay a yellow tile or upgrade a yellow tile in Liège'\
-                  ' (H17) along with an optional token.'\
-                  ' This counts as one of the corporation\'s tile builds.'\
-                  ' Blocks H17 while owned by a player.',
+            desc: 'Owning corporation may lay or upgrade a tile in Liège'\
+                  ' (H17). If it does, it may then optionally place a token for free there.'\
+                  ' This counts as one of the corporation\'s tile builds and token laying'\
+                  ' (if token was placed). Blocks H17 while owned by a player.',
             abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['H17'] },
                         {
                           type: 'teleport',
                           owner_type: 'corporation',
                           hexes: ['H17'],
-                          tiles: %w[14 15 57 619],
+                          tiles: %w[14 15 57 619 X14 X15 X16 X17 X18 X19 35 36 118],
                         }],
+            color: '#d9d9d9',
+          },
+          {
+            name: 'Ligne de Saint-Quentin à Guise',
+            sym: 'SQG',
+            value: 70,
+            revenue: 0,
+            desc: 'Revenue is equal to 70 F if Saint-Quentin (G10) is green, to 100 F if'\
+                  ' Saint-Quentin is brown and to 0 F otherwise.'\
+                  ' Closes in purple phase. May not be sold to corporation in red and gray phase.',
+            abilities: [{ type: 'close', on_phase: 'Purple' }],
             color: '#d9d9d9',
           },
           {
@@ -56,7 +70,8 @@ module Engine
             sym: 'LS',
             value: 90,
             revenue: 15,
-            desc: 'Owning corporation may place its cheapest available token for free in A12.'\
+            desc: 'Comes with a free ferry marker.'\
+                  ' Owning corporation may place its cheapest available token for free in A12.'\
                   ' The value of London (A10) is increased, for this corporation only,'\
                   ' by the largest non-London, non-Luxembourg revenue on the route.',
             abilities: [{
@@ -70,15 +85,6 @@ module Engine
               from_owner: true,
               owner_type: 'corporation',
             }],
-            color: '#d9d9d9',
-          },
-          {
-            name: 'Ligne de Saint-Quentin à Guise',
-            sym: 'SQG',
-            value: 100,
-            desc: 'Revenue is equal to 70 if Saint-Quentin (G10) is green, to 100 if Saint-Quentin is brown and to 0 otherwise.'\
-                  ' Closes in purple phase.',
-            abilities: [{ type: 'close', on_phase: 'Purple' }],
             color: '#d9d9d9',
           },
           {
@@ -182,7 +188,7 @@ module Engine
             name: 'Chemins de fer de l\'Ouest',
             logo: '1894/Ouest',
             simple_logo: '1894/Ouest.alt',
-            tokens: [0, 0, 100, 100, 140],
+            tokens: [0, 0, 100, 100, 100],
             max_ownership_percent: 60,
             coordinates: %w[B3 E6],
             color: '#4682b4',
@@ -194,7 +200,7 @@ module Engine
             simple_logo: '1894/Nord.alt',
             tokens: [0, 0, 100, 100],
             max_ownership_percent: 60,
-            coordinates: %w[E10 G14],
+            coordinates: %w[D9 G14],
             color: '#ff4040',
           },
           {
@@ -207,29 +213,15 @@ module Engine
             coordinates: 'D15',
             color: '#fcf75e',
             text_color: 'black',
-            abilities: [
-              {
-                type: 'token',
-                description: 'Reservation in Antwerpen (D17)',
-                desc_detail: 'Has one slot in Antwerpen (D17) reserved and may place a token there for 40 F if connected. '\
-                             'The reservation is removed when Antwerpen is upgraded to brown.',
-                hexes: ['D17'],
-                price: 40,
-              },
-              {
-                type: 'reservation',
-                hex: 'D17',
-              },
-            ],
           },
           {
             sym: 'CFOR',
             name: 'Chemin de fer d\'Orléans à Rouen',
             logo: '1894/CFOR',
             simple_logo: '1894/CFOR.alt',
-            tokens: [0, 0, 100, 100, 140],
+            tokens: [0, 0, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: %w[D3 H1],
+            coordinates: %w[D3 H3],
             color: '#9c661f',
           },
           {
@@ -253,9 +245,9 @@ module Engine
             name: 'Chemins de fer de Paris à Lyon et à la Méditerranée',
             logo: '1894/PLM',
             simple_logo: '1894/PLM.alt',
-            tokens: [0, 40, 100, 100, 140],
+            tokens: [0, 40, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: 'G4',
+            coordinates: 'G6',
             city: 0,
             color: '#dda0dd',
             text_color: 'black',
@@ -265,19 +257,11 @@ module Engine
             name: 'Chemins de fer de l\'Est',
             logo: '1894/Est',
             simple_logo: '1894/Est.alt',
-            tokens: [0, 40, 100, 100, 140],
+            tokens: [0, 40, 100, 100, 100],
             max_ownership_percent: 60,
-            coordinates: 'I8',
+            coordinates: 'I10',
             color: '#ff9966',
             text_color: 'black',
-            abilities: [
-              {
-                type: 'hex_bonus',
-                amount: 0,
-                description: 'Value of I2 increased to 60',
-                hexes: ['I2'],
-              },
-            ],
           },
           {
             sym: 'LF',
@@ -294,7 +278,7 @@ module Engine
             name: 'Late Belgian',
             logo: '1894/LB',
             simple_logo: '1894/LB.alt',
-            tokens: [0, 40],
+            tokens: [0, 40, 100],
             max_ownership_percent: 60,
             color: '#c9c9c9',
             text_color: 'black',
