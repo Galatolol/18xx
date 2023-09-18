@@ -1060,8 +1060,23 @@ module Engine
             .group_by { |e| acting_for_entity(e) }
         end
 
-        def possible_presidents
-          players.reject(&:bankrupt) + corporations.select(&:floated?).reject(&:closed?).sort
+        def player_distance_for_president(previous, entity)
+          return 0 if !previous || !entity
+
+          possible_players = if previous.player?
+                               @players.rotate(@players.index(previous)).reject(&:bankrupt)
+                             else
+                               @players.reject(&:bankrupt)
+                             end
+          possible_corps = corporations.reject(&:closed?).sort
+
+          possible = possible_players + possible_corps
+          possible.reject! { |p| p == previous }
+          possible = [previous] + possible
+
+          a = possible.find_index(previous)
+          b = possible.find_index(entity)
+          a < b ? b - a : b - (a - possible.size)
         end
 
         # for 1841, this means frozen
@@ -2548,7 +2563,7 @@ module Engine
           return false if bundle.partial? && !can_sell_partial?(owner, corp)
           return true if can_dump?(owner, corp, active)
 
-          corp_minimum_to_retain(owner, corp, active) <= bundle.percent &&
+          corp_minimum_to_retain(owner, corp, active) <= (owner.percent_of(corp) - bundle.percent) &&
             !bundle.presidents_share
         end
 
