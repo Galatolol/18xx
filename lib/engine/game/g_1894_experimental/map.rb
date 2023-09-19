@@ -269,7 +269,7 @@ module Engine
           },
           blue: {
             ['A10'] => 'town=revenue:yellow_30|brown_80;path=a:0,b:_0;path=a:1,b:_0;path=a:5,b:_0',
-            ['A12'] => 'city=revenue:0;icon=image:1894/ferry;icon=image:1894/ferry;icon=image:1894/ferry',
+            ['A12'] => 'city=revenue:0;icon=image:1894/ferry;icon=image:1894/ferry;icon=image:1894/ferry;icon=image:1894/ferry',
           },
           red: {
             ['A4'] => 'offboard=revenue:50;icon=image:1894/plus_100_black;path=a:0,b:_0;path=a:1,b:_0',

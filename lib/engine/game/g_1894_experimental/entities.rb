@@ -88,7 +88,7 @@ module Engine
             sym: 'LS',
             value: 90,
             revenue: 15,
-            desc: 'Comes with a free ferry marker.'\
+            desc: 'Owning company pays 40 F for ferry marker.'\
                   ' Owning corporation may place its cheapest available token for free in A12.'\
                   ' The value of London (A10) is increased, for this corporation only,'\
                   ' by the largest non-London, non-Luxembourg revenue on the route.',

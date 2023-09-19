@@ -196,6 +196,7 @@ module Engine
         LONDON_BONUS_FERRY_SUPPLY_HEX = 'A12'
         FERRY_MARKER_ICON = 'ferry'
         FERRY_MARKER_COST = 80
+        LS_FERRY_MARKER_COST = 40
 
         PARIS_HEX = 'G6'
         CENTRE_BOURGOGNE_HEX = 'I2'
@@ -430,7 +431,7 @@ module Engine
             if action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
               action.entity.owner.add_ability(
                 Engine::Ability::Description.new(type: 'description', description: 'London bonus',
-                                                 desc_detail: 'The alue of London (A10) is increased, for this corporation only,'\
+                                                 desc_detail: 'The value of London (A10) is increased, for this corporation only,'\
                                                               ' by the largest non-London, non-Luxembourg revenue on the route.')
               )
               return
@@ -480,13 +481,6 @@ module Engine
               sqg.revenue = 100
             end
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
-          when Action::BuyCompany
-            return unless action.company == ls
-
-            return add_ferry_marker_to_common_supply if ferry_marker?(action.entity)
-
-            action.entity.add_ability(@ferry_marker_ability.dup)
-            @log << "#{action.entity.name} gets a ferry marker"
           end
         end
 
@@ -647,37 +641,32 @@ module Engine
           graph.reachable_hexes(entity).include?(hex_by_id(LONDON_HEX))
         end
 
+        def get_ferry_marker_cost(entity)
+          return ls.owner == entity ? LS_FERRY_MARKER_COST : FERRY_MARKER_COST
+        end
+
         def can_buy_ferry_marker?(entity)
           return false unless entity.corporation?
 
           ferry_marker_available? &&
             !ferry_marker?(entity) &&
-            buying_power(entity) >= FERRY_MARKER_COST &&
+            buying_power(entity) >= get_ferry_marker_cost(entity) &&
             connected_to_london?(entity)
         end
 
         def buy_ferry_marker(entity)
           return unless can_buy_ferry_marker?(entity)
 
-          entity.spend(FERRY_MARKER_COST, @bank)
+          cost = get_ferry_marker_cost(entity)
+
+          entity.spend(cost, @bank)
           entity.add_ability(@ferry_marker_ability.dup)
-          @log << "#{entity.name} buys a ferry marker for $#{FERRY_MARKER_COST}"
+          @log << "#{entity.name} buys a ferry marker for $#{cost}"
 
           tile_icons = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons
           tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == FERRY_MARKER_ICON })
 
           graph.clear
-        end
-
-        def add_ferry_marker_to_common_supply
-          @log << 'Reserved ferry marker returned to the common supply'
-          hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons << Part::Icon.new('1894/ferry')
-        end
-
-        def event_close_companies!
-          add_ferry_marker_to_common_supply if ls.owner.player?
-
-          super
         end
 
         def block_london
