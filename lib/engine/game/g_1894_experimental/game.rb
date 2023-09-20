@@ -21,7 +21,7 @@ module Engine
 
         CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
-        STARTING_CASH = { 3 => 570, 4 => 470 }.freeze
+        STARTING_CASH = { 3 => 570, 4 => 480 }.freeze
 
         CAPITALIZATION = :full
 
