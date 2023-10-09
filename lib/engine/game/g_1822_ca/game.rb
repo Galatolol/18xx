@@ -218,10 +218,29 @@ module Engine
 
         MUST_SELL_IN_BLOCKS = true
 
-        EVENTS_TEXT = Base::EVENTS_TEXT.merge(
+        EVENTS_TEXT = G1822::Game::EVENTS_TEXT.merge(
           'open_detroit_duluth' => ['Open Detroit-Duluth',
                                     'Phase 3: the connection between Detroit (Y29) and Duluth (P18) opens'],
         )
+
+        STATUS_TEXT = G1822::Game::STATUS_TEXT.merge(
+          'l_upgrade' => ['$70 L-train upgrades',
+                          'The cost to upgrade an L-train to a 2-train is reduced from $80 to $70.']
+        )
+
+        # the big city tiles have complex arrangements of multiple cities and
+        # multiple possible upgrade paths, the implemented upgrade logic can't
+        # handle all of them so some restrictions are hardcoded here instead of
+        # writing logic that wouldn't be very common
+        BIG_CITY_ILLEGAL_TILE_UPGRADES = {
+          'M2' => 'M6',
+          'M3' => 'M4',
+          'O2' => 'O3',
+          'O4' => 'O5',
+          'Q4' => 'Q5',
+          'T5' => 'T6',
+          'W5' => 'W6',
+        }.freeze
 
         attr_accessor :sawmill_hex, :sawmill_owner, :train_with_grain, :train_with_pullman
         attr_writer :sawmill_bonus
@@ -299,7 +318,7 @@ module Engine
 
         def operating_round(round_num)
           Engine::Round::Operating.new(self, [
-            G1822::Step::PendingToken,
+            G1822CA::Step::PendingToken,
             G1822::Step::FirstTurnHousekeeping,
             Engine::Step::AcquireCompany,
             G1822CA::Step::DiscardTrain,
@@ -315,7 +334,7 @@ module Engine
             G1822::Step::BuyTrain,
             G1822CA::Step::MinorAcquisition,
             G1822CA::Step::AcquisitionTrack,
-            G1822::Step::PendingToken,
+            G1822CA::Step::PendingToken,
             G1822CA::Step::DiscardTrain,
             G1822CA::Step::IssueShares,
           ], round_num: round_num)
@@ -327,6 +346,7 @@ module Engine
 
         def upgrades_to?(from, to, _special = false, selected_company: nil)
           return %w[5 6 57].include?(to.name) if from.name == 'AG13' && from.color == :white
+          return false if self.class::BIG_CITY_ILLEGAL_TILE_UPGRADES[from.name] == to.name
 
           super
         end
@@ -344,7 +364,7 @@ module Engine
         end
 
         def upgrades_to_correct_label?(from, to)
-          super || (MOUNTAIN_PASS_HEXES.include?(from.hex.id) && MOUNTAIN_PASS_TILES.include?(to.name))
+          super || (MOUNTAIN_PASS_HEXES.include?(from.hex&.id) && MOUNTAIN_PASS_TILES.include?(to.name))
         end
 
         def small_mail_contract_subsidy(routes)
@@ -568,14 +588,14 @@ module Engine
         def destination_city(hex, entity)
           return hex.tile.cities[0] unless (exits = entity.destination_exits)
 
-          cities = exits.each_with_object([]) do |exit, cities_|
+          dest_cities = exits.each_with_object([]) do |exit, cities|
             hex.paths[exit].each do |path|
               next unless (city = path.city)
 
-              cities_ << city unless cities.include?(city)
+              cities << city unless cities.include?(city)
             end
           end
-          cities.one? ? cities[0] : cities
+          dest_cities.one? ? dest_cities[0] : dest_cities
         end
 
         def destination_description(corporation)

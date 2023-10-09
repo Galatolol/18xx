@@ -4,8 +4,11 @@ module Engine
   module Game
     module G1844
       module Entities
-        MOUNTAIN_HEXES = %w[H7 L13 I14 G14 F19 L23].freeze
+        MOUNTAIN_HEXES = %w[H7 L13 I14 G14 F19 J29 L23].freeze
         MOUNTAIN_TILES = %w[XM1 XM2 XM3].freeze
+
+        TUNNEL_HEXES = %w[J9 I12 K14 I16 H17 H19 H21 H23 H27].freeze
+        TUNNEL_TILES = %w[X78 X79].freeze
 
         COMPANIES = [
           {
@@ -26,11 +29,12 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
+                after_phase: '2',
+                when: %w[track owning_player_track],
                 count: 1,
                 reachable: true,
                 special: false,
-                tiles: %w[7 8 9],
+                tiles: %w[3 4 5 6 7 8 9 57 58],
                 hexes: [],
               },
             ],
@@ -55,8 +59,9 @@ module Engine
             abilities: [
               {
                 type: 'choose_ability',
-                when: %w[owning_player_or_turn owning_corp_or_turn],
-                choices: 'Place', # TODO: add special_choose step
+                after_phase: '2',
+                when: %w[track owning_player_track],
+                choices: ['Place tile'],
               },
             ],
           },
@@ -76,7 +81,7 @@ module Engine
             desc: "Comes with the Director's share of the FNM. When purchased, the owner sets the par price for the FNM" \
                   ' and it immediately floats, with 3 shares going to the market. The company closes when the FNM runs' \
                   ' a train for the first time.',
-            abilities: [{ type: 'close', when: 'ran_train', corporation: 'FNM' }, # TODO: add ran_train event
+            abilities: [{ type: 'close', when: 'ran_train', corporation: 'FNM' },
                         { type: 'no_buy' },
                         { type: 'shares', shares: 'FNM_0' }],
           },
@@ -89,9 +94,14 @@ module Engine
                   ' They may assign it immediately or later to any corporation they are the director of. Train limits must'\
                   ' be kept.',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
-              { type: 'assign_corporation', when: 'owning_player_or_turn', count: 1, closed_when_used_up: true },
+              {
+                type: 'choose_ability',
+                after_phase: '4',
+                when: 'owning_player_or_turn',
+                choices: [], # Defined in special_choose step
+              },
             ],
           },
           {
@@ -107,10 +117,12 @@ module Engine
                   ' certificate limit.',
             color: 'brown',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
               {
                 type: 'tile_lay',
+                when: 'stock_round',
+                owner_type: 'player',
                 blocks: true,
                 count: 1,
                 tiles: MOUNTAIN_TILES,
@@ -131,10 +143,11 @@ module Engine
                   ' certificate limit.',
             color: 'brown',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
               {
                 type: 'tile_lay',
+                when: 'stock_round',
                 blocks: true,
                 count: 1,
                 tiles: %w[XM1 XM2 XM3],
@@ -155,10 +168,11 @@ module Engine
                   ' certificate limit.',
             color: 'brown',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
               {
                 type: 'tile_lay',
+                when: 'stock_round',
                 blocks: true,
                 count: 1,
                 tiles: %w[XM1 XM2 XM3],
@@ -179,10 +193,11 @@ module Engine
                   ' certificate limit.',
             color: 'brown',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
               {
                 type: 'tile_lay',
+                when: 'stock_round',
                 blocks: true,
                 count: 1,
                 tiles: %w[XM1 XM2 XM3],
@@ -203,10 +218,11 @@ module Engine
                   ' certificate limit.',
             color: 'brown',
             abilities: [
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
               {
                 type: 'tile_lay',
+                when: 'stock_round',
                 blocks: true,
                 count: 1,
                 tiles: %w[XM1 XM2 XM3],
@@ -228,15 +244,14 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
-                owner_type: 'player',
+                when: 'owning_player_track',
                 count: 1,
+                cost: 100,
                 reachable: true,
-                special: false,
-                tiles: %w[7 8 9],
-                hexes: [],
+                tiles: TUNNEL_TILES,
+                hexes: TUNNEL_HEXES,
               },
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
             ],
           },
@@ -254,15 +269,14 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
-                owner_type: 'player',
+                when: 'owning_player_track',
                 count: 1,
+                cost: 100,
                 reachable: true,
-                special: false,
-                tiles: %w[7 8 9],
-                hexes: [],
+                tiles: TUNNEL_TILES,
+                hexes: TUNNEL_HEXES,
               },
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
             ],
           },
@@ -280,15 +294,14 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
-                owner_type: 'player',
+                when: 'owning_player_track',
                 count: 1,
+                cost: 100,
                 reachable: true,
-                special: false,
-                tiles: %w[7 8 9],
-                hexes: [],
+                tiles: TUNNEL_TILES,
+                hexes: TUNNEL_HEXES,
               },
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
             ],
           },
@@ -306,15 +319,14 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
-                owner_type: 'player',
+                when: 'owning_player_track',
                 count: 1,
+                cost: 100,
                 reachable: true,
-                special: false,
-                tiles: %w[7 8 9],
-                hexes: [],
+                tiles: TUNNEL_TILES,
+                hexes: TUNNEL_HEXES,
               },
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
             ],
           },
@@ -332,15 +344,14 @@ module Engine
             abilities: [
               {
                 type: 'tile_lay',
-                when: 'track',
-                owner_type: 'player',
+                when: 'owning_player_track',
                 count: 1,
+                cost: 100,
                 reachable: true,
-                special: false,
-                tiles: %w[7 8 9],
-                hexes: [],
+                tiles: TUNNEL_TILES,
+                hexes: TUNNEL_HEXES,
               },
-              { type: 'close', when: 'never' },
+              { type: 'close', on_phase: 'never' },
               { type: 'no_buy' },
             ],
           },
@@ -359,7 +370,8 @@ module Engine
             max_ownership_percent: 75,
             coordinates: 'D19',
             destination_coordinates: 'D15',
-            color: '#c0c0c0',
+            color: '#d8d2d3',
+            text_color: '#363552',
           },
           {
             float_percent: 50,
@@ -373,8 +385,8 @@ module Engine
             max_ownership_percent: 75,
             coordinates: 'C12',
             destination_coordinates: 'F17',
-            color: '#606060',
-            text_color: 'orange',
+            color: '#583838',
+            text_color: '#a2452b',
           },
           {
             float_percent: 50,
@@ -388,7 +400,8 @@ module Engine
             max_ownership_percent: 75,
             coordinates: 'C24',
             destination_coordinates: 'F25',
-            color: '#165800',
+            color: '#225252',
+            text_color: '#d8d2d3',
           },
           {
             float_percent: 50,
@@ -401,9 +414,10 @@ module Engine
             tokens: [0, 40],
             max_ownership_percent: 75,
             coordinates: 'I4',
+            city: 0,
             destination_coordinates: 'F7',
-            color: '#c0c0c0',
-            text_color: '#165800',
+            color: '#d8d2d3',
+            text_color: '#225252',
           },
           {
             float_percent: 50,
@@ -417,10 +431,11 @@ module Engine
             max_ownership_percent: 75,
             coordinates: 'G18',
             destination_coordinates: 'H19',
-            color: 'yellow',
+            color: '#c1b22b',
+            text_color: 'black',
           },
           {
-            float_percent: 50,
+            float_percent: 60,
             sym: 'JN',
             name: 'Jura Neuchatelois (R1)',
             logo: '1844/JN.alt',
@@ -429,10 +444,10 @@ module Engine
             tokens: [0, 40, 100],
             type: 'regional',
             coordinates: 'F7',
-            color: 'green',
+            color: '#3f963d',
           },
           {
-            float_percent: 50,
+            float_percent: 60,
             sym: 'ChA',
             name: 'Chur-Arosa (R2)',
             logo: '1844/ChA.alt',
@@ -441,10 +456,11 @@ module Engine
             tokens: [0, 40, 100],
             type: 'regional',
             coordinates: 'G28',
-            color: 'red',
+            color: '#242943',
+            text_color: '#bcba4c',
           },
           {
-            float_percent: 50,
+            float_percent: 60,
             sym: 'VZ',
             name: 'Visp-Zermatt (R3)',
             logo: '1844/VZ.alt',
@@ -453,7 +469,7 @@ module Engine
             tokens: [0, 40, 100],
             type: 'regional',
             coordinates: 'K10',
-            color: '#474548',
+            color: '#b02c2d',
           },
           {
             float_percent: 50,
@@ -466,7 +482,7 @@ module Engine
             type: 'historical',
             coordinates: 'L21',
             destination_coordinates: 'G20',
-            color: '#d1232a',
+            color: '#2a5f3b',
           },
           {
             float_percent: 50,
@@ -479,7 +495,7 @@ module Engine
             type: 'historical',
             coordinates: 'G26',
             destination_coordinates: 'J13',
-            color: '#d1232a',
+            color: '#cf3334',
           },
           {
             float_percent: 50,
@@ -493,7 +509,7 @@ module Engine
             coordinates: 'F11',
             destination_coordinates: 'J13',
             abilities: [{ type: 'assign_hexes', hexes: ['J13'], count: 1 }],
-            color: '#d1232a',
+            color: '#c1b22b',
           },
           {
             float_percent: 50,
@@ -505,8 +521,9 @@ module Engine
             tokens: [0, 40, 100, 100, 100],
             type: 'historical',
             coordinates: 'D15',
+            city: 0,
             destination_coordinates: 'H13',
-            color: '#d1232a',
+            color: '#3e3d5e',
           },
           {
             float_percent: 50,
@@ -519,7 +536,8 @@ module Engine
             type: 'historical',
             coordinates: 'D25',
             destination_coordinates: 'C20',
-            color: '#d1232a',
+            color: '#d8d2d3',
+            text_color: 'black',
           },
           {
             float_percent: 50,
@@ -532,7 +550,7 @@ module Engine
             type: 'historical',
             coordinates: 'I6',
             destination_coordinates: 'H13',
-            color: '#d1232a',
+            color: '#be8c3a',
           },
           {
             float_percent: 20,
@@ -543,7 +561,8 @@ module Engine
             shares: [10, 10, 10, 10, 10, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
             tokens: [],
             type: 'historical',
-            color: 'red',
+            floatable: false,
+            color: '#913e2e',
             abilities: [
               {
                 type: 'train_buy',

@@ -923,7 +923,7 @@ module Engine
       end
 
       def train_limit(entity)
-        @phase.train_limit(entity)
+        @phase.train_limit(entity) + Array(abilities(entity, :train_limit)).sum(&:increase)
       end
 
       def train_owner(train)
@@ -1250,6 +1250,10 @@ module Engine
           !depot.depot_trains.empty? &&
           (self.class::MUST_BUY_TRAIN == :always ||
            (self.class::MUST_BUY_TRAIN == :route && @graph.route_info(entity)&.dig(:route_train_purchase)))
+      end
+
+      def can_buy_train_from_others?
+        self.class::ALLOW_TRAIN_BUY_FROM_OTHERS
       end
 
       def discard_discount(train, price)
@@ -2137,7 +2141,7 @@ module Engine
           @log << "-- Event: obsolete #{removed_obsolete_trains.uniq.join(', ')} trains are removed from The Depot --"
         end
 
-        return unless rusted_trains.any?
+        return if rusted_trains.empty?
 
         @log << "-- Event: #{rusted_trains.uniq.join(', ')} trains rust " \
                 "( #{owners.map { |c, t| "#{c} x#{t}" }.join(', ')}) --"
@@ -2238,6 +2242,10 @@ module Engine
 
       def initial_auction_companies
         @companies
+      end
+
+      def player_debt(_player)
+        0
       end
 
       private
@@ -2728,7 +2736,14 @@ module Engine
 
       def next_sr_position(entity)
         player_order = if @round.current_entity&.player?
-                         next_sr_player_order == :first_to_pass ? @round.pass_order : []
+                         case next_sr_player_order
+                         when :first_to_pass
+                           @round.pass_order
+                         when :most_cash
+                           @players.sort_by { |p| [p.cash, @players.index(p)] }.reverse
+                         else
+                           []
+                         end
                        else
                          @players
                        end
@@ -2978,8 +2993,9 @@ module Engine
 
       def ability_right_time?(ability, time, on_phase, passive_ok, strict_time)
         return true unless @round
+        return false if ability.on_phase && !['any', ability.on_phase].include?(on_phase)
+        return false if ability.after_phase && !@phase.previous.map { |p| p['name'] }.include?(ability.after_phase)
         return true if time == 'any' || ability.when?('any')
-        return (on_phase == ability.on_phase) || (on_phase == 'any') if ability.on_phase
         return false if ability.passive && !passive_ok
         return true if ability.passive && ability.when.empty?
 
@@ -3017,6 +3033,8 @@ module Engine
             @round.operating? && !@round.current_operator_acted
           when 'or_start'
             ability_time_is_or_start?
+          when 'stock_round'
+            @round.stock?
           else
             default
           end
