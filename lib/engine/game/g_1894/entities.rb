@@ -55,6 +55,24 @@ module Engine
             color: '#d9d9d9',
           },
           {
+            name: 'Station Antwerpen Centraal',
+            sym: 'SAC',
+            value: 50,
+            revenue: 10,
+            desc: 'Owning corporation may lay or upgrade a tile in Antwerpen'\
+                  ' (D17). If it does, it may then optionally place a token for free there.'\
+                  ' This counts as one of the corporation\'s tile builds and token laying'\
+                  ' (if token was placed). Blocks D17 while owned by a player.',
+            abilities: [{ type: 'blocks_hexes', owner_type: 'player', hexes: ['D17'] },
+                        {
+                          type: 'teleport',
+                          owner_type: 'corporation',
+                          hexes: ['D17'],
+                          tiles: %w[14 15 57 619 X14 X15 X16 X17 X18 X19 35 36 118],
+                        }],
+            color: '#d9d9d9',
+          },
+          {
             name: 'Ligne de Saint-Quentin à Guise',
             sym: 'SQG',
             value: 70,
@@ -70,7 +88,7 @@ module Engine
             sym: 'LS',
             value: 90,
             revenue: 15,
-            desc: 'Comes with a free ferry marker.'\
+            desc: 'Owning corporation pays 40 F for ferry marker.'\
                   ' Owning corporation may place its cheapest available token for free in A12.'\
                   ' The value of London (A10) is increased, for this corporation only,'\
                   ' by the largest non-London, non-Luxembourg revenue on the route.',

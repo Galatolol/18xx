@@ -21,84 +21,23 @@ module Engine
 
         CERT_LIMIT = { 3 => 18, 4 => 14 }.freeze
 
-        STARTING_CASH = { 3 => 570, 4 => 470 }.freeze
+        STARTING_CASH = { 3 => 570, 4 => 480 }.freeze
 
         CAPITALIZATION = :full
 
         MUST_SELL_IN_BLOCKS = false
 
         MARKET = [
-          %w[83
-             89
-             96
-             103
-             111
-             120
-             131
-             145
-             160
-             185
-             213
-             250
-             290
-             350e],
-          %w[77
-             82
-             90p
-             94
-             99
-             109
-             120
-             132
-             150
-             170
-             195
-             230
-             270
-             320],
-          %w[72
-             77
-             82
-             88
-             93
-             100p
-             109
-             120
-             135
-             153
-             176
-             205
-             240
-             290],
-          %w[66
-             70
-             75
-             82p
-             87
-             93
-             99
-             109
-             120
-             138
-             160
-             185
-             220],
-          %w[63o
-             66
-             70
-             75
-             80
-             85
-             92
-             102
-             115
-             128
-             147],
-          %w[59o 63o 66 70 76p 81 88 99 109],
-          %w[55o 59o 62o 65 69 73 82 92],
-          %w[40o 50o 54o 60o 64 67p 75],
-          %w[30o 40o 50o 54o 60o],
-          %w[20o 30o 40o 50o 54o],
+          %w[90 99 109 115 124 132 141 151 162 190 220 260 310 375e],
+          %w[83 95p 100 106 113 121 130 139 149 175 205 240 285 340],
+          %w[75 82 89 95 103 111 120 130 140 165 190 225 270],
+          %w[69 75 81 87 93 100p 108 116 133 155 180 215],
+          %w[64 69 75 80p 85 91 97 111 126 145 170],
+          %w[59 64 68 71 76 81 90 101 115],
+          %w[50o 56o 62 66 70 75 83 93],
+          %w[40o 50o 55o 60o 64 67p 75],
+          %w[30o 40o 50o 55o 60o],
+          %w[20o 30o 40o 50o 55o],
           %w[10o 20o 30o 40o 50o],
         ].freeze
 
@@ -257,6 +196,7 @@ module Engine
         LONDON_BONUS_FERRY_SUPPLY_HEX = 'A12'
         FERRY_MARKER_ICON = 'ferry'
         FERRY_MARKER_COST = 80
+        LS_FERRY_MARKER_COST = 40
 
         PARIS_HEX = 'G6'
         CENTRE_BOURGOGNE_HEX = 'I2'
@@ -375,6 +315,7 @@ module Engine
           @log << "-- The French major shareholding corporation is the #{french_starting_corporation.id}"
           belgian_starting_corporation = corporation_by_id('Belge')
 
+          remove_random_teleport_company
           remove_extra_french_major_shareholding_companies
 
           @players.each do |player|
@@ -491,7 +432,8 @@ module Engine
             if action.city.hex.id == LONDON_BONUS_FERRY_SUPPLY_HEX
               action.entity.owner.add_ability(
                 Engine::Ability::Description.new(type: 'description', description: 'London bonus',
-                                                 desc_detail: 'The alue of London (A10) is increased, for this corporation only,'\
+                                                 desc_detail: 'The value of London (A10) is increased,'\
+                                                              ' for this corporation only,'\
                                                               ' by the largest non-London, non-Luxembourg revenue on the route.')
               )
               return
@@ -708,21 +650,27 @@ module Engine
           graph.reachable_hexes(entity).include?(hex_by_id(LONDON_HEX))
         end
 
+        def get_ferry_marker_cost(entity)
+          ls.owner == entity ? LS_FERRY_MARKER_COST : FERRY_MARKER_COST
+        end
+
         def can_buy_ferry_marker?(entity)
           return false unless entity.corporation?
 
           ferry_marker_available? &&
             !ferry_marker?(entity) &&
-            buying_power(entity) >= FERRY_MARKER_COST &&
+            buying_power(entity) >= get_ferry_marker_cost(entity) &&
             connected_to_london?(entity)
         end
 
         def buy_ferry_marker(entity)
           return unless can_buy_ferry_marker?(entity)
 
-          entity.spend(FERRY_MARKER_COST, @bank)
+          cost = get_ferry_marker_cost(entity)
+
+          entity.spend(cost, @bank)
           entity.add_ability(@ferry_marker_ability.dup)
-          @log << "#{entity.name} buys a ferry marker for $#{FERRY_MARKER_COST}"
+          @log << "#{entity.name} buys a ferry marker for $#{cost}"
 
           tile_icons = hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons
           tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == FERRY_MARKER_ICON })
@@ -748,6 +696,13 @@ module Engine
           def london.blocks?(corporation)
             !@game.ferry_marker?(corporation)
           end
+        end
+
+        def remove_random_teleport_company
+          teleports = companies.find_all { |c| c.value == 50 }
+          company = teleports.sort_by { rand }.take(1).first
+          company.close!
+          @round.steps.find { |s| s.is_a?(Engine::Step::WaterfallAuction) }.companies.delete(company)
         end
 
         def remove_extra_french_major_shareholding_companies
