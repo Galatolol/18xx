@@ -483,13 +483,6 @@ module Engine
               sqg.revenue = 100
             end
             @log << "#{sqg.name}'s revenue increased to #{sqg.revenue}"
-          when Action::BuyCompany
-            return unless action.company == ls
-
-            return add_ferry_marker_to_common_supply if ferry_marker?(action.entity)
-
-            action.entity.add_ability(@ferry_marker_ability.dup)
-            @log << "#{action.entity.name} gets a ferry marker"
           end
         end
 
@@ -676,17 +669,6 @@ module Engine
           tile_icons.delete_at(tile_icons.find_index { |icon| icon.name == FERRY_MARKER_ICON })
 
           graph.clear
-        end
-
-        def add_ferry_marker_to_common_supply
-          @log << 'Reserved ferry marker returned to the common supply'
-          hex_by_id(LONDON_BONUS_FERRY_SUPPLY_HEX).tile.icons << Part::Icon.new('1894/ferry')
-        end
-
-        def event_close_companies!
-          add_ferry_marker_to_common_supply if ls.owner.player?
-
-          super
         end
 
         def block_london

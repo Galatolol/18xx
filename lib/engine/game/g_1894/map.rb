@@ -209,6 +209,7 @@ module Engine
           'G10' => 'Saint-Quentin',
           'G12' => 'Caudry & Maubeuge',
           'G14' => 'Charleroi',
+          'G16' => 'Namur & Sint-Truiden',
           'G18' => 'Hasselt',
           'H1' => 'Voves',
           'H3' => 'Chartres',
